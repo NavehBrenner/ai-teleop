@@ -9,7 +9,7 @@ them back, and check the `checkpoint_sha256` in `metadata.json` to confirm you d
 
 The two runs here predate that fix. Their weight init and batch shuffling came from OS
 entropy, so **no command reproduces them**, and their results are quoted in
-`docs/phase-1-results.md`. Losing them would repeat audit finding H-8 — the original
+`docs/results/phase-1-results.md`. Losing them would repeat audit finding H-8 — the original
 2026-07-07 headline checkpoint is already gone, which is why its 70.0% can no longer be
 arbitrated. 716 KB each; git is the cheapest place they can't disappear from.
 

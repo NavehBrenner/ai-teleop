@@ -7,7 +7,7 @@ Run from the `kevin/` directory:
     uv run python scripts/dev_harness_controller.py                # interactive viewer
     uv run python scripts/dev_harness_controller.py --headless     # CI / regression
 
-Phases (see `docs/milestone-2-spec.md` Step 7 for the design contract):
+Phases (see `docs/specs/milestone-2-spec.md` Step 7 for the design contract):
 
 1. Waypoint  — 10 cm square in front of the wall, four corners, 1 s each.
 2. Compliance — target 5 cm past the wall surface; arm contacts, peg seats,

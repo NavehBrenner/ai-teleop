@@ -31,7 +31,7 @@ the same clamps later protect M5's behavioral-cloning residual.
 `delta_grip_force` is **additive** on top of a baseline closing force set
 at scene reset, so 0.0 means "grip exactly as held at trial start". The
 M2 controller plumbs and clamps the channel but the M2 harness does not
-exercise it (see `docs/milestone-2-spec.md` *What's not in M2*).
+exercise it (see `docs/specs/milestone-2-spec.md` *What's not in M2*).
 """
 
 from __future__ import annotations

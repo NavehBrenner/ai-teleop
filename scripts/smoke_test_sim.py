@@ -5,7 +5,7 @@ Run from the `kevin/` directory:
     uv run python scripts/smoke_test_sim.py
     uv run python scripts/smoke_test_sim.py --no-viewer    # CI / headless
 
-The acceptance criteria in `docs/milestone-1-spec.md` correspond to the
+The acceptance criteria in `docs/specs/milestone-1-spec.md` correspond to the
 sections labelled [criterion N] below.
 """
 

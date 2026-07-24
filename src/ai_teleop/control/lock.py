@@ -20,7 +20,7 @@ pending requests, and returns an *effective target pose* the impedance
 law should track this tick.
 
 `LockStatus` is the read-only struct exposed to the (future) eval
-harness — see `docs/milestone-2-spec.md` *Lock state machine*.
+harness — see `docs/specs/milestone-2-spec.md` *Lock state machine*.
 """
 
 from __future__ import annotations

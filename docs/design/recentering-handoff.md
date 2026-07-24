@@ -9,7 +9,7 @@ work that preceded it is done (below); start here for the next problem.
   substepping in `run_episode` (commit `2e52314`). Sim-time now tracks wall-time, so the
   `sim_time`-anchored gesture timings are no longer stretched; viewer is responsive.
 - A debug real-time `print` is still in `run_episode` — **strip before PR**.
-- Sibling handoff: `../stereohand/docs/recentering-handoff.md`
+- Sibling handoff: `../stereohand/docs/design/recentering-handoff.md`
   (branch `feat/tracker-event-gate-fps-cap`).
 
 ## Problem to solve

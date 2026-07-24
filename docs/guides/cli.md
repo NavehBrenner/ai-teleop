@@ -5,14 +5,14 @@ project. Type `kvn <command>` instead of `uv run python scripts/<script>.py`.
 
 `kvn` is a thin dispatcher, not a reimplementation:
 
-- **Simulation / data commands** run the matching script in [`scripts/`](../scripts)
+- **Simulation / data commands** run the matching script in [`scripts/`](../../scripts)
   with the project interpreter. Each script keeps its own `argparse`, so
   `kvn <command> --help` shows that script's real flags and every option passes
   straight through.
 - **Dev-gate commands** delegate to the [poe](https://poethepoet.natn.io/) tasks in
-  [`pyproject.toml`](../pyproject.toml), so the gate has a single source of truth.
+  [`pyproject.toml`](../../pyproject.toml), so the gate has a single source of truth.
 
-Source: [`src/ai_teleop/cli.py`](../src/ai_teleop/cli.py).
+Source: [`src/ai_teleop/cli.py`](../../src/ai_teleop/cli.py).
 
 ## Install / invoke
 
@@ -162,7 +162,7 @@ uv run kvn harness --headless --force-cap 25
 Runs N unattended episodes (coverage-randomized scene → realistic noisy human →
 analytical expert → controller → sim) and writes **one NPZ trajectory file per
 episode**. Episodes are reproducible from `(seed, episode_index)` and cached by
-fingerprint. On-disk schema: [`docs/data-schema.md`](data-schema.md).
+fingerprint. On-disk schema: [`docs/reference/data-schema.md`](../reference/data-schema.md).
 
 | Flag | Default | Meaning |
 |---|---|---|
@@ -205,7 +205,7 @@ uv run kvn test tests/test_foo.py -k case   # extra args pass through to pytest
 ## Logging
 
 The simulation/data scripts (`smoke`, `harness`, `gen`) emit progress and status
-through the project logger ([`src/ai_teleop/common/log.py`](../src/ai_teleop/common/log.py))
+through the project logger ([`src/ai_teleop/common/log.py`](../../src/ai_teleop/common/log.py))
 instead of bare `print`, so output is leveled, timestamped, and tagged
 (`HH:MM:SS INFO [datagen] …`). Each exposes the same three flags:
 
@@ -230,7 +230,7 @@ script's real stdout stays clean for piping.
 ## Adding a command
 
 - **A new runnable script** → add it to `scripts/`, then add one line to
-  `APP_COMMANDS` in [`src/ai_teleop/cli.py`](../src/ai_teleop/cli.py). The script's
+  `APP_COMMANDS` in [`src/ai_teleop/cli.py`](../../src/ai_teleop/cli.py). The script's
   own `argparse` is the source of truth for its flags; `kvn` just forwards them.
 - **A new dev-gate action** → add a poe task in `pyproject.toml`, then add one line
   to `DEV_COMMANDS`. Don't reimplement the command inside the CLI.

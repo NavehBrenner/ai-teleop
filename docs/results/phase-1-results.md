@@ -73,7 +73,7 @@ Review** repackages.
 > Everything below is the 2026-07-07 result **as it was measured**. It is kept verbatim
 > because it happened and its records are committed — not because it stands. For this result
 > in the context of every M5→M7 experiment, see the
-> [KPI dashboard](results/kpi-dashboard.md).
+> [KPI dashboard](kpi-dashboard.md).
 
 **Headline (2026-07-07, superseded by the note above).** In the calibrated chamfer-contact
 band, the F/T residual lifts insertion success from **36.7% → 70.0%** — a **+33.3 pp**
@@ -195,11 +195,11 @@ human_only** (both 10, neither 8). Records: `results/phase-1/band_scale0.4_trial
 contributes to it only when *both* arms seated — 10 of the 30 seeds here, not 30. Its
 p=0.557 is over those 10 pairs. The other KPIs are over all 30.
 
-![Insertion success, assist off vs on](results/phase-1/success_rates.png)
+![Insertion success, assist off vs on](phase-1/success_rates.png)
 
-![Per-KPI distributions by config](results/phase-1/kpi_distributions.png)
+![Per-KPI distributions by config](phase-1/kpi_distributions.png)
 
-![Paired per-seed KPI deltas](results/phase-1/paired_deltas.png)
+![Paired per-seed KPI deltas](phase-1/paired_deltas.png)
 
 The headline success lift is large and significant. Peak force trends ~5 N lower (and is
 capped by construction regardless). Time-to-insert is unchanged. The **residual increases

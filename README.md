@@ -7,11 +7,11 @@ Built in [MuJoCo](https://mujoco.org) for the Franka Emika Panda. The residual p
 > **Status**: the simulation, control backbone, assistance seam, expert + data generation, both
 > policy arcs (Phase-1 F/T residual, Phase-2 vision), and live stereo-hand teleoperation are
 > built and evaluated (**M1–M8**); final evaluation and polish (**M9**) are in progress. To train
-> or deploy a policy see [docs/policy-guide.md](./docs/policy-guide.md); for measured outcomes see
+> or deploy a policy see [docs/guides/policy-guide.md](./docs/guides/policy-guide.md); for measured outcomes see
 > [docs/results/kpi-dashboard.md](./docs/results/kpi-dashboard.md) — the Phase-1 success-rate
 > headline is under revision (it did not reproduce under seeded training; see
-> [docs/phase-1-results.md](./docs/phase-1-results.md)). Per-milestone status:
-> [docs/milestones.md](./docs/milestones.md). Full definition: [project-scope.md](./project-scope.md).
+> [docs/results/phase-1-results.md](./docs/results/phase-1-results.md)). Per-milestone status:
+> [docs/specs/milestones.md](./docs/specs/milestones.md). Full definition: [project-scope.md](./project-scope.md).
 
 ## Project context
 
@@ -20,11 +20,11 @@ Course project for *Workshop in Autonomous Systems Simulation* (OpenU course 209
 ## Documents
 
 - **[project-scope.md](./project-scope.md)** — full scope, design decisions, KPIs, architecture overview, deferred design questions.
-- **[docs/architecture-tour.md](./docs/architecture-tour.md)** — a guided walk through the code in the order the data flows: operator input → the assistance seam → sim → the episode loop → corpus → policy → evaluation. Start here to find your way around `src/`.
-- **[docs/policy-guide.md](./docs/policy-guide.md)** — how to train a policy, deploy one in an episode, and run a paired ablation, as three runnable recipes, plus an inventory of every checkpoint in `outputs/policy/runs/`.
+- **[docs/guides/architecture-tour.md](./docs/guides/architecture-tour.md)** — a guided walk through the code in the order the data flows: operator input → the assistance seam → sim → the episode loop → corpus → policy → evaluation. Start here to find your way around `src/`.
+- **[docs/guides/policy-guide.md](./docs/guides/policy-guide.md)** — how to train a policy, deploy one in an episode, and run a paired ablation, as three runnable recipes, plus an inventory of every checkpoint in `outputs/policy/runs/`.
 - **[docs/results/kpi-dashboard.md](./docs/results/kpi-dashboard.md)** — the consolidated M5→M7 experiment ledger: every training and eval run, its config, its measured result, and why it did or didn't work, reconstructed from artifacts.
-- **[docs/phase-1-results.md](./docs/phase-1-results.md)** — measured outcomes. *The headline figure is currently under revision.*
-- **[docs/milestone-1-spec.md](./docs/milestone-1-spec.md)** — current milestone: simulation environment online.
+- **[docs/results/phase-1-results.md](./docs/results/phase-1-results.md)** — measured outcomes. *The headline figure is currently under revision.*
+- **[docs/specs/milestone-1-spec.md](./docs/specs/milestone-1-spec.md)** — current milestone: simulation environment online.
 
 ## Quick start
 
@@ -58,7 +58,7 @@ kvn check                 # the full lint + typecheck + test gate
 `kvn` (pronounced *"Kevin"*) is the project's command-line front door — one entry
 point for the whole workflow instead of `uv run python scripts/...`. `kvn` (or
 `kvn --help`) lists commands; `kvn <command> --help` shows a command's flags. Full
-reference: **[docs/cli.md](./docs/cli.md)**.
+reference: **[docs/guides/cli.md](./docs/guides/cli.md)**.
 
 > Don't want the PATH launcher? Everything also works as `uv run kvn <command>`
 > straight after `uv pip install -e ".[dev]"`.
