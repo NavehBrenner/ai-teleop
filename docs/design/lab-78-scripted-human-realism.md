@@ -2,7 +2,7 @@
 
 **Issue:** [LAB-78](https://linear.app/naveh-brenner/issue/LAB-78) · **Milestone:** M7 (prerequisite) ·
 **Blocks:** LAB-77 (difficulty recalibration) → LAB-82 (vision corpus).
-**Companion design doc:** [`design/human-generation.md`](design/human-generation.md) (the form this refines).
+**Companion design doc:** [`design/human-generation.md`](human-generation.md) (the form this refines).
 
 Implementation spec — written to be picked up cold in a new session. Grounded against
 the measured gap from `scripts/dev/compare_human_vs_scripted.py` (64 recorded real-human
@@ -91,7 +91,7 @@ Determinism is preserved: the stream is still fully determined by `seed`; the on
   approach" note is now obsolete — the actor owns the approach).
 
 **`src/ai_teleop/data/generate.py`** (`ScriptedNoisyHuman(...)`, ~line 268) and
-**`docs/cli.md`** — thread `max_approach_speed` through the data-gen config/CLI like the other
+**`docs/guides/cli.md`** — thread `max_approach_speed` through the data-gen config/CLI like the other
 noise params (so the calibration in LAB-77 can sweep it if needed). Bump the default
 `position_bias_std` per §5.
 
@@ -134,7 +134,7 @@ regress (no framework beyond pytest):
 - **Precedes LAB-77 by design:** changing the operator shifts every success rate, so the
   difficulty recalibration must measure against this final operator (see the issue chain).
 - **Eval pairing intact:** the actor stays seedable and open-loop, so paired-seed comparisons
-  ([`design/evaluation-protocol.md`](design/evaluation-protocol.md)) still hold.
+  ([`design/evaluation-protocol.md`](evaluation-protocol.md)) still hold.
 
 ## 8. Out of scope
 

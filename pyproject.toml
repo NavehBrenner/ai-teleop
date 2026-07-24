@@ -85,7 +85,7 @@ dev = [
 
 # The project CLI front door — `kvn` (pronounced "Kevin"). After
 # `uv pip install -e .` this lands on PATH; `uv run kvn <command>` also works.
-# See src/ai_teleop/cli.py and docs/cli.md.
+# See src/ai_teleop/cli.py and docs/guides/cli.md.
 [project.scripts]
 kvn = "ai_teleop.cli:main"
 

@@ -4,7 +4,7 @@ Runs episodes (scripted noisy-human + expert + controller + sim), logs structure
 trajectories to disk, and provides loaders for BC training.
 
 The on-disk trajectory schema (``trajectory.py``) is the stable contract M5
-trains against — see ``docs/data-schema.md``.
+trains against — see ``docs/reference/data-schema.md``.
 """
 
 from ai_teleop.data.dataset import (

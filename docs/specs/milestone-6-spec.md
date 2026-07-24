@@ -23,7 +23,7 @@ the apparatus that *quantifies* that improvement and defends it: a passive-obser
 evaluation harness, an ablation runner over paired seeds, difficulty calibration so
 the comparison has headroom, and the KPI tables/plots that become the D1 result.
 
-The methodology is **locked** in [`design/evaluation-protocol.md`](design/evaluation-protocol.md)
+The methodology is **locked** in [`design/evaluation-protocol.md`](../design/evaluation-protocol.md)
 — the headline claim (absolute success rate, assist on vs off), the KPI set, the
 paired-seed primary experiment, and the controller↔harness decoupling. This spec
 is that protocol's build-order expansion.

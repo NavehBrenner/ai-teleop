@@ -5,7 +5,7 @@ one in an episode, and **evaluate** one with a paired ablation — three runnabl
 **checkpoint inventory** of what every run in `outputs/policy/runs/` is and which are superseded.
 
 For *what the experiments found*, see the
-[KPI dashboard](results/kpi-dashboard.md); for *where the code lives*, the
+[KPI dashboard](../results/kpi-dashboard.md); for *where the code lives*, the
 [architecture tour](architecture-tour.md). This guide is the *how-to-run*.
 
 > **The policy is a residual.** A base command source (a scripted noisy operator, or a live
@@ -17,7 +17,7 @@ For *what the experiments found*, see the
 > **Read every success rate at the noise floor (LAB-114).** A single checkpoint is one draw
 > from an **18 pp**-wide distribution over training seeds. These recipes produce and run
 > *individual* checkpoints; a rate from one of them is not a result about the recipe. See the
-> [KPI dashboard](results/kpi-dashboard.md) top box and
+> [KPI dashboard](../results/kpi-dashboard.md) top box and
 > [§4](#4-recipe-c--evaluate-a-policy-paired-ablation).
 
 ---
@@ -34,7 +34,7 @@ uv run kvn gen --episodes 200 --out-dir data/my_corpus
 ```
 
 `kvn gen --help` lists the operating-point knobs (error scale, step budget, hole geometry). The
-committed corpora and their lineage are in the [dashboard §2.1](results/kpi-dashboard.md#21-corpus-lineage-datadataset_metadatajson).
+committed corpora and their lineage are in the [dashboard §2.1](../results/kpi-dashboard.md#21-corpus-lineage-datadataset_metadatajson).
 
 ---
 
@@ -150,7 +150,7 @@ uv run python scripts/report_results.py --trials runs/eval-3way/trials.csv \
 Every run in `outputs/policy/runs/`, by lineage. **`outputs/` is gitignored** — these live on
 the training box; a run is recoverable only if it is either committed (below) or regenerable
 (post-LAB-114: corpus + `seed` + `commit`, all in its `metadata.json`). Results columns are in
-the [dashboard §3–§4](results/kpi-dashboard.md#3-training-runs-m5m7); this table is the
+the [dashboard §3–§4](../results/kpi-dashboard.md#3-training-runs-m5m7); this table is the
 *operational* view.
 
 **M5 — first behavioral clone**
@@ -196,7 +196,7 @@ the [dashboard §3–§4](results/kpi-dashboard.md#3-training-runs-m5m7); this t
 
 The two `lab101_*` checkpoints are committed because they back published numbers and are
 **pre-G1 (unseeded) — no command reproduces them**; retention policy in
-[`docs/results/phase-1/checkpoints/README.md`](results/phase-1/checkpoints/README.md). The
+[`docs/results/phase-1/checkpoints/README.md`](../results/phase-1/checkpoints/README.md). The
 2026-07-07 headline checkpoint is **gone** (gitignored, never committed — finding H-8), which is
 why its 70.0% can no longer be arbitrated.
 
@@ -224,5 +224,5 @@ the whole reason the two published `lab101_*` checkpoints are committed rather t
 
 `scripts/dagger.py` (on-policy DAgger relabel) and `scripts/report_results.py` (KPI aggregation)
 are run as raw `python scripts/…` above — they are **not** in `APP_COMMANDS`, so `kvn dagger` /
-`kvn report` do not exist yet. Exposing them (and refreshing the stale `docs/cli.md`, which lists
+`kvn report` do not exist yet. Exposing them (and refreshing the stale `docs/guides/cli.md`, which lists
 neither `train` nor `evaluate`) is a **stage-3C** stale-doc fix, tracked there — not changed here.

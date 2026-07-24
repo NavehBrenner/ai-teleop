@@ -18,7 +18,7 @@ expert were the two fallback levers if plain BC-on-more-data stalled.
 > and a 20-seed arm carries a ±20 pp exact interval. So M7's *directional* margins (35 vs 40; 40
 > vs 30) are draws — its honest conclusion is **"no vision benefit was detectable at this
 > power"**, and the large margins that survive (40 vs 10) plus the *mechanism* carry the result.
-> Full numbers: [`results/kpi-dashboard.md`](results/kpi-dashboard.md) §4/§6. Mechanism:
+> Full numbers: [`results/kpi-dashboard.md`](../results/kpi-dashboard.md) §4/§6. Mechanism:
 > wiki `synthesis/imitation-limits-closed-loop`, `concepts/vision-conditioned-policy`,
 > `concepts/training-seed-variance`.
 
@@ -128,4 +128,4 @@ needed its wording audited, not its experiments re-run. No new M7 compute was sp
 M7 closes Phase 2. The go-forward decision (D-6, `docs/review/go-forward.md`) weighs whether to
 pursue any of the out-of-imitation levers or to declare the training arc a documented negative and
 spend the remaining budget strengthening what already works. The Phase-1 result it strengthens is
-itself under revision (LAB-114) — see [`results/kpi-dashboard.md`](results/kpi-dashboard.md).
+itself under revision (LAB-114) — see [`results/kpi-dashboard.md`](../results/kpi-dashboard.md).

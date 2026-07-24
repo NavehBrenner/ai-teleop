@@ -1,7 +1,7 @@
 # Architecture tour
 
 A guided walk through `src/ai_teleop/`, in the order the data flows. It is for
-someone who has read the [README](../README.md) and now wants to know *how the pieces
+someone who has read the [README](../../README.md) and now wants to know *how the pieces
 fit* — which module owns which idea, and why the seams sit where they do.
 
 **This is not an API reference.** The docstrings are, and they are good: every module
@@ -11,11 +11,11 @@ know what it does.
 
 Companion documents:
 
-- [`docs/cli.md`](./cli.md) — every command and flag.
-- [`docs/design/`](./design/) — the *why* behind each subsystem (problem structure,
+- [`docs/guides/cli.md`](./cli.md) — every command and flag.
+- [`docs/design/`](../design/) — the *why* behind each subsystem (problem structure,
   teleop input, expert corrections, policy model, evaluation protocol).
-- [`docs/data-schema.md`](./data-schema.md) — the on-disk corpus contract.
-- [`docs/phase-1-results.md`](./phase-1-results.md) — measured outcomes.
+- [`docs/reference/data-schema.md`](../reference/data-schema.md) — the on-disk corpus contract.
+- [`docs/results/phase-1-results.md`](../results/phase-1-results.md) — measured outcomes.
   **The Phase-1 headline number is under revision** (a 2026-07-22 reproduction attempt
   did not reproduce it); this tour deliberately makes no performance claims.
 
@@ -224,7 +224,7 @@ along the bore once both are within tolerance. Everything is multiplied by a smo
 distance gate that is **zero by construction** far from the hole — matching what the
 deployed policy can possibly support, since in free space its F/T reading is ≈0 and
 Phase 1 has no exteroception. Full derivation in
-[`docs/design/expert-corrections.md`](./design/expert-corrections.md).
+[`docs/design/expert-corrections.md`](../design/expert-corrections.md).
 
 ### Generating the corpus
 
@@ -253,7 +253,7 @@ counter-example.
 | `data/generate.py` | `GenerationConfig`, `generate_dataset`, `regenerate_from_metadata` — the pipeline and the frozen config the fingerprint derives from. |
 | `data/step_callbacks.py` | `EpisodeLogger` (records the trajectory through the runner's hook) and `TerminationProbe` / `episode_terminal_reason` — the episode-outcome policy: depth → success, force cap → abort, timeout → failure. |
 | `data/trajectory.py` | The per-episode writer/reader (`EpisodeRecorder`, `load_episode`) and the on-disk path conventions. The stable contract M5 trains against. |
-| `data/schema.py` | The `TypedDict`s that *define* that contract — `EpisodeMetadata`, `EpisodeSummary`, `DatasetConfig`, `ResBCDatasetMetadata`. [`docs/data-schema.md`](./data-schema.md) describes the format; this module is the format. |
+| `data/schema.py` | The `TypedDict`s that *define* that contract — `EpisodeMetadata`, `EpisodeSummary`, `DatasetConfig`, `ResBCDatasetMetadata`. [`docs/reference/data-schema.md`](../reference/data-schema.md) describes the format; this module is the format. |
 | `data/images.py` | Wrist-camera frame loading — the load-side counterpart to `EpisodeLogger`'s render side. Only populated for the vision (Phase 2) corpora. |
 | `data/dataset.py` | The training-side loader: `extract_training_episode` (trajectory → the three input streams), normalization stats, episode splits, padding-aware collation, `build_dataloaders`. |
 
@@ -270,7 +270,7 @@ the equality is not assumed (audit finding D-2).
 
 The only package that imports `torch`; the rest of `ai_teleop` stays torch-free.
 
-Architecture, locked in [`docs/design/policy-model.md`](./design/policy-model.md): a
+Architecture, locked in [`docs/design/policy-model.md`](../design/policy-model.md): a
 **single stateful GRU over an early-fused observation**. Each control step, the command,
 F/T and proprioception streams contribute their current normalized value, concatenated
 into one vector, fed to one GRU carrying hidden state across the episode. An MLP head
@@ -386,14 +386,14 @@ lines, and you have the whole control path.
 **"How was the policy trained?"**
 `data/generate.py` (corpus) → `data/dataset.py` (loading) → `policy/train.py` (loop) →
 `policy/residual_policy.py` (deployment). Then
-[`docs/design/policy-model.md`](./design/policy-model.md) for why the architecture is
+[`docs/design/policy-model.md`](../design/policy-model.md) for why the architecture is
 what it is.
 
 **"Where do the numbers come from?"**
 `eval/ablation.py` (what a trial is) → `eval/observer.py` (what success means) →
 `eval/report.py` (the statistics). Then
-[`docs/design/evaluation-protocol.md`](./design/evaluation-protocol.md), and
-[`docs/review/code-audit.md`](./review/code-audit.md) §H before quoting anything.
+[`docs/design/evaluation-protocol.md`](../design/evaluation-protocol.md), and
+[`docs/review/code-audit.md`](../review/code-audit.md) §H before quoting anything.
 
 **"What is the actual contribution?"**
 `domain/interfaces.py`, then `expert/expert.py` and `policy/residual_policy.py` side by

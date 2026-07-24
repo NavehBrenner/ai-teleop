@@ -1,5 +1,5 @@
 """Wrist-camera frame loading — the M7 load-side counterpart to the render side
-(`step_callbacks.EpisodeLogger`, `docs/data-schema.md`).
+(`step_callbacks.EpisodeLogger`, `docs/reference/data-schema.md`).
 
 Rendered frames live at ``<episode_dir>/imgs/step_NNNNN.jpg``, decimated by the
 generator's ``render_every`` cadence — so a frame stream is normally a strict

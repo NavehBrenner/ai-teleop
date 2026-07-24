@@ -6,7 +6,7 @@ env owns physics + sensing only — it is built on one wall (recorded in its
 `EnvConfig`) and `reset()` always returns it to the same t=0 state. Which hole
 is the *goal* is a task concept the caller owns, not the env's. Per-episode
 variation comes from building a different env (a different wall), not from a
-reset argument. See `docs/milestone-1-spec.md`.
+reset argument. See `docs/specs/milestone-1-spec.md`.
 """
 
 from __future__ import annotations

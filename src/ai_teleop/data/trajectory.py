@@ -15,7 +15,7 @@ loader (LAB-32). Each per-step column is stored as a stacked ``(T, …)`` array;
 per-episode metadata is a JSON string under the ``metadata`` key.
 
 The schema is the *only* thing M5 depends on, so it is versioned
-(``SCHEMA_VERSION``) and documented in ``docs/data-schema.md``. Everything else
+(``SCHEMA_VERSION``) and documented in ``docs/reference/data-schema.md``. Everything else
 about data generation (noise magnitudes, gate constants, scene layout) is free to
 change without breaking M5 — only the columns and their meanings are frozen.
 

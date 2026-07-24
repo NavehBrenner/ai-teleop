@@ -2,7 +2,7 @@
 
 Executable entry points for the project workflow. Prefer the **`kvn` CLI** as the
 front door — it dispatches to these scripts and forwards their flags
-(`kvn <command> --help`). See [`../docs/cli.md`](../docs/cli.md). Running a script
+(`kvn <command> --help`). See [`../docs/guides/cli.md`](../docs/guides/cli.md). Running a script
 file directly with `uv run python scripts/<name>.py` still works.
 
 One-time project setup (not a `kvn` command — it bootstraps `kvn` itself):

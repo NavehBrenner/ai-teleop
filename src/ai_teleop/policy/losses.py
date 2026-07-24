@@ -12,7 +12,7 @@ ignores that axis-angle is a non-Euclidean parameterization. The default
 predicted and target rotations (``angle(R̂ · R*ᵀ)``) — the proper distance on
 SO(3). ``orientation="mse"`` is the documented simpler fallback (smooth-L1 on the
 raw axis-angle components), kept behind a flag because the spec lists the exact
-rotation loss as a calibration knob (`docs/milestone-5-spec.md` *Known unknowns*).
+rotation loss as a calibration knob (`docs/specs/milestone-5-spec.md` *Known unknowns*).
 
 All reductions are **masked**: training batches are zero-padded to the longest
 episode (see ``data.collate_episodes``), so the loss is averaged only over real

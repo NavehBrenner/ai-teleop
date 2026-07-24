@@ -6,7 +6,7 @@ what's deferred, acceptance, dependencies, rough effort). Detailed per-milestone
 (`milestone-N-spec.md`) are created from these definitions one at a time, as each
 milestone is started.
 
-- Authoritative design decisions live in [`../project-scope.md`](../project-scope.md).
+- Authoritative design decisions live in [`../project-scope.md`](../../project-scope.md).
 - This file is the *plan*; the scope doc is the *definition*. If they conflict, the scope
   doc wins and this file should be reconciled.
 - Per the root `CLAUDE.md` convention: at the end of each milestone, record durable,
@@ -29,8 +29,8 @@ milestone is started.
 
 † The Phase-1 success-rate **headline is under revision** — it did not reproduce under seeded
 training (LAB-114); the standing results are the bounded-force guarantee + the mechanism
-findings. See [`phase-1-results.md`](phase-1-results.md) and
-[`results/kpi-dashboard.md`](results/kpi-dashboard.md).
+findings. See [`phase-1-results.md`](../results/phase-1-results.md) and
+[`results/kpi-dashboard.md`](../results/kpi-dashboard.md).
 ‡ M7 closed as a **documented negative result** (vision/DAgger/better-expert all explored, none
 lifted closed-loop success); the mechanism is the deliverable. Spec:
 [`milestone-7-spec.md`](milestone-7-spec.md).
@@ -142,7 +142,7 @@ the noisy-human command using force/torque + proprioception (no vision yet).
 **In scope**:
 - BC training pipeline (dataset loader, model, train/val loop, checkpointing).
 - Policy (Phase-1, no image): GRU encoders over command history + F/T history, MLP over
-  proprioception, fused → clamped Δpose + Δgrip. See [`design/policy-model.md`](design/policy-model.md).
+  proprioception, fused → clamped Δpose + Δgrip. See [`design/policy-model.md`](../design/policy-model.md).
 - Integrate the trained policy as the "learned assist" mode behind the assistance seam.
 
 **Deferred**: vision conditioning (M7), RL (anti-scope).
@@ -186,7 +186,7 @@ main ML contribution.
 - Vision-conditioned policy: add a **fine-tuned image CNN** (pretrained init, trained
   end-to-end with the rest; freeze fallback) over the existing GRU/MLP streams
   (image + F/T + proprioception + command). Optional all-holes auxiliary loss as a
-  training stabilizer. See [`design/policy-model.md`](design/policy-model.md) Decision B.
+  training stabilizer. See [`design/policy-model.md`](../design/policy-model.md) Decision B.
 - Regenerate data with images; retrain; ablate vision+F/T vs F/T-only on the same trials.
 - Optional: training-time domain randomization (lighting/texture) for robustness.
 
@@ -222,7 +222,7 @@ success here. Full retrospective spec: [`milestone-7-spec.md`](milestone-7-spec.
 (LAB-75) in favour of stereo-only — a second calibrated camera triangulates the 21 landmarks
 to *metric* 3D (real depth + observable orientation → true 6-DoF mirroring), which the
 single-camera path could only fake. Keeps the `HandReading` contract and the strategy layer
-unchanged. Full rationale in [`design/teleop-input.md`](design/teleop-input.md).
+unchanged. Full rationale in [`design/teleop-input.md`](../design/teleop-input.md).
 
 **Deferred**: MediaPipe Holistic / full-arm tracking (stretch).
 
@@ -266,7 +266,7 @@ project requirements, system architecture with **architecture diagram + sequence
 **≥2 design alternatives** with trade-offs and rationale, simulation scenarios, KPI
 definitions, challenges/risks, a preliminary prototype/demo, evaluation criteria, timeline.
 
-**Source material**: most of this already exists in [`../project-scope.md`](../project-scope.md);
+**Source material**: most of this already exists in [`../project-scope.md`](../../project-scope.md);
 D1 is largely repackaging it into review form + adding diagrams + a live demo.
 **Milestone readiness target**: M1–M4 done (working expert-driven prototype to demo); M5–M6
 in progress is a bonus. **Rough effort**: 8–12 h (mostly writing + diagrams).

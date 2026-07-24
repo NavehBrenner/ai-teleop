@@ -22,7 +22,7 @@ nothing type-checked across the boundary. That was forced by *where the pipeline
 lived*, not by anything about the training itself (audit finding G-1).
 
 Training reads only the existing corpus — regenerating data is M4's job, not a
-training knob (see ``docs/milestone-5-spec.md`` anti-scope).
+training knob (see ``docs/specs/milestone-5-spec.md`` anti-scope).
 """
 
 from __future__ import annotations

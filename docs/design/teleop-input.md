@@ -6,7 +6,7 @@
 > sensor. The monocular rationale is kept below only to explain *why* stereo was worth it;
 > there is no longer a single-camera code path or fallback.
 
-Companion docs: [problem-structure.md](problem-structure.md) · [evaluation-protocol.md](evaluation-protocol.md). The authoritative high-level scope is [`../../project-scope.md`](../../project-scope.md); milestone build-order lives in [`../milestones.md`](../milestones.md) (M8). This file pins down *how the human's hand becomes an EE command*, and locks the next step: a second camera for metric, stereo-triangulated hand pose.
+Companion docs: [problem-structure.md](problem-structure.md) · [evaluation-protocol.md](evaluation-protocol.md). The authoritative high-level scope is [`../../project-scope.md`](../../project-scope.md); milestone build-order lives in [`../milestones.md`](../specs/milestones.md) (M8). This file pins down *how the human's hand becomes an EE command*, and locks the next step: a second camera for metric, stereo-triangulated hand pose.
 
 The teleop input is **demo-enablement, not a core result** — the KPIs come from the scripted noisy-human, not a live operator (see [evaluation-protocol.md](evaluation-protocol.md)). So this path is allowed to be approximate; the bar is "a person can comfortably drive the arm and complete assisted insertions," not metric fidelity. The stereo upgrade below is what turns "drivable" into "feels like the robot mirrors my hand."
 

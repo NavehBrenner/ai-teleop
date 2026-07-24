@@ -326,7 +326,7 @@ The reconstruction that built §3–§4 is a read-only sweep over `outputs/polic
 
 ---
 
-**See also:** [`phase-1-results.md`](../phase-1-results.md) (the headline record, kept
+**See also:** [`phase-1-results.md`](phase-1-results.md) (the headline record, kept
 verbatim) · [`review/divergence-investigation.md`](../review/divergence-investigation.md) (the
-full LAB-114 investigation) · [`architecture-tour.md`](../architecture-tour.md) (where each of
+full LAB-114 investigation) · [`architecture-tour.md`](../guides/architecture-tour.md) (where each of
 these modules lives).

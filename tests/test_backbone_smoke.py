@@ -8,7 +8,7 @@ the gate when M3+ work shifts solver settings.
 
 It is deliberately *looser and shorter* than the full harness — trimmed step
 counts and relaxed tolerances. For the authoritative acceptance numbers run
-the harness (see `docs/milestone-2-spec.md` *Acceptance criteria*).
+the harness (see `docs/specs/milestone-2-spec.md` *Acceptance criteria*).
 """
 
 from __future__ import annotations

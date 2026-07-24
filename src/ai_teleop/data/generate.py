@@ -34,7 +34,7 @@ Output layout (one directory per master seed; one sub-directory per episode)::
                 ...
 
 The on-disk schema is the stable contract M5 reads — see
-`ai_teleop.data.trajectory` / `ai_teleop.data.schema` and `docs/data-schema.md`.
+`ai_teleop.data.trajectory` / `ai_teleop.data.schema` and `docs/reference/data-schema.md`.
 """
 
 from __future__ import annotations

@@ -29,7 +29,7 @@ on PATH. The individual steps, from this directory:
 point for the whole workflow instead of `uv run python scripts/...`. It's a thin
 dispatcher (`src/ai_teleop/cli.py`): simulation/data commands run the matching
 script in `scripts/`; dev-gate commands delegate to the poe tasks below. Full
-reference: `docs/cli.md`.
+reference: `docs/guides/cli.md`.
 
 | Command | Does |
 |---|---|
