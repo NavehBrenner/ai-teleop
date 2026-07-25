@@ -23,7 +23,10 @@ edit, mirroring the data-gen rollout. The configs are supplied by the caller as
 
 from __future__ import annotations
 
+import multiprocessing
+import os
 from collections.abc import Callable
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -32,6 +35,7 @@ import numpy as np
 
 from ai_teleop.common.command import Command
 from ai_teleop.common.observation import Observation
+from ai_teleop.common.resources import safe_worker_count
 from ai_teleop.control import Controller
 from ai_teleop.data.generate import (
     DEFAULT_JOINT_DAMPING,
@@ -257,6 +261,104 @@ def run_paired(
             episode_index, config, trace_path=trace_path, **trial_kwargs
         )
     return results
+
+
+# --- Parallel trial batch -------------------------------------------------------
+# A paired trial is fully determined by its ``episode_index`` (its wall, operator and
+# observer all seed off ``(master_seed, episode_index)`` — see `run_trial`), with no
+# shared RNG and no order dependence, so the 100-trial eval loop parallelizes across
+# processes with bit-identical per-trial results. Processes (not threads): each trial
+# runs its own MuJoCo env + policy. Spawn: clean per-worker CUDA context. A picklable
+# `TrialConfigSpec` rebuilds the `Config` factories in each worker (a lambda closing
+# over a checkpoint does not pickle). Opt-in via `EVAL_TRIAL_WORKERS` / a `workers`
+# arg; default 1 keeps the original sequential loop.
+_EVAL_WORKER: dict[str, Any] = {}
+
+
+@dataclass(frozen=True)
+class TrialConfigSpec:
+    """Picklable description of a `Config`, rebuilt inside each worker process.
+    ``checkpoint is None`` ⇒ the human-only (NoAssist) baseline."""
+
+    label: str
+    checkpoint: str | None
+    device: str = "cuda"
+
+
+def _config_from_spec(spec: TrialConfigSpec) -> Config:
+    if spec.checkpoint is None:
+        return Config(label=spec.label, assist_factory=NoAssist)
+    from ai_teleop.policy import LearnedResidual
+
+    checkpoint, device = spec.checkpoint, spec.device
+    return Config(
+        label=spec.label,
+        assist_factory=lambda: LearnedResidual.from_checkpoint(checkpoint, device=device),
+    )
+
+
+def _default_eval_workers() -> int:
+    raw = os.environ.get("EVAL_TRIAL_WORKERS")
+    return int(raw) if raw else 1
+
+
+def _init_eval_worker(
+    specs: list[TrialConfigSpec], out_dir: str | Path | None, trial_kwargs: dict[str, Any]
+) -> None:
+    _EVAL_WORKER["configs"] = [_config_from_spec(spec) for spec in specs]
+    _EVAL_WORKER["out_dir"] = out_dir
+    _EVAL_WORKER["trial_kwargs"] = trial_kwargs
+
+
+def _eval_trial_task(episode_index: int) -> tuple[int, dict[str, TrialKPIs]]:
+    results = run_paired(
+        episode_index,
+        _EVAL_WORKER["configs"],
+        out_dir=_EVAL_WORKER["out_dir"],
+        **_EVAL_WORKER["trial_kwargs"],
+    )
+    return episode_index, results
+
+
+def run_paired_batch(
+    episode_indices: list[int],
+    specs: list[TrialConfigSpec],
+    *,
+    out_dir: str | Path | None = None,
+    workers: int | None = None,
+    **trial_kwargs: Any,
+) -> list[dict[str, TrialKPIs]]:
+    """Run one paired trial per ``episode_index``, returned in that order.
+
+    Identical results to calling `run_paired` in a loop — each trial is
+    seed-determined — but ``workers > 1`` fans the trials across processes.
+    """
+    workers = _default_eval_workers() if workers is None else workers
+    workers = safe_worker_count(workers)
+    if workers <= 1:
+        configs = [_config_from_spec(spec) for spec in specs]
+        return [
+            run_paired(episode_index, configs, out_dir=out_dir, **trial_kwargs)
+            for episode_index in episode_indices
+        ]
+
+    ordered: list[dict[str, TrialKPIs] | None] = [None] * len(episode_indices)
+    context = multiprocessing.get_context("spawn")
+    with ProcessPoolExecutor(
+        max_workers=workers,
+        mp_context=context,
+        initializer=_init_eval_worker,
+        initargs=(specs, out_dir, trial_kwargs),
+    ) as pool:
+        futures = {
+            pool.submit(_eval_trial_task, episode_index): position
+            for position, episode_index in enumerate(episode_indices)
+        }
+        for future in as_completed(futures):
+            position = futures[future]
+            _, results = future.result()
+            ordered[position] = results
+    return [results for results in ordered if results is not None]
 
 
 def replay_kpis(trace_path: str | Path, **observer_kwargs: Any) -> TrialKPIs:
