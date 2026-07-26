@@ -100,6 +100,23 @@ def dagger_episode_index(round_index: int, rollout_index: int) -> int:
     return _DAGGER_INDEX_BASE + round_index * _DAGGER_ROUND_BLOCK + rollout_index
 
 
+def _summaries_through_round(aggregate_dir: Path, last_round: int) -> list[EpisodeSummary]:
+    """The aggregate manifest reduced to the base corpus + DAgger episodes from
+    rounds ``<= last_round``. Used to resume a crashed run: rounds after the last
+    *checkpointed* one may have written rollout episodes (and grown the manifest)
+    without training, so those are dropped here to avoid double-counting when the
+    resumed round re-rolls them (rollouts overwrite by index — see ``rollout_and_relabel``)."""
+    metadata = json.loads((aggregate_dir / "metadata.json").read_text(encoding="utf-8"))
+    kept: list[EpisodeSummary] = []
+    for summary in metadata["episodes"]:
+        index = summary["episode_index"]
+        # base corpus episode, or a DAgger rollout from a round we're keeping
+        is_base = index < _DAGGER_INDEX_BASE
+        if is_base or (index - _DAGGER_INDEX_BASE) // _DAGGER_ROUND_BLOCK <= last_round:
+            kept.append(summary)
+    return kept
+
+
 def expert_from_config(config: Mapping[str, Any]) -> Expert:
     """Rebuild the corpus's expert from its ``metadata.json`` config, so the
     relabels are drawn from the *same* teacher the corpus was cloned from."""
@@ -431,6 +448,7 @@ def run_dagger(
     # tests) need neither torch nor a checkpoint on disk.
     from ai_teleop.policy import LossConfig, PolicyConfig, TrainConfig
     from ai_teleop.policy.residual_policy import load_checkpoint
+    from ai_teleop.policy.run_artifacts import CHECKPOINT_NAME
     from ai_teleop.policy.train import train_policy
 
     base_dir = Path(base_dir)
@@ -443,12 +461,34 @@ def run_dagger(
     use_vision = load_checkpoint(Path(checkpoint)).config.use_vision
     effective_render_every = render_every if use_vision else None
 
-    all_summaries = seed_aggregate(base_dir, aggregate_dir)
-    current_checkpoint = Path(checkpoint)
+    # Crash-resume: if earlier rounds already trained a checkpoint on disk, continue
+    # from the next round instead of restarting from the base (each vision round is
+    # hours). The last checkpointed round's corpus state is rebuilt from the manifest;
+    # a fresh run (no round checkpoints) seeds the aggregate from base as before.
+    runs_root_path = Path(runs_root)
+    resume_from = 0
+    for round_index in reversed(range(rounds)):
+        if (runs_root_path / f"dagger_round{round_index}" / CHECKPOINT_NAME).exists():
+            resume_from = round_index + 1
+            break
+    if resume_from == 0:
+        all_summaries = seed_aggregate(base_dir, aggregate_dir)
+        current_checkpoint = Path(checkpoint)
+    else:
+        all_summaries = _summaries_through_round(aggregate_dir, resume_from - 1)
+        current_checkpoint = runs_root_path / f"dagger_round{resume_from - 1}" / CHECKPOINT_NAME
+        log.info(
+            "resuming DAgger at round %d (rounds 0–%d already checkpointed) │ "
+            "corpus %d episodes │ from %s",
+            resume_from,
+            resume_from - 1,
+            len(all_summaries),
+            current_checkpoint,
+        )
     results: list[dict[str, object]] = []
     workers = _default_rollout_workers() if rollout_workers is None else rollout_workers
 
-    for round_index in range(rounds):
+    for round_index in range(resume_from, rounds):
         log.info(
             "round %d │ rolling out %d episodes with %s (%d worker%s)",
             round_index,
