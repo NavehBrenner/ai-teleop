@@ -32,6 +32,7 @@ on-policy states.
 
 from __future__ import annotations
 
+import csv
 import json
 import multiprocessing
 import os
@@ -540,6 +541,7 @@ def run_dagger(
             master_seed=eval_master_seed,
             error_scale=error_scale,
             device=device,
+            out_dir=Path(current_checkpoint).parent,
         )
         log.info(
             "round %d │ eval @ error_scale %.2f │ human %.0f%% │ vision %.0f%%",
@@ -565,9 +567,13 @@ def _reablate(
     master_seed: int,
     error_scale: float,
     device: str,
+    out_dir: Path | None = None,
 ) -> dict[str, float]:
     """Paired human-only vs vision ablation on the held-out eval walls; returns
-    each config's success rate. Thin reuse of ``eval.ablation.run_paired``."""
+    each config's success rate. Thin reuse of ``eval.ablation.run_paired``. When
+    ``out_dir`` is given, also dumps the full per-trial KPIs (force, jerk, time —
+    already computed here, else discarded) to ``out_dir/trials.csv`` so every round
+    gets the same rich metrics as the final ``evaluate pair``, not just success%."""
     from ai_teleop.eval.ablation import TrialConfigSpec, run_paired_batch
 
     specs = [
@@ -575,10 +581,19 @@ def _reablate(
         TrialConfigSpec(label="vision", checkpoint=str(checkpoint), device=device),
     ]
     successes = {spec.label: 0 for spec in specs}
+    rows: list[dict[str, object]] = []
     batch = run_paired_batch(
         list(range(seeds)), specs, master_seed=master_seed, operator_error_scale=error_scale
     )
     for results in batch:
         for label, kpis in results.items():
             successes[label] += int(kpis.success)
+            rows.append(kpis.to_dict())
+    if out_dir is not None and rows:
+        csv_path = Path(out_dir) / "trials.csv"
+        csv_path.parent.mkdir(parents=True, exist_ok=True)
+        with csv_path.open("w", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()))
+            writer.writeheader()
+            writer.writerows(rows)
     return {label: successes[label] / seeds for label in successes}
