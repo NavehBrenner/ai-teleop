@@ -70,6 +70,25 @@ Review** repackages.
 > which rest on theory and byte-identical sweeps. The success-rate *lift* is, on the honest
 > measurement, **not established** — mean −4 pp, and no version of the recipe reproduces +33.
 >
+> **Confirmed on a fresh official corpus (2026-07-28, LAB-112).** The distribution above was
+> then re-measured at scale on a brand-new ~1000-episode corpus, extended to all four production
+> recipes, each retrained over multiple seeds (100 paired held-out eval seeds, es0.4):
+>
+> | Recipe | seeds | mean Δ | range | verdict |
+> |---|---|---|---|---|
+> | F/T plain BC | 5 | **−4.4 pp** | [−19, +8] | NOISE |
+> | F/T + DAgger | 5 | **+2.0 pp** | [+1, +3] | NOISE (tightest) |
+> | Vision plain BC | 3 | **−8.3 pp** | [−16, +4] | NOISE |
+> | Vision + DAgger | 3 | **+1.3 pp** | [−4, +12] | NOISE |
+>
+> **No recipe clears the 18 pp floor.** The −19→+8 spread on a single F/T recipe reproduces
+> the LAB-114 noise on data that never existed when LAB-114 ran — the null is a property of the
+> task, not the old corpus. Peak force stays inside the ~24 N envelope for all four (guarantee
+> intact); jerk is raised least by Vision+DAgger (48.0 vs 45.6, effectively flat — the
+> action-rate penalty solves the smoothness cost below). Full section:
+> [KPI dashboard §5.5](kpi-dashboard.md#55-the-official-multi-seed-run--the-definitive-measurement);
+> go/no-go on any further compute: [`../review/go-forward.md`](../review/go-forward.md).
+>
 > Everything below is the 2026-07-07 result **as it was measured**. It is kept verbatim
 > because it happened and its records are committed — not because it stands. For this result
 > in the context of every M5→M7 experiment, see the

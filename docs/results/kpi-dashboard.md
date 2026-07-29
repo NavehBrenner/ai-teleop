@@ -177,6 +177,10 @@ Reconstructed from the per-trial CSVs via `compare_paired`. Δ is paired (McNema
 | `eval_lab101_band100` | es0.4, 100s, `dataset_10` | residual (ar100) | 41.0% vs 50.0% | **−9.0 pp** (100, p=0.136) | reproduction — §5 |
 | `eval_lab114_seed2` | es0.4, 100s | residual | 35.0% vs 50.0% | **−15.0 pp** (100, **p=0.008**) | a *significant* regression from nothing but a seed — §5 |
 | `eval_lab114_seed4` | es0.4, 100s | residual | 53.0% vs 50.0% | +3.0 pp (100, p=0.74) | the other end of the same spread |
+| **`eval_official_ft_s*`** | es0.4, 100s, official corpus | residual ×5 seeds | 31–58% vs 50.0% | **mean −4.4 pp** [−19,+8] | **NOISE** (distribution — §5.5) |
+| **`eval_official_dag_ft_s*`** | es0.4, 100s, official | residual ×5 seeds | 51–53% vs 50.0% | **mean +2.0 pp** [+1,+3] | **NOISE** (tightest — §5.5) |
+| **`eval_official_vis_s*`** | es0.4, 100s, official | vision ×3 seeds | 34–54% vs 50.0% | **mean −8.3 pp** [−16,+4] | **NOISE** (§5.5) |
+| **`eval_official_dag_vis_s*`** | es0.4, 100s, official | vision ×3 seeds | 46–62% vs 50.0% | **mean +1.3 pp** [−4,+12] | **NOISE** (§5.5) |
 
 The Stage-C DAgger rounds (`eval` per round, 20s es0.4) read **40% → 30% → 15%** across rounds
 0–2 — the round-to-round steps are inside the noise floor, but the round-0-to-round-3 drop and
@@ -232,6 +236,69 @@ a fixed recipe is therefore not actively harmful; tuning *recipes* by val loss i
 ![Insertion success, assist off vs on](phase-1/success_rates.png)
 ![Per-KPI distributions by config](phase-1/kpi_distributions.png)
 ![val loss vs closed-loop success across seeds](phase-1/lab114_val_loss_vs_success.png)
+
+---
+
+## 5.5 The official multi-seed run — the definitive measurement
+
+§5 retired the single-checkpoint headline; this section replaces it with the measurement the
+project stands on. Per the D-6 mandate (LAB-114): a fresh **~1000-episode** official corpus (F/T
+and vision, separate), each of the four production recipes **retrained over multiple seeds** and
+reported as a **distribution**, evaluated on 100 paired held-out seeds at the es0.4 operating
+point. Seed families are disjoint by construction, so every Δ below is genuine held-out **test**
+(corpus master-seed 100; DAgger rollouts 300/301/302; eval walls seed 0). Re-aggregate with
+`scripts/dev/official_kpi/aggregate.py`.
+
+| Recipe | seeds (n) | `human_only` | treatment success | **mean Δ** | range | verdict @ 18 pp floor |
+|---|---|---|---|---|---|---|
+| **FT plain** | 5 | 50.0% | 31–58% | **−4.4 pp** | [−19, +8] | **NOISE** |
+| **FT DAgger** | 5 | 50.0% | 51–53% | **+2.0 pp** | [+1, +3] | **NOISE** (tightest; all 5 seeds ≥ 0) |
+| **Vision plain** | 3 | 50.0% | 34–54% | **−8.3 pp** | [−16, +4] | **NOISE** |
+| **Vision DAgger** | 3 | 50.0% | 46–62% | **+1.3 pp** | [−4, +12] | **NOISE** |
+
+**No recipe clears the floor.** The largest single-seed swing (FT plain, −19 to +8 across
+retrains) *is* the 18 pp spread, reproduced on a brand-new corpus — LAB-114 was not an artifact
+of the old data. The honest reading of all four rows is one sentence: **on the seeded
+measurement, none of {F/T, vision} × {plain BC, DAgger} lifts closed-loop seating above the
+human-only baseline beyond training-seed noise.**
+
+Two second-order structure notes that *are* signal, not noise:
+
+- **DAgger tightens the distribution without moving its center.** Both DAgger arms collapse the
+  seed spread (FT: [−19,+8]→[+1,+3]; vision: partial) around a mean a hair above zero. FT DAgger
+  is the only arm where all 5 seeds land non-negative — the most *stable* recipe, but +2 pp is
+  still inside the floor, so it is a tighter draw of the same null, not a win. (This is the F/T
+  DAgger story on a *large* corpus; contrast the small-corpus collapse in §6, which was dominated
+  by force-abort states the bounded expert couldn't relabel — the larger, cleaner corpus removes
+  the degradation but adds no lift.)
+- **The noise lives on *both* axes.** Re-evaluating each intermediate DAgger round on the same
+  100 held-out walls (per-round `trials.csv`, LAB-112 backfill) shows the paired Δ swinging
+  *within a single training seed* across rounds — seed-0 vision-DAgger ran **−1 → −28 → −12 → +8
+  → −4** over rounds 0–4, a 36 pp range with no trend. A single round's checkpoint is as much a
+  lottery draw as a single seed. Reported KPI is the **pre-committed final round**, never
+  max-over-rounds (that is the LAB-114 optimistic-selection bias re-introduced on a new axis).
+
+**Full KPI, not just success** (treatment arm, mean across seeds at es0.4):
+
+| Recipe | peak contact force | ∫\|jerk\| (h = 45.6) |
+|---|---|---|
+| FT plain | 25.8 N | 70.1 |
+| FT DAgger | 22.9 N | 85.1 |
+| Vision plain | 24.7 N | 57.2 |
+| Vision DAgger | 23.5 N | **48.0** |
+
+**Peak force stays inside the ~24 N envelope for every recipe** — the bounded-force guarantee
+(§7) holds on the official run by construction, independent of the success null. Jerk is raised
+by every treatment (the known residual-costs-smoothness cost, §6/`phase-1-results.md`), *least*
+by Vision DAgger (48.0 vs human 45.6, effectively flat) — the `--action-rate-weight 100` penalty
+plus DAgger's on-policy smoothing nearly erase the jerk cost. So the smoothness regression is a
+solved problem at the operating point; it is the success lift that does not materialize.
+
+**This is the arc's closing measurement.** It does not overturn §7 — the standing positives never
+rested on a success rate — and it converts the documented negative from "one unreproducible
+checkpoint" into a rigorous, multi-seed, fresh-corpus null. See
+[`../review/go-forward.md`](../review/go-forward.md) for what (if anything) is worth further
+compute.
 
 ---
 
@@ -305,7 +372,15 @@ uv run python scripts/report_results.py --trials runs/eval_lab101_band100_ar0/tr
 
 # The committed Phase-1 records (headline, flat-wall, seed-variance, H-C) live here:
 ls docs/results/phase-1/*.csv docs/results/phase-1/lab114/
+
+# The §5.5 official multi-seed distributions (all four recipes, over training seeds):
+uv run python scripts/dev/official_kpi/aggregate.py       # reads runs/eval_official_*
 ```
+
+The §5.5 official-run eval sets (`runs/eval_official_*`) and per-round DAgger `trials.csv`
+(`outputs/policy/runs/dag_*_s*/dagger_round*/`) are **local artifacts, gitignored** like the rest
+of `runs/`/`outputs/` — the committed record is the §5.5 tables plus `aggregate.py`. The chunk
+scripts that produced them are `scripts/dev/official_kpi/*.sh` (self-resumable, self-timing).
 
 Training configs are each run's committed `outputs/policy/runs/<name>/metadata.json`. Post-G1
 runs carry a `checkpoint_sha256`; the two pre-G1 checkpoints behind published numbers are
