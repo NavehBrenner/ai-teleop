@@ -558,35 +558,53 @@ Every command and flag: [`docs/guides/cli.md`](./guides/cli.md). Train / deploy 
 three runnable recipes, plus an inventory of every checkpoint:
 [`docs/guides/policy-guide.md`](./guides/policy-guide.md).
 
-The demo artefacts for the final submission are a **1–2 minute video** (webcam → robot,
-assistance toggling on and off, KPI summary) and 3–5 recorded live-teleoperation clips, embedded
-in the project page.
+### Demo media
+
+Two artefacts accompany the submission, **recorded from the running system** rather than
+reconstructed:
+
+| Artefact | Content | Status |
+|---|---|---|
+| Demo video, 1–2 min | webcam → tracked hand → robot; assistance toggling on and off; a KPI summary | 🎬 *being recorded* |
+| 3–5 live-teleoperation clips | full stereo-hand sessions, unedited, including the failures | 🎬 *being recorded* |
+
+Both are committed under `assets/media/` and embedded in the README, so they are visible from the
+repository page without cloning. The clips are deliberately not curated down to the successful
+runs only — the failure modes are the more informative half, and §6 explains them.
 
 ---
 
 ## 8. Evaluation criteria
 
-How the system is judged successful, restated as checkable conditions:
+These are the success criteria as committed in
+[`project-scope.md`](../project-scope.md) at the planning phase, **quoted unchanged**, each
+against what was measured. Two of them were not met.
 
-1. **Integrated demo works.** Webcam-driven teleoperation produces visible insertion attempts in
-   MuJoCo with assistance toggleable at runtime. *(Met.)*
-2. **The safety claim holds by construction.** Peak contact force stays inside the envelope in
-   every configuration, including with a deliberately misbehaving residual. *(Met, and structural
-   rather than statistical.)*
-3. **The comparison is defensible.** Assist-off vs assist-on measured over paired seeds under a
-   matched operator, reported as a distribution over training seeds with *n* and the noise floor
-   stated. *(Protocol met. The measured effect is a **null** — no recipe clears the noise floor;
-   see §5.3 and the note below.)*
-4. **The architecture is clean.** Input layer / controller / assistance layer separated by
-   Protocols, Strategy at each seam, Dependency Inversion demonstrated by the one-argument swap.
-   *(Met — and audited; the audit's findings were applied and the scaffolding retired.)*
-5. **The deliverables are complete and professional.** This document, the README, tested runnable
-   code, and the self-evaluation writeup.
+| # | Success criterion, as originally written | Verdict |
+|---|---|---|
+| 1 | *"Working integrated demo: webcam-driven teleop produces visible insertion attempts in MuJoCo, with assistance mode toggleable at runtime."* | ✅ **Met** |
+| 2 | *"Phase 1 (F/T-only residual) outperforms human-only on success rate; peak force bounded by construction."* | ❌ **Not met** on success rate · ✅ met on the force bound |
+| 3 | *"Phase 2 (vision-conditioned residual) outperforms human-only on success rate **and** peak force, statistically meaningful; and beats Phase 1 (the vision ablation)."* | ❌ **Not met** |
+| 4 | *"Architecture cleanly separates input layer / backbone controller / assistance layer; Strategy pattern at each seam; SOLID compliance defensible during the design review."* | ✅ **Met** |
+| 5 | *"All booklet-required deliverables submitted on time and to professional quality, including self-evaluation writeup."* | 🎬 **In progress** — this document, the README and the code are complete; the demo media (§7) and the self-evaluation are being finished ahead of the 2026-08-31 deadline |
 
-Note on criterion 3: the original success criterion was phrased as "the residual *beats*
-human-only on success rate". The project reports what it measured rather than what it hoped for.
-A negative result that is correctly measured, correctly bounded and mechanistically explained is
-a result; a positive one taken from a single unseeded checkpoint is not.
+**On criteria 2 and 3 — what "not met" means here.** The residual does not outperform human-only
+on success rate. Over the official multi-seed run the four recipes measure −4.4, +2.0, −8.3 and
++1.3 pp against a training-seed noise floor of 20–27 pp, so no arm clears it in either direction
+(§5.3). Vision does not beat F/T-only either, at any operating point tested. Both criteria are
+failed on their own terms, and the phrasing above is left exactly as it was written before any
+result existed.
+
+The half of criterion 2 that *was* met is the half that never depended on a sampled rate: peak
+contact force stayed inside the envelope on every official trial, and does so **by construction**
+(§1.4) rather than by measurement — the clamp and the compliant backbone bound it even for a
+maximally wrong network output.
+
+What the arc produced instead of the lift is a mechanism-level account of *why* per-step imitation
+cannot lift closed-loop seating on this task, and a measurement discipline strong enough to
+retract the project's own earlier positive result when it failed to reproduce. Whether that is an
+adequate substitute for the criterion is a judgement for the reader; this document's obligation is
+to state the criterion as written and report that it was not achieved.
 
 ---
 
