@@ -41,7 +41,7 @@ from matplotlib.figure import Figure  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from kpi_data import (  # noqa: E402
+from kpi_data import (
     DEFAULT_POLICY_RUNS_ROOT,
     DEFAULT_RUNS_ROOT,
     METRICS,
@@ -55,6 +55,7 @@ from kpi_data import (  # noqa: E402
     load_recipes,
     load_vision_dagger_rounds,
     marginal_value,
+    population_spread,  # noqa: E402
     treatment_spread,
 )
 
@@ -704,6 +705,60 @@ def log_dagger_effect(recipes: dict[str, Recipe]) -> None:
                 )
 
 
+# ---------------------------------------------------------------------------
+# Figure 5 — always-on KPIs: all trials vs the both-arms-seated subset
+# ---------------------------------------------------------------------------
+
+
+def plot_population_split(recipes: Sequence[Recipe], path: Path) -> Path | None:
+    """The always-on KPIs twice: over every matched wall, then over seated walls only.
+
+    Only ``success_only=False`` metrics appear. Success rate is degenerate on a
+    seated-only subset (it is 100% by construction) and time-to-insert is already
+    seated-only, so neither has two populations to compare.
+    """
+    metrics = [m for m in METRICS if m is not SUCCESS_METRIC and not m.success_only]
+    if not metrics:
+        return None
+    populations = ((False, "all matched walls"), (True, "both arms seated"))
+    figure, grid = plt.subplots(
+        len(populations),
+        len(metrics),
+        figsize=(5.6 * len(metrics), 4.6 * len(populations)),
+        squeeze=False,
+    )
+    for row, (seated_only, population_label) in zip(grid, populations, strict=True):
+        for axes, metric in zip(row, metrics, strict=True):
+            pairs = [
+                (recipe, population_spread(recipe, metric, seated_only=seated_only))
+                for recipe in recipes
+            ]
+            usable = [(r, s) for r, s in pairs if s is not None]
+            if not usable:
+                axes.set_visible(False)
+                continue
+            positions = list(range(len(usable)))
+            draw_intervals(axes, positions, [s for _, s in usable])
+            baseline = population_spread(
+                usable[0][0], metric, seated_only=seated_only, arm="baseline"
+            )
+            if baseline is not None:
+                draw_baseline(axes, baseline.mean)
+            axes.set_xticks(positions)
+            axes.set_xticklabels([r.label for r, _ in usable], rotation=20, ha="right")
+            axes.set_ylabel(metric.axis_label)
+            axes.set_title(f"{metric.label} — {population_label}")
+            axes.grid(True, alpha=0.5)
+            axes.set_axisbelow(True)
+    interval_legend(None, figure)
+    figure.suptitle(
+        "Always-on KPIs by population — the all-trials mean is driven by how each arm fails",
+        fontsize=14,
+    )
+    figure.tight_layout(rect=(0, 0.06, 1, 0.95))
+    return finish(figure, path)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Phase-1 official-run KPI figures.")
     parser.add_argument(
@@ -738,6 +793,7 @@ def main() -> None:
         plot_success_rate_spread(ordered, arguments.figure_dir / "success_rate_spread.png"),
         plot_kpi_spread_by_recipe(ordered, arguments.figure_dir / "kpi_spread_by_recipe.png"),
         plot_dagger_vs_plain(recipes, arguments.figure_dir / "dagger_vs_plain.png"),
+        plot_population_split(ordered, arguments.figure_dir / "kpi_population_split.png"),
         plot_dagger_rounds(
             arguments.runs_root,
             arguments.policy_runs_root,

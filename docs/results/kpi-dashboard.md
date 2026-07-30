@@ -397,13 +397,41 @@ Two things visible only per seed:
   at batch 2 gives 52.69. Part of the smoothness story previously credited to DAgger is an
   optimisation-noise effect the batch-2 control isolates.
 
-**All trials vs seated-only.** Peak force and jerk are recorded on every trial, so their means
-mix the runs that inserted with the runs that ran out of budget or tripped the force cap. Split
-by that (tables §5), peak force on the *both-arms-seated* subset is far lower than across all
-trials — **≈15 N against ≈24 N** — so the all-trials figure is driven substantially by how each
-arm fails, not by how it behaves while seating. The direction of DAgger's effect survives the
-split (FT DAgger −1.04 N all-trials, −0.59 N seated-only; Vision DAgger −0.48 N, −1.05 N), which
-is what makes it a property of the controller rather than of its failure rate.
+### 5.6.1 The same KPIs on the success group only
+
+`peak_contact_force` and `jerk_integral` are recorded on **every** trial, so every number above
+mixes two populations: the runs that inserted, and the runs that ran out of budget or tripped the
+force cap. A treatment that merely *fails* differently — loading harder against the wall before
+giving up — moves those means without changing anything about how it behaves while seating.
+Restricting to walls where **both** arms seated separates the two. (Success rate is degenerate on
+that subset by construction, and time-to-insert is already seated-only, so only these two metrics
+have two populations to compare.)
+
+![two rows by two columns: peak contact force and jerk, each over all matched walls and over the both-arms-seated subset](phase-1/kpi_population_split.png)
+
+***Figure 5 — the two always-on KPIs by population.** Top row all matched walls, bottom row the
+seated subset; the dashed line is `human_only` *for that population*, which moves too. **What to
+conclude:** the population, not the treatment, is the larger effect on both metrics — and it moves
+them in opposite directions.*
+
+**Peak force nearly halves on the success group: 15.46 N against 23.97 N for `human_only`.** The
+high all-trials figure is mostly the failures, which include force-cap trips. The 30 N bound is a
+statement about the worst trial; it says little about a successful insertion, which peaks around
+15 N. **DAgger's advantage survives the split** — FT DAgger −1.04 N over all trials and −0.59 N
+seated-only, Vision DAgger −0.48 N and −1.05 N — so it is a property of how the controller seats,
+not of how often it fails.
+
+**Jerk moves the other way: `human_only` rises from 45.60 to 64.90 on the seated subset.** A
+successful insertion involves more corrective motion near the hole; a failed run often aborts
+early having accumulated less. So the smoothness cost is *understated* by the all-trials view.
+Two recipes change character under the split: **Vision DAgger goes from +2.43 to −0.21**, i.e.
+indistinguishable from the human when both seat, while **FT plain (batch 2) improves from +7.09 to
++3.80** and **FT DAgger worsens from +39.52 to +47.03** (still one outlier seed).
+
+The general point is worth stating once: for any KPI recorded on all trials, *which trials are in
+the average* is a design decision, and here it is worth more than any treatment effect in the
+table. Both populations are reported in
+[`phase-1/official_kpi_tables.md`](phase-1/official_kpi_tables.md) §5.
 
 **Contact events — recorded, not reported.** Exactly **1.00** on every trial of every arm,
 `human_only` included. The metric counts hysteresis-debounced rising edges past the contact floor,
@@ -533,7 +561,7 @@ uv run python scripts/dev/official_kpi/aggregate.py       # reads runs/eval_offi
 # The §5.6 full-KPI board — every recipe × every metric, as markdown on stdout:
 uv run python scripts/dev/official_kpi/kpi_tables.py      # → docs/results/phase-1/official_kpi_tables.md
 
-# Figures 1–4 — the same statistics as plain matplotlib interval charts:
+# Figures 1–5 — the same statistics as plain matplotlib box charts:
 uv run python scripts/dev/official_kpi/plot_kpis.py       # → docs/results/phase-1/*.png
 ```
 

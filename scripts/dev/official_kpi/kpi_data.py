@@ -320,6 +320,56 @@ def baseline_spread(recipe: Recipe, metric: MetricSpec) -> Spread | None:
     return _spread([marginal_value(point.baseline, metric) for point in recipe.points])
 
 
+def seated_pair_means(
+    point: EvalPoint, metric: MetricSpec, *, seated_only: bool
+) -> tuple[float | None, float | None, int]:
+    """One eval's (baseline mean, treatment mean, n) over matched walls.
+
+    ``seated_only`` keeps only walls where **both** arms seated. That subset is the one
+    on which a difference is a difference: an always-on KPI averaged over all trials
+    mixes the runs that inserted with the runs that ran out of budget or tripped the
+    force cap, so a treatment that merely *fails* differently moves it.
+    """
+    by_seed = {trial.seed: trial for trial in point.baseline_trials}
+    baseline_values: list[float] = []
+    treatment_values: list[float] = []
+    for treatment in point.treatment_trials:
+        baseline = by_seed.get(treatment.seed)
+        if baseline is None:
+            continue
+        if seated_only and not (baseline.success and treatment.success):
+            continue
+        baseline_values.append(float(getattr(baseline, metric.key)))
+        treatment_values.append(float(getattr(treatment, metric.key)))
+    if not baseline_values:
+        return None, None, 0
+    count = len(baseline_values)
+    return (
+        sum(baseline_values) / count,
+        sum(treatment_values) / count,
+        count,
+    )
+
+
+def population_spread(
+    recipe: Recipe, metric: MetricSpec, *, seated_only: bool, arm: str = "treatment"
+) -> Spread | None:
+    """A recipe's per-seed means for ``metric``, over all matched walls or only seated ones.
+
+    ``arm`` selects which side is summarised; the baseline is included because its own
+    value moves with the population (its failures carry the high forces too), so a
+    seated-only panel needs a seated-only reference line.
+    """
+    values: list[MetricValue] = []
+    for point in recipe.points:
+        baseline_mean, treatment_mean, count = seated_pair_means(
+            point, metric, seated_only=seated_only
+        )
+        chosen = baseline_mean if arm == "baseline" else treatment_mean
+        values.append(MetricValue(chosen, count))
+    return _spread(values)
+
+
 def delta_spread(recipe: Recipe, metric: MetricSpec) -> Spread | None:
     """The paired treatment − ``human_only`` delta, spread over training seeds."""
     paired = [paired_value(point.paired, metric) for point in recipe.points]
