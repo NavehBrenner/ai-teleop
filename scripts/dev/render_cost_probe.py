@@ -23,7 +23,7 @@ from ai_teleop.sim.scene_source import resolve_scene_path  # noqa: E402
 
 def main() -> None:
     scene_path = resolve_scene_path(generated=False, wall_seed=7, distractors=None)
-    env = SimEnv(str(scene_path), render_mode="headless", seed=0)
+    env = SimEnv(str(scene_path), render_mode="headless")
     env.reset()
     for _ in range(10):  # warm up (lazy Renderer creation, first-frame GL setup)
         env.render_wrist_camera()

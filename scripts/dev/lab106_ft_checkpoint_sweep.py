@@ -24,6 +24,7 @@ from ai_teleop.policy.residual_policy import load_checkpoint
 _spec = importlib.util.spec_from_file_location(
     "lab81_offline_eval", Path(__file__).with_name("lab81_offline_eval.py")
 )
+assert _spec is not None, "lab81_offline_eval.py must sit beside this script"
 _lab81 = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_lab81)  # type: ignore[union-attr]
 _evaluate = _lab81._evaluate

@@ -48,6 +48,7 @@ import argparse
 import sys
 from collections.abc import Callable
 from dataclasses import replace
+from functools import partial
 from itertools import product
 from pathlib import Path
 
@@ -71,6 +72,13 @@ from ai_teleop.data.step_callbacks import TerminationProbe  # noqa: E402
 from ai_teleop.domain import NoAssist  # noqa: E402
 from ai_teleop.domain.interfaces import AssistProvider  # noqa: E402
 from ai_teleop.expert import Expert  # noqa: E402
+
+
+def _build_expert(expert_kwargs: dict[str, object]) -> Expert:
+    """Bind kwargs eagerly — a lambda closing over the loop variable would rebind."""
+    return Expert(**expert_kwargs)  # type: ignore[arg-type]
+
+
 from ai_teleop.input import ScriptedNoisyHuman  # noqa: E402
 from ai_teleop.sim.config import EnvConfig, episode_wall_seed  # noqa: E402
 from ai_teleop.sim.env_setup import make_env  # noqa: E402
@@ -240,7 +248,7 @@ def _summarize(label: str, rows: list[dict]) -> None:
         ("delta_saturated_frac", "{:.2f}"),
         ("min_tip_distance_mm", "{:.1f}mm"),
     ):
-        by_outcome = {}
+        by_outcome: dict[str, list[float]] = {}
         for row in rows:
             by_outcome.setdefault(row["outcome"], []).append(row[key])
         parts = [
@@ -333,7 +341,7 @@ def main() -> None:
             if gain > 0.0:
                 expert_kwargs.update(brake_gain=gain, brake_lead_floor=floor)
                 label += f" brake_gain={gain} floor={floor * 1000:.0f}mm"
-            run_config(label, lambda kw=expert_kwargs: Expert(**kw))
+            run_config(label, partial(_build_expert, dict(expert_kwargs)))
 
     print("\ndone.")
 

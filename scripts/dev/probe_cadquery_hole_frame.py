@@ -5,7 +5,12 @@ that tessellation at mm-scale is clean. Build in mm.
 Run: uv run python scripts/dev/probe_cadquery_hole_frame.py
 """
 
+from typing import TYPE_CHECKING, cast
+
 import cadquery as cq
+
+if TYPE_CHECKING:
+    from cadquery.occ_impl.shapes import Shape
 
 # Plate: thickness along world X, 400 mm (Y) x 400 mm (Z) face. Built on "YZ"
 # workplane so box(length->Y, width->Z, height->X-normal).
@@ -21,7 +26,7 @@ drilled = plate.faces("<X").workplane().pushPoints([(target_y, target_z)]).hole(
 cyl_faces = drilled.faces("%CYLINDER").vals()
 print(f"num cylindrical faces (expect 1): {len(cyl_faces)}")
 for f in cyl_faces:
-    c = f.Center()
+    c = cast("Shape", f).Center()
     print(f"  hole face centre world = ({c.x:.1f}, {c.y:.1f}, {c.z:.1f})  [thickness, Y, Z]")
 
 # Chamfer only the robot-facing (<X) rim and confirm edge selection works.
@@ -29,9 +34,12 @@ chamfered = drilled.faces("<X").edges("%CIRCLE").chamfer(2.0)
 print("chamfer on <X face: OK")
 
 # Tessellate and report triangle count + bbox to sanity-check mm-scale meshing.
-verts, tris = chamfered.val().tessellate(tolerance=0.2)
+# .val() is typed as a union of everything a Workplane can hold; after .chamfer()
+# it is always a Shape, and only Shape carries tessellate/BoundingBox/Center.
+solid = cast("Shape", chamfered.val())
+verts, tris = solid.tessellate(tolerance=0.2)
 print(f"tessellation: {len(verts)} verts, {len(tris)} tris")
-bb = chamfered.val().BoundingBox()
+bb = solid.BoundingBox()
 print(
     f"bbox (mm): x[{bb.xmin:.1f},{bb.xmax:.1f}] y[{bb.ymin:.1f},{bb.ymax:.1f}] z[{bb.zmin:.1f},{bb.zmax:.1f}]"
 )

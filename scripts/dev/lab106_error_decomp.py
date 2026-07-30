@@ -45,9 +45,13 @@ def _report_run(run: str, val_summaries) -> None:
     model = loaded.model.eval()
 
     # buckets: (label, mask_fn) → accumulate error and |pred|, |target|.
-    buckets = {"far d>=0.15": [], "near 0.05-0.15": [], "close d<0.05": []}
-    pred_mag = {k: [] for k in buckets}
-    zero_err = {k: [] for k in buckets}
+    buckets: dict[str, list[float]] = {
+        "far d>=0.15": [],
+        "near 0.05-0.15": [],
+        "close d<0.05": [],
+    }
+    pred_mag: dict[str, list[float]] = {k: [] for k in buckets}
+    zero_err: dict[str, list[float]] = {k: [] for k in buckets}
 
     for summary in val_summaries:
         raw = load_episode(DATASET / summary["file"])
