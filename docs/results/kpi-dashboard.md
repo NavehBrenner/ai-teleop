@@ -338,11 +338,12 @@ compute.
 
 ---
 
-## 5.6 The full KPI board — what the success rate alone hid
+## 5.6 The full KPI board
 
-Success is one of **five** KPIs the harness records. The other four
-(`time_to_insert_s`, `peak_contact_force`, `contact_events`, `jerk_integral`) are measured on the
-same trials of the same evals, and reporting only the headline throws them away. The complete
+Success is one of the KPIs the harness records; `time_to_insert_s`, `peak_contact_force` and
+`jerk_integral` are measured on the same trials of the same evals. (`contact_events` is recorded
+but not reported — it reads exactly 1 on every trial of every arm, `human_only` included, so at
+this operating point it separates nothing.) The complete
 board — every recipe × every metric, mean over training seeds with the observed range, the paired
 comparison against `human_only`, the paired DAgger-vs-plain comparison, and the raw per-seed
 draws — is generated into
@@ -355,10 +356,9 @@ draws — is generated into
 | **Time to insert (s)** | ↓ | 7.83 | 7.91 [7.12, 8.42] | 7.47 [7.28, 7.79] | 7.28 [6.88, 7.47] | 7.46 [7.06, 8.05] | 7.62 [6.85, 8.02] |
 | ↳ n (seated trials) | | 50 | 31–58 | 29–60 | 51–53 | 34–54 | 46–62 |
 | **Peak contact force (N)** | ↓ | 23.97 | 25.79 [23.93, 29.02] | 24.26 [21.21, 28.80] | 22.92 [21.66, 24.07] | 24.68 [23.37, 25.58] | 23.49 [20.92, 25.18] |
-| **Contact events** | ↓ | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 |
 | **∫\|jerk\|** | ↓ | 45.60 | 70.10 [59.62, 95.18] | 52.69 [46.60, 61.89] | 85.12 [45.08, 231.74] | 57.25 [46.01, 78.70] | 48.03 [45.84, 50.04] |
 
-![five interval charts, one per KPI, showing each recipe's mean and min/max over training seeds against the human_only line](phase-1/kpi_spread_by_recipe.png)
+![four interval charts, one per reported KPI, showing each recipe's mean and min/max over training seeds against the human_only line](phase-1/kpi_spread_by_recipe.png)
 
 ***Figure 2 — every KPI, every recipe.** Absolute units, the dashed red line the `human_only`
 value on the same walls. **What to conclude:** the seed spread that swallows the success rate is
@@ -374,22 +374,21 @@ slower**. That gap is survivorship: an arm that seats fewer walls is seating the
 its mean is over a different population. Read the paired column; the marginal column is not a
 comparison.
 
-**Peak contact force — the one KPI where DAgger moves something, and it moves it the right way.**
+**Peak contact force — the one KPI where DAgger moves the mean, not just the spread.**
 Plain BC *raises* peak force above the baseline (FT plain **+1.83 N** paired, per-seed p reaching
 <0.001); both DAgger arms *lower* it (FT DAgger **−1.04 N**, Vision DAgger **−0.48 N**). Compared
 directly against plain BC at matched training seed, **FT DAgger is gentler on all five seeds**
 (mean **−2.87 N**, range [−5.93, −0.37]); against the batch-2 control the mean is **−1.34 N**
 [−5.70, +0.45], so the sign is not unanimous once batch size is held. Vision: **−1.19 N**
 [−4.66, +1.82]. The direction is consistent, the magnitude is a couple of newtons, and none of
-it approaches the hard bound — the eval observer aborts a trial above **30 N**
-(`DEFAULT_FORCE_CAP`, `eval/observer.py`), so *no* arm can exceed that by construction. (The
-earlier "~24 N envelope" phrasing in this section was wrong: 23.97 N is the human baseline, not
-a bound, and FT plain's worst seed averages 29.02 N.)
+it approaches the hard bound. The eval observer aborts a trial above **30 N**
+(`DEFAULT_FORCE_CAP`, `eval/observer.py`), so no arm can exceed that by construction; 23.97 N is
+the `human_only` mean, not a bound, and FT plain's worst seed averages 29.02 N.
 
 **Jerk — the smoothness cost is real, still positive everywhere, and the FT-DAgger number is one
 seed.** Every treatment raises ∫|jerk| above `human_only`; none lowers it. Vision DAgger is
 nearest flat (**+2.43** paired, range [+0.24, +4.44] — statistically non-zero, practically ~5%).
-Two corrections the per-seed view forces:
+Two things visible only per seed:
 
 - **FT DAgger's 85.12 mean is a single outlier.** Its five seeds are 45.08 / 52.64 / **231.74** /
   47.96 / 48.19. Four of them sit at or below the batch-2 plain arm; one seed is 4.5× the others.
@@ -398,14 +397,15 @@ Two corrections the per-seed view forces:
   at batch 2 gives 52.69. Part of the smoothness story previously credited to DAgger is an
   optimisation-noise effect the batch-2 control isolates.
 
-**Contact events — degenerate.** Exactly **1.00** on every trial of every arm, `human_only`
-included. The metric counts hysteresis-debounced rising edges past the contact floor; at this
-operating point the approach makes one sustained contact and stays in it. It discriminates
-nothing here and is reported only so its silence is on the record.
+**Contact events — recorded, not reported.** Exactly **1.00** on every trial of every arm,
+`human_only` included. The metric counts hysteresis-debounced rising edges past the contact floor,
+and at this operating point the approach makes one sustained contact and stays in it, so it
+separates nothing. It stays in the recorded schema and is dropped from the reported set; a lower
+force floor or a bouncing regime would make it informative again.
 
 ### Did DAgger produce any result at all?
 
-![two rows (F/T, vision) by five columns (KPI) of interval charts comparing human_only, plain BC and DAgger](phase-1/dagger_vs_plain.png)
+![two rows (F/T, vision) by four columns (KPI) of interval charts comparing human_only, plain BC and DAgger](phase-1/dagger_vs_plain.png)
 
 ***Figure 3 — the three arms side by side.** Rows are modality, columns are KPI; each panel puts
 `human_only` (red diamond), plain BC and DAgger on one axis, and prints the paired
@@ -431,7 +431,7 @@ The honest three-line answer to "did DAgger do anything":
 
 ### DAgger across rounds
 
-![five panels, one per KPI, each plotting the metric against DAgger round with one line per training seed](phase-1/dagger_rounds_vision.png)
+![four panels, one per reported KPI, each plotting the metric against DAgger round with one line per training seed](phase-1/dagger_rounds_vision.png)
 
 ***Figure 4 — vision DAgger, every round, every seed.** One line per training seed so the reader
 sees the round axis is noisy *within* a seed. **What to conclude:** there is no round trend to

@@ -478,8 +478,17 @@ not per-step i.i.d. Gaussian, which would reduce the expert to a trivial noise-n
 | **Insertion success** | bool | The headline metric. Scored on *sustained* seating, not first contact. |
 | **Time-to-insert** | s | Efficiency; distinguishes "succeeded" from "succeeded before the budget ran out". |
 | **Peak contact force** | N | Safety proxy — the KPI the architecture *guarantees* rather than measures. |
-| **Contact events before success** | count | How much fumbling preceded seating. |
 | **Trajectory smoothness** | integrated jerk | Whether the assist buys success at the cost of a jittery arm. |
+
+A fifth KPI, **contact events before success**, was defined and is still recorded per trial. It
+is **not reported**: it reads exactly 1 on every trial of every arm, `human_only` included, so at
+this operating point it separates nothing. It stays in the recorded schema in case a future
+operating point makes it informative.
+
+Two of the four have a reading caveat, stated where they are reported (§5.3): time-to-insert is
+defined only on seated trials, so a marginal mean is taken over each arm's own successes and is
+not comparable across arms — the paired figure is. And the paired figures are the ones the
+dashboard quotes.
 
 A caveat the harness carries explicitly: data generation and evaluation share the *seating
 geometry* (`common/seating.py`) but not the *decision rule* — data-gen scores success on the first
