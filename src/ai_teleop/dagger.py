@@ -32,15 +32,19 @@ on-policy states.
 
 from __future__ import annotations
 
+import csv
 import json
+import multiprocessing
 import os
 from collections.abc import Mapping
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
 from ai_teleop.common.log import get_logger
+from ai_teleop.common.resources import safe_worker_count
 from ai_teleop.control import Controller
 from ai_teleop.data.generate import (
     DEFAULT_DELTA_CLAMP,
@@ -95,6 +99,23 @@ def _human_seed(master_seed: int, episode_index: int) -> int:
 def dagger_episode_index(round_index: int, rollout_index: int) -> int:
     """Collision-free episode index for a DAgger-relabeled episode."""
     return _DAGGER_INDEX_BASE + round_index * _DAGGER_ROUND_BLOCK + rollout_index
+
+
+def _summaries_through_round(aggregate_dir: Path, last_round: int) -> list[EpisodeSummary]:
+    """The aggregate manifest reduced to the base corpus + DAgger episodes from
+    rounds ``<= last_round``. Used to resume a crashed run: rounds after the last
+    *checkpointed* one may have written rollout episodes (and grown the manifest)
+    without training, so those are dropped here to avoid double-counting when the
+    resumed round re-rolls them (rollouts overwrite by index — see ``rollout_and_relabel``)."""
+    metadata = json.loads((aggregate_dir / "metadata.json").read_text(encoding="utf-8"))
+    kept: list[EpisodeSummary] = []
+    for summary in metadata["episodes"]:
+        index = summary["episode_index"]
+        # base corpus episode, or a DAgger rollout from a round we're keeping
+        is_base = index < _DAGGER_INDEX_BASE
+        if is_base or (index - _DAGGER_INDEX_BASE) // _DAGGER_ROUND_BLOCK <= last_round:
+            kept.append(summary)
+    return kept
 
 
 def expert_from_config(config: Mapping[str, Any]) -> Expert:
@@ -287,6 +308,116 @@ def append_summaries(
     (aggregate_dir / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
 
 
+# Rollouts are the dominant cost and each one is fully determined by
+# (master_seed, rollout_index) — no shared RNG, no order dependence (see
+# `_human_seed` / `episode_wall_seed`) — so they parallelize with bit-identical
+# results. Processes (not threads): MuJoCo + the GRU policy hold per-episode state
+# that must not be shared. Spawn (not fork) so each worker builds its own CUDA
+# context cleanly. Opt-in via `DAGGER_ROLLOUT_WORKERS` / `--rollout-workers`;
+# default 1 keeps the original sequential path.
+_WORKER: dict[str, Any] = {}
+
+
+def _default_rollout_workers() -> int:
+    raw = os.environ.get("DAGGER_ROLLOUT_WORKERS")
+    return int(raw) if raw else 1
+
+
+def _init_rollout_worker(
+    checkpoint: str, config: Mapping[str, Any], render_every: int | None, device: str
+) -> None:
+    """Per-process setup: load the round's policy + rebuild the expert once, reused
+    across every rollout this worker runs (the pool is created fresh each round)."""
+    from ai_teleop.policy import LearnedResidual
+
+    _WORKER["policy"] = LearnedResidual.from_checkpoint(Path(checkpoint), device=device)
+    _WORKER["expert"] = expert_from_config(config)
+    _WORKER["config"] = config
+    _WORKER["render_every"] = render_every
+
+
+def _rollout_task(
+    round_index: int, rollout_index: int, runs_dir: str, master_seed: int
+) -> tuple[int, EpisodeSummary]:
+    summary = rollout_and_relabel(
+        policy=_WORKER["policy"],
+        expert=_WORKER["expert"],
+        runs_dir=Path(runs_dir),
+        dagger_index=dagger_episode_index(round_index, rollout_index),
+        master_seed=master_seed,
+        rollout_index=rollout_index,
+        config=_WORKER["config"],
+        render_every=_WORKER["render_every"],
+    )
+    return rollout_index, summary
+
+
+def _run_round_rollouts(
+    *,
+    checkpoint: Path,
+    config: Mapping[str, Any],
+    runs_dir: Path,
+    round_index: int,
+    n_rollout: int,
+    master_seed: int,
+    render_every: int | None,
+    device: str,
+    workers: int,
+) -> list[EpisodeSummary]:
+    """The round's ``n_rollout`` on-policy rollouts, returned in ``rollout_index``
+    order. ``workers <= 1`` runs the original sequential loop; more fans the
+    rollouts across processes (identical results — each rollout is seed-determined)."""
+    workers = safe_worker_count(workers)
+    if workers <= 1:
+        from ai_teleop.policy import LearnedResidual
+
+        policy = LearnedResidual.from_checkpoint(checkpoint, device=device)
+        expert = expert_from_config(config)
+        summaries: list[EpisodeSummary] = []
+        for rollout_index in range(n_rollout):
+            summary = rollout_and_relabel(
+                policy=policy,
+                expert=expert,
+                runs_dir=runs_dir,
+                dagger_index=dagger_episode_index(round_index, rollout_index),
+                master_seed=master_seed,
+                rollout_index=rollout_index,
+                config=config,
+                render_every=render_every,
+            )
+            summaries.append(summary)
+            log.info(
+                "  rollout %3d │ %6d steps │ %s",
+                rollout_index,
+                summary["n_steps"],
+                summary["terminal_reason"],
+            )
+        return summaries
+
+    ordered: list[EpisodeSummary | None] = [None] * n_rollout
+    context = multiprocessing.get_context("spawn")
+    with ProcessPoolExecutor(
+        max_workers=workers,
+        mp_context=context,
+        initializer=_init_rollout_worker,
+        initargs=(str(checkpoint), config, render_every, device),
+    ) as pool:
+        futures = [
+            pool.submit(_rollout_task, round_index, i, str(runs_dir), master_seed)
+            for i in range(n_rollout)
+        ]
+        for future in as_completed(futures):
+            rollout_index, summary = future.result()
+            ordered[rollout_index] = summary
+            log.info(
+                "  rollout %3d │ %6d steps │ %s",
+                rollout_index,
+                summary["n_steps"],
+                summary["terminal_reason"],
+            )
+    return [summary for summary in ordered if summary is not None]
+
+
 def run_dagger(
     *,
     base_dir: str | Path,
@@ -304,6 +435,7 @@ def run_dagger(
     eval_seeds: int = 20,
     eval_master_seed: int = 0,
     error_scale: float = 1.0,
+    rollout_workers: int | None = None,
 ) -> list[dict[str, object]]:
     """Full batched-DAgger loop; returns a per-round result record.
 
@@ -315,14 +447,14 @@ def run_dagger(
     """
     # Heavy / torch-only imports are lazy so the sim-only rollout path (and its
     # tests) need neither torch nor a checkpoint on disk.
-    from ai_teleop.policy import LearnedResidual, LossConfig, PolicyConfig, TrainConfig
+    from ai_teleop.policy import LossConfig, PolicyConfig, TrainConfig
     from ai_teleop.policy.residual_policy import load_checkpoint
+    from ai_teleop.policy.run_artifacts import CHECKPOINT_NAME
     from ai_teleop.policy.train import train_policy
 
     base_dir = Path(base_dir)
     aggregate_dir = Path(aggregate_dir)
     config = json.loads((base_dir / "metadata.json").read_text(encoding="utf-8"))["config"]
-    expert = expert_from_config(config)
 
     # Modality is read from the base checkpoint (LAB-106): an F/T base needs no wrist
     # render (much faster rounds) and must retrain F/T-only, not vision. render_every
@@ -330,35 +462,55 @@ def run_dagger(
     use_vision = load_checkpoint(Path(checkpoint)).config.use_vision
     effective_render_every = render_every if use_vision else None
 
-    all_summaries = seed_aggregate(base_dir, aggregate_dir)
-    current_checkpoint = Path(checkpoint)
-    results: list[dict[str, object]] = []
-
-    for round_index in range(rounds):
+    # Crash-resume: if earlier rounds already trained a checkpoint on disk, continue
+    # from the next round instead of restarting from the base (each vision round is
+    # hours). The last checkpointed round's corpus state is rebuilt from the manifest;
+    # a fresh run (no round checkpoints) seeds the aggregate from base as before.
+    runs_root_path = Path(runs_root)
+    resume_from = 0
+    for round_index in reversed(range(rounds)):
+        if (runs_root_path / f"dagger_round{round_index}" / CHECKPOINT_NAME).exists():
+            resume_from = round_index + 1
+            break
+    if resume_from == 0:
+        all_summaries = seed_aggregate(base_dir, aggregate_dir)
+        current_checkpoint = Path(checkpoint)
+    else:
+        all_summaries = _summaries_through_round(aggregate_dir, resume_from - 1)
+        current_checkpoint = runs_root_path / f"dagger_round{resume_from - 1}" / CHECKPOINT_NAME
         log.info(
-            "round %d │ rolling out %d episodes with %s", round_index, n_rollout, current_checkpoint
+            "resuming DAgger at round %d (rounds 0–%d already checkpointed) │ "
+            "corpus %d episodes │ from %s",
+            resume_from,
+            resume_from - 1,
+            len(all_summaries),
+            current_checkpoint,
         )
-        policy = LearnedResidual.from_checkpoint(current_checkpoint, device=device)
-        successes = 0
-        for rollout_index in range(n_rollout):
-            summary = rollout_and_relabel(
-                policy=policy,
-                expert=expert,
-                runs_dir=aggregate_dir / "runs",
-                dagger_index=dagger_episode_index(round_index, rollout_index),
-                master_seed=rollout_master_seed,
-                rollout_index=rollout_index,
-                config=config,
-                render_every=effective_render_every,
-            )
-            all_summaries.append(summary)
-            successes += int(bool(summary["success"]))
-            log.info(
-                "  rollout %3d │ %6d steps │ %s",
-                rollout_index,
-                summary["n_steps"],
-                summary["terminal_reason"],
-            )
+    results: list[dict[str, object]] = []
+    workers = _default_rollout_workers() if rollout_workers is None else rollout_workers
+
+    for round_index in range(resume_from, rounds):
+        log.info(
+            "round %d │ rolling out %d episodes with %s (%d worker%s)",
+            round_index,
+            n_rollout,
+            current_checkpoint,
+            workers,
+            "" if workers == 1 else "s",
+        )
+        round_summaries = _run_round_rollouts(
+            checkpoint=current_checkpoint,
+            config=config,
+            runs_dir=aggregate_dir / "runs",
+            round_index=round_index,
+            n_rollout=n_rollout,
+            master_seed=rollout_master_seed,
+            render_every=effective_render_every,
+            device=device,
+            workers=workers,
+        )
+        all_summaries.extend(round_summaries)
+        successes = sum(int(bool(summary["success"])) for summary in round_summaries)
         append_summaries(aggregate_dir, all_summaries, config=config)
         log.info(
             "round %d │ policy rollout success %d/%d │ aggregate now %d episodes",
@@ -389,6 +541,7 @@ def run_dagger(
             master_seed=eval_master_seed,
             error_scale=error_scale,
             device=device,
+            out_dir=Path(current_checkpoint).parent,
         )
         log.info(
             "round %d │ eval @ error_scale %.2f │ human %.0f%% │ vision %.0f%%",
@@ -414,22 +567,33 @@ def _reablate(
     master_seed: int,
     error_scale: float,
     device: str,
+    out_dir: Path | None = None,
 ) -> dict[str, float]:
     """Paired human-only vs vision ablation on the held-out eval walls; returns
-    each config's success rate. Thin reuse of ``eval.ablation.run_paired``."""
-    from ai_teleop.eval.ablation import HUMAN_ONLY, Config, run_paired
-    from ai_teleop.policy import LearnedResidual
+    each config's success rate. Thin reuse of ``eval.ablation.run_paired``. When
+    ``out_dir`` is given, also dumps the full per-trial KPIs (force, jerk, time —
+    already computed here, else discarded) to ``out_dir/trials.csv`` so every round
+    gets the same rich metrics as the final ``evaluate pair``, not just success%."""
+    from ai_teleop.eval.ablation import TrialConfigSpec, run_paired_batch
 
-    vision = Config(
-        label="vision",
-        assist_factory=lambda: LearnedResidual.from_checkpoint(checkpoint, device=device),
+    specs = [
+        TrialConfigSpec(label="human_only", checkpoint=None),
+        TrialConfigSpec(label="vision", checkpoint=str(checkpoint), device=device),
+    ]
+    successes = {spec.label: 0 for spec in specs}
+    rows: list[dict[str, object]] = []
+    batch = run_paired_batch(
+        list(range(seeds)), specs, master_seed=master_seed, operator_error_scale=error_scale
     )
-    configs = [HUMAN_ONLY, vision]
-    successes = {config.label: 0 for config in configs}
-    for episode_index in range(seeds):
-        results = run_paired(
-            episode_index, configs, master_seed=master_seed, operator_error_scale=error_scale
-        )
+    for results in batch:
         for label, kpis in results.items():
             successes[label] += int(kpis.success)
+            rows.append(kpis.to_dict())
+    if out_dir is not None and rows:
+        csv_path = Path(out_dir) / "trials.csv"
+        csv_path.parent.mkdir(parents=True, exist_ok=True)
+        with csv_path.open("w", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()))
+            writer.writeheader()
+            writer.writerows(rows)
     return {label: successes[label] / seeds for label in successes}

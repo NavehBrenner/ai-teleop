@@ -15,7 +15,7 @@ Companion documents:
 - [`docs/design/`](../design/) — the *why* behind each subsystem (problem structure,
   teleop input, expert corrections, policy model, evaluation protocol).
 - [`docs/reference/data-schema.md`](../reference/data-schema.md) — the on-disk corpus contract.
-- [`docs/results/phase-1-results.md`](../results/phase-1-results.md) — measured outcomes.
+- [`docs/results/kpi-dashboard.md`](../results/kpi-dashboard.md) — measured outcomes.
   **The Phase-1 headline number is under revision** (a 2026-07-22 reproduction attempt
   did not reproduce it); this tour deliberately makes no performance claims.
 
@@ -393,7 +393,7 @@ what it is.
 `eval/ablation.py` (what a trial is) → `eval/observer.py` (what success means) →
 `eval/report.py` (the statistics). Then
 [`docs/design/evaluation-protocol.md`](../design/evaluation-protocol.md), and
-[`docs/review/code-audit.md`](../review/code-audit.md) §H before quoting anything.
+[`docs/results/kpi-dashboard.md`](../results/kpi-dashboard.md) before quoting anything.
 
 **"What is the actual contribution?"**
 `domain/interfaces.py`, then `expert/expert.py` and `policy/residual_policy.py` side by

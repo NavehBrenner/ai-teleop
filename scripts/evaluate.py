@@ -40,27 +40,12 @@ from ai_teleop.eval.ablation import (  # noqa: E402
     DEFAULT_WRIST_RENDER_EVERY,
     HUMAN_ONLY,
     INSERTION_MAX_STEPS,
-    Config,
+    TrialConfigSpec,
     run_paired,
+    run_paired_batch,
 )
 
 log = get_logger("evaluate")
-
-
-def _policy_config(checkpoint: str, *, label: str, device: str) -> Config:
-    """Build a learned-residual config from a checkpoint (lazy import — needs torch).
-
-    Works for both the F/T-only and the vision checkpoint: whether the policy
-    conditions on the wrist image is read from the checkpoint's own config
-    (``use_vision``), so the ablation harness turns on the env's wrist capture for
-    the vision one automatically — no flag needed here.
-    """
-    from ai_teleop.policy import LearnedResidual
-
-    return Config(
-        label=label,
-        assist_factory=lambda: LearnedResidual.from_checkpoint(checkpoint, device=device),
-    )
 
 
 def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
@@ -76,40 +61,38 @@ def _run_pair(args: argparse.Namespace) -> int:
     # The M7 3-way ablation (LAB-83): human-only vs F/T-only vs vision, matched
     # seeds. Any subset is fine — supply only the checkpoints you have. `--residual-
     # checkpoint` stays as the single-treatment "residual" label (back-compat).
-    configs = [HUMAN_ONLY]
+    specs = [TrialConfigSpec(label="human_only", checkpoint=None)]
     if args.ftonly_checkpoint:
-        configs.append(_policy_config(args.ftonly_checkpoint, label="ftonly", device=args.device))
+        specs.append(TrialConfigSpec("ftonly", args.ftonly_checkpoint, args.device))
     if args.vision_checkpoint:
-        configs.append(_policy_config(args.vision_checkpoint, label="vision", device=args.device))
+        specs.append(TrialConfigSpec("vision", args.vision_checkpoint, args.device))
     if args.residual_checkpoint:
-        configs.append(
-            _policy_config(args.residual_checkpoint, label="residual", device=args.device)
-        )
+        specs.append(TrialConfigSpec("residual", args.residual_checkpoint, args.device))
 
     out_dir = Path(args.out_dir)
+    batch = run_paired_batch(
+        list(range(args.seeds)),
+        specs,
+        out_dir=out_dir / "traces",
+        workers=args.trial_workers,
+        master_seed=args.master_seed,
+        max_steps=args.max_steps,
+        max_dpos=args.max_dpos,
+        joint_damping=args.joint_damping,
+        operator_error_scale=args.error_scale,
+        wrist_render_every=args.wrist_render_every,
+    )
     rows: list[dict[str, object]] = []
-    for episode_index in range(args.seeds):
-        results = run_paired(
-            episode_index,
-            configs,
-            master_seed=args.master_seed,
-            out_dir=out_dir / "traces",
-            max_steps=args.max_steps,
-            max_dpos=args.max_dpos,
-            joint_damping=args.joint_damping,
-            operator_error_scale=args.error_scale,
-            wrist_render_every=args.wrist_render_every,
-        )
+    for episode_index, results in enumerate(batch):
         for kpis in results.values():
             rows.append(kpis.to_dict())
-        seated = {label: r.success for label, r in results.items()}
-        log.info("seed %4d │ %s", episode_index, seated)
+        log.info("seed %4d │ %s", episode_index, {label: r.success for label, r in results.items()})
 
     csv_path = out_dir / "trials.csv"
     _write_csv(csv_path, rows)
-    for config in configs:
-        rate = sum(r["config_label"] == config.label and r["success"] for r in rows) / args.seeds
-        log.info("%-12s success rate: %.1f%%", config.label, 100 * rate)
+    for spec in specs:
+        seated = sum(1 for r in rows if r["config_label"] == spec.label and r["success"])
+        log.info("%-12s success rate: %.1f%%", spec.label, 100 * seated / args.seeds)
     log.info("wrote %d trial records → %s", len(rows), csv_path)
     return 0
 
@@ -196,6 +179,13 @@ def main() -> int:
         default="cuda",
         help="Torch device for policy inference (cuda by default — vision needs it for "
         "real-time; falls to the checkpoint on CPU only if you pass --device cpu).",
+    )
+    pair.add_argument(
+        "--trial-workers",
+        type=int,
+        default=None,
+        help="Parallel trial processes (default: $EVAL_TRIAL_WORKERS or 1). Trials are "
+        "seed-determined, so results are identical regardless of worker count.",
     )
     pair.add_argument(
         "--wrist-render-every",

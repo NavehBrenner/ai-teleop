@@ -163,7 +163,7 @@ _LEGACY_DELTA_CLAMP = 0.02
 # hashed, and folding them in now would invalidate every committed manifest:
 # dataset_2/3/4 ran `lateral_tolerance=0.006`, dataset_6 onwards 0.010, and both
 # groups currently reproduce their committed hash. Recorded as a finding
-# (docs/review/code-audit.md, C-1a) rather than silently rehashing history.
+# (finding C-1a) rather than silently rehashing history.
 _UNFINGERPRINTED = frozenset({"success_depth", "lateral_tolerance", "force_cap"})
 
 

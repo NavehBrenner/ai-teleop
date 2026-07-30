@@ -14,7 +14,13 @@ from pathlib import Path
 
 import numpy as np
 
-from ai_teleop.dagger import append_summaries, rollout_and_relabel, seed_aggregate
+from ai_teleop.dagger import (
+    _summaries_through_round,
+    append_summaries,
+    dagger_episode_index,
+    rollout_and_relabel,
+    seed_aggregate,
+)
 from ai_teleop.data import build_dataloaders
 from ai_teleop.data.schema import EpisodeMetadata
 from ai_teleop.data.trajectory import load_episode
@@ -136,3 +142,21 @@ def test_aggregate_unions_and_loads(tmp_path: Path) -> None:
     )
     # `Dataset` isn't `Sized` in the torch stubs; every dataset here is a list.
     assert len(train_loader.dataset) + len(val_loader.dataset) == 4  # type: ignore[arg-type]
+
+
+def test_summaries_through_round_drops_later_rounds(tmp_path: Path) -> None:
+    """Crash-resume corpus rebuild keeps base + rounds ≤ last_round, drops the
+    rollouts a later un-checkpointed round already wrote (else they double-count)."""
+    episodes = [
+        {"episode_index": 0, "file": "runs/episode_00000/episode.npz"},  # base
+        {"episode_index": 1, "file": "runs/episode_00001/episode.npz"},  # base
+        {"episode_index": dagger_episode_index(0, 0), "file": "runs/episode_1000000/episode.npz"},
+        {"episode_index": dagger_episode_index(1, 0), "file": "runs/episode_1010000/episode.npz"},
+        {"episode_index": dagger_episode_index(2, 0), "file": "runs/episode_1020000/episode.npz"},
+    ]
+    (tmp_path / "metadata.json").write_text(json.dumps({"episodes": episodes}))
+
+    kept = _summaries_through_round(tmp_path, last_round=1)
+    indices = {s["episode_index"] for s in kept}
+    assert indices == {0, 1, dagger_episode_index(0, 0), dagger_episode_index(1, 0)}
+    assert dagger_episode_index(2, 0) not in indices  # round 2 (no checkpoint) dropped

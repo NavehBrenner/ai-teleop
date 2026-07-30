@@ -72,6 +72,13 @@ def main() -> int:
     parser.add_argument(
         "--runs-root", default="outputs/policy/runs", help="Where retrained runs are written."
     )
+    parser.add_argument(
+        "--rollout-workers",
+        type=int,
+        default=None,
+        help="Parallel rollout processes per round (default: $DAGGER_ROLLOUT_WORKERS or 1). "
+        "Rollouts are seed-determined, so results are identical regardless of worker count.",
+    )
     add_logging_arguments(parser)
     args = parser.parse_args()
     configure_from_args(args)
@@ -99,6 +106,7 @@ def main() -> int:
         action_rate_weight=args.action_rate_weight,
         eval_seeds=args.eval_seeds,
         error_scale=args.error_scale,
+        rollout_workers=args.rollout_workers,
     )
     log.info("DAgger done in %.0fs", time.time() - start)
     log.info("results:\n%s", json.dumps(results, indent=2))

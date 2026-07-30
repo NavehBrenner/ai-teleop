@@ -2,8 +2,7 @@
 
 For every `src/ai_teleop/*` module, every `scripts/*.py`, and every `kvn` command, report:
 
-* **documented?** — named in any `docs/**.md` or `README.md` (excluding `docs/review/`,
-  which is review scaffolding, not user documentation).
+* **documented?** — named in any `docs/**.md` or `README.md`.
 * **where** — which doc files mention it.
 * **reachable?** — for docs: how many link-hops from `README.md`. A stranger who lands on
   the README should reach "run an episode", "train a policy" and "what were the results"
