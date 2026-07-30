@@ -68,10 +68,14 @@ mlruns/
 !docs/results/checkpoints/
 !docs/results/checkpoints/**
 
-# Media (allow committed assets, ignore generated)
+# Media: ignore generated captures (outputs/, runs/) but ALLOW the committed
+# submission media. Without the exceptions below the comment was aspirational —
+# `assets/media/demo.mp4` was silently ignored by the *.mp4 rule.
 *.mp4
 *.avi
 *.mov
+!assets/media/
+!assets/media/**
 
 # Testing / type checking
 .pytest_cache/
