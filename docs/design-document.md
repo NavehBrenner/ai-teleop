@@ -99,6 +99,10 @@ it (the eval harness).
 ### 2.2 Architectural diagram
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{
+  'background':'#ffffff','primaryTextColor':'#000000','textColor':'#000000',
+  'lineColor':'#333333','primaryBorderColor':'#333333',
+  'clusterBkg':'#fbfbfb','clusterBorder':'#999999'}}}%%
 flowchart TB
     subgraph online["ONLINE — one episode, 500 Hz"]
         direction TB
@@ -144,13 +148,13 @@ flowchart TB
         OBS --> REPORT["eval/report.py<br/><i>paired ablation</i>"]
     end
 
-    classDef inputC   fill:#dbeafe,stroke:#1d4ed8,color:#0b2545
-    classDef contract fill:#fff7cd,stroke:#b45309,color:#3f2d00,stroke-width:2px
-    classDef assistC  fill:#e9d8fd,stroke:#6b21a8,color:#2e1065
-    classDef safetyC  fill:#fee2e2,stroke:#b91c1c,color:#450a0a
-    classDef controlC fill:#dcfce7,stroke:#15803d,color:#052e16
-    classDef worldC   fill:#cffafe,stroke:#0e7490,color:#083344
-    classDef dataC    fill:#f1f5f9,stroke:#475569,color:#0f172a
+    classDef inputC   fill:#dbeafe,stroke:#1d4ed8,color:#000000
+    classDef contract fill:#fff7cd,stroke:#b45309,color:#000000,stroke-width:2px
+    classDef assistC  fill:#e9d8fd,stroke:#6b21a8,color:#000000
+    classDef safetyC  fill:#fee2e2,stroke:#b91c1c,color:#000000
+    classDef controlC fill:#dcfce7,stroke:#15803d,color:#000000
+    classDef worldC   fill:#cffafe,stroke:#0e7490,color:#000000
+    classDef dataC    fill:#f1f5f9,stroke:#475569,color:#000000
 
     class SH,VI,SNH inputC
     class IS,AP contract
@@ -198,6 +202,13 @@ path run twice with a different `assist` argument. Full walkthrough:
 One episode, from `kvn episode` to the recorded result. The inner block is the 500 Hz tick.
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{
+  'background':'#ffffff','primaryTextColor':'#000000','textColor':'#000000',
+  'actorTextColor':'#000000','actorBorder':'#333333','actorBkg':'#ffffff',
+  'signalColor':'#333333','signalTextColor':'#000000',
+  'labelBoxBkgColor':'#ffffff','labelBoxBorderColor':'#333333','labelTextColor':'#000000',
+  'noteBkgColor':'#fff8dc','noteTextColor':'#000000','noteBorderColor':'#999999',
+  'sequenceNumberColor':'#ffffff','activationBkgColor':'#dddddd'}}}%%
 sequenceDiagram
     autonumber
     actor Op as Operator
