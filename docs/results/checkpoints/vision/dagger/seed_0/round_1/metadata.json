@@ -1,0 +1,67 @@
+{
+  "created_at": "2026-07-26T13:23:50+00:00",
+  "git_commit": "b54e4c9",
+  "dataset": {
+    "dir": "data/dagger_official_vis_s0",
+    "master_seed": 100,
+    "fingerprint": "d783676d1151fe7b",
+    "schema_version": "2.0",
+    "n_episodes_total": 580,
+    "n_train_episodes": 464,
+    "n_val_episodes": 116,
+    "expert_success_rate": 0.706
+  },
+  "model_config": {
+    "command_dim": 9,
+    "force_torque_dim": 6,
+    "proprioception_dim": 24,
+    "use_command_ee_delta": false,
+    "use_vision": true,
+    "image_embed_dim": 128,
+    "image_backbone": "mobilenet_v3_small",
+    "image_pretrained": true,
+    "freeze_image_encoder": true,
+    "hidden_size": 128,
+    "num_layers": 2,
+    "head_hidden": [
+      128
+    ],
+    "dropout": 0,
+    "output_dim": 7
+  },
+  "loss_config": {
+    "weight_position": 1.0,
+    "weight_orientation": 0.5,
+    "weight_grip": 0.1,
+    "weight_action_rate": 100.0,
+    "orientation": "geodesic",
+    "huber_beta": 1.0
+  },
+  "train_config": {
+    "epochs": 40,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0,
+    "tbptt_steps": 256,
+    "patience": 8,
+    "min_delta": 0.0001,
+    "lr_patience": 3,
+    "lr_factor": 0.5,
+    "use_amp": false,
+    "checkpoint_image_encoder": false,
+    "image_encode_chunk": 0
+  },
+  "results": {
+    "epochs_run": 18,
+    "best_val_loss": 0.0016935306686664457,
+    "best_epoch": 9,
+    "final_train_loss": 0.001005587633456441,
+    "final_val_loss": 0.0017397439570900342
+  },
+  "run_name": "dagger_round1",
+  "batch_size": 2,
+  "seed": 0,
+  "val_fraction": 0.2,
+  "device": "cuda",
+  "wall_time_s": 3330.9,
+  "checkpoint_sha256": "2c96d32391147ba32d10c1f99d4b2e386c4627e3bd2cde01a8a16050ea3ee25e"
+}

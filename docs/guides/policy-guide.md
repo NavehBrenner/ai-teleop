@@ -147,11 +147,20 @@ uv run python scripts/report_results.py --trials runs/eval-3way/trials.csv \
 
 ## 4. The checkpoint inventory
 
-Every run in `outputs/policy/runs/`, by lineage. **`outputs/` is gitignored** — these live on
-the training box; a run is recoverable only if it is either committed (below) or regenerable
-(post-LAB-114: corpus + `seed` + `commit`, all in its `metadata.json`). Results columns are in
-the [dashboard §3–§4](../results/kpi-dashboard.md#3-training-runs-m5m7); this table is the
-*operational* view.
+Every run in `outputs/policy/runs/`, by lineage. **`outputs/` is gitignored**, but every
+checkpoint behind a documented number is committed under
+[`docs/results/checkpoints/`](../results/checkpoints/) — laid out by methodology
+(`ft|vision / bc|dagger / seed_N / round_N`), each with its `metadata.json`, so any row below can
+be deployed straight from a clone:
+
+```bash
+kvn episode --policy tf --checkpoint docs/results/checkpoints/ft/bc/seed_0/checkpoint.pt
+```
+
+Anything *not* committed is recoverable only if regenerable (corpus + `seed` + `commit`, all in
+its `metadata.json` — true for every run after training was seeded on 2026-07-23). Results
+columns are in the [dashboard §3–§4](../results/kpi-dashboard.md#3-training-runs-m5m7); this
+table is the *operational* view.
 
 **M5 — first behavioral clone**
 
