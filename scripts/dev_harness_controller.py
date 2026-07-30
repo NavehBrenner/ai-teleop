@@ -24,6 +24,7 @@ import csv
 import sys
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -42,6 +43,9 @@ from ai_teleop.sim.scene import SimEnv  # noqa: E402
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCENE_PATH = REPO_ROOT / "assets" / "mjcf" / "full_scene.xml"
 OUTPUT_DIR = REPO_ROOT / "outputs"
+if TYPE_CHECKING:
+    import _csv
+
 CSV_PATH = OUTPUT_DIR / "m2_harness_trace.csv"
 
 log = get_logger("harness")
@@ -91,7 +95,7 @@ def run_phase(
     duration_s: float,
     target_pos_fn,
     target_quat: np.ndarray,
-    csv_writer: csv.writer | None,
+    csv_writer: _csv._writer | None,
     viewer_real_time: bool,
 ) -> dict:
     """Run a single phase for `duration_s` of sim time, collecting summary stats.

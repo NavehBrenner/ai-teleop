@@ -26,17 +26,18 @@ import mujoco
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
-try:
-    _FONT = ImageFont.truetype("DejaVuSans-Bold.ttf", 22)
-except OSError:  # fall back to the bitmap default if the TTF is unavailable
-    _FONT = ImageFont.load_default()
-
 from ai_teleop.control import Controller
 from ai_teleop.domain import NoAssist, apply_delta
 from ai_teleop.expert import Expert
 from ai_teleop.input import ScriptedNoisyHuman
 from ai_teleop.sim.scene import SimEnv
 from ai_teleop.sim.scene_source import resolve_scene_path
+
+_FONT: ImageFont.FreeTypeFont | ImageFont.ImageFont
+try:
+    _FONT = ImageFont.truetype("DejaVuSans-Bold.ttf", 22)
+except OSError:  # fall back to the bitmap default if the TTF is unavailable
+    _FONT = ImageFont.load_default()
 
 PANEL = 480
 OUT_DIR = Path(__file__).resolve().parents[2] / "outputs"
@@ -96,7 +97,7 @@ def run_views(
             third_frames.append(third.render().copy())
             wrist = env.render_wrist_camera()
             wrist_frames.append(
-                np.asarray(Image.fromarray(wrist).resize((PANEL, PANEL), Image.NEAREST))
+                np.asarray(Image.fromarray(wrist).resize((PANEL, PANEL), Image.Resampling.NEAREST))
             )
             if progress_label:
                 _progress(progress_label, len(third_frames), total_frames)

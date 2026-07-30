@@ -48,7 +48,7 @@ def main() -> int:
                 (int(r["seed"]), r["config_label"]): r["success"] for r in csv.DictReader(handle)
             }
         for row in par:
-            key = (int(row["seed"]), str(row["config_label"]))
+            key = (int(str(row["seed"])), str(row["config_label"]))
             if key in banked:
                 got, want = str(row["success"]), banked[key]
                 assert str(got).lower() == str(want).lower(), f"{key}: {got} vs banked {want}"

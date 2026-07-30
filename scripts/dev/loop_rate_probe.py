@@ -42,7 +42,7 @@ def main() -> None:
     args = p.parse_args()
 
     scene_path = resolve_scene_path(generated=False, wall_seed=7, distractors=None)
-    env = SimEnv(str(scene_path), render_mode="headless", seed=0)
+    env = SimEnv(str(scene_path), render_mode="headless")
     obs = env.reset()
     controller = Controller(env)
     target_pose = np.concatenate([obs.hole_poses[0][:3], controller.home_pose[3:]])  # goal: hole_0
