@@ -22,6 +22,7 @@ dashboard row rather than watch one episode, see
 ```
 ft/                     force/torque-only  (Phase 1)
   bc/seed_{0..4}/                    plain behavioral cloning
+  bc_batch2/seed_{0..4}/             the same recipe at batch 2 — the confound control
   dagger/seed_{0..4}/round_{0..2}/   DAgger, every round retained
 vision/                 wrist camera + force/torque  (Phase 2)
   bc/seed_{0..2}/
@@ -32,6 +33,7 @@ legacy/                 pre-official runs that back an earlier documented number
 | Family | Checkpoints | Size |
 |---|---|---|
 | `ft/bc` | 5 | 3.8 MB |
+| `ft/bc_batch2` | 5 | 3.8 MB |
 | `ft/dagger` | 15 | 12 MB |
 | `vision/bc` | 3 | 15 MB |
 | `vision/dagger` | 15 | 74 MB |

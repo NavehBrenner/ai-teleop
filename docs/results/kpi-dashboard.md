@@ -275,7 +275,8 @@ point. Seed families are disjoint by construction, so every Δ below is genuine 
 | Recipe | seeds (n) | batch | `human_only` | treatment success | **mean Δ** | range | verdict vs floor |
 |---|---|---|---|---|---|---|---|
 | **FT plain** | 5 | 16 | 50.0% | 31–58% | **−4.4 pp** | [−19, +8] | **NOISE** |
-| **FT DAgger** | 5 | 2 | 50.0% | 51–53% | **+2.0 pp** | [+1, +3] | **NOISE** (all 5 seeds ≥ 0, but see the confound below) |
+| **FT plain** *(batch-2 control)* | 5 | 2 | 50.0% | 29–60% | **−3.4 pp** | [−21, +10] | **NOISE** |
+| **FT DAgger** | 5 | 2 | 50.0% | 51–53% | **+2.0 pp** | [+1, +3] | **NOISE** (all 5 seeds ≥ 0) |
 | **Vision plain** | 3 | 2 | 50.0% | 34–54% | **−8.3 pp** | [−16, +4] | **NOISE** |
 | **Vision DAgger** | 3 | 2 | 50.0% | 46–62% | **+1.3 pp** | [−4, +12] | **NOISE** |
 
@@ -294,20 +295,26 @@ The honest reading of all four rows is one sentence: **on the seeded measurement
 {F/T, vision} × {plain BC, DAgger} lifts closed-loop seating above the human-only baseline
 beyond training-seed noise.**
 
-Two second-order structure notes, one of them qualified:
+Two second-order structure notes:
 
-- **DAgger appears to tighten the distribution without moving its center** — both DAgger arms
-  show a narrower seed spread (FT: [−19,+8]→[+1,+3]; vision: [−16,+4]→[−4,+12], barely) around a
-  mean a hair above zero. FT DAgger is the only arm where all five seeds land non-negative.
-  **⚠️ In the F/T arm this claim is confounded:** plain trained at **batch 16**, DAgger at
-  **batch 2**, so the two arms differ in *two* variables and an 8× smaller batch is itself a
-  large change to optimization noise. The vision arm is clean on batch size (both at 2) and
-  there the tightening is much weaker — which is itself evidence that batch size is doing some
-  of the work. A batch-2 FT-plain re-run is the outstanding measurement that would separate them.
-  Either way +2 pp is inside the floor, so this is at most a tighter draw of the same null, never
-  a win. (Contrast the small-corpus DAgger collapse in §6, which was dominated by force-abort
-  states the bounded expert couldn't relabel — the larger, cleaner corpus removes the degradation
-  but adds no lift.)
+- **DAgger tightens the distribution without moving its center — and it is DAgger, not the batch
+  size.** Both DAgger arms show a narrower seed spread (FT: [−19,+8]→[+1,+3]; vision:
+  [−16,+4]→[−4,+12]) around a mean a hair above zero, and FT DAgger is the only arm where all
+  five seeds land non-negative.
+
+  This was **confounded when first observed**: FT plain trained at batch 16 and FT DAgger at
+  batch 2, so the two arms differed in *two* variables, and an 8× smaller batch is itself a large
+  change to optimization noise. The **batch-2 control row above resolves it.** Retraining FT
+  plain at batch 2 — every other knob held — gives mean **−3.4 pp, range [−21, +10]**: a **31 pp
+  spread, slightly *wider* than at batch 16**, and a near-identical center. Batch size moves
+  neither the spread nor the center. The collapse from a 27–31 pp spread to 2 pp is therefore
+  attributable to DAgger.
+
+  It remains a **tighter draw of the same null, not a win** — +2 pp is inside the floor and every
+  per-seed p is ≥ 0.68. What DAgger buys is *reliability*, not lift: it makes the recipe's outcome
+  predictable without making it better. (Contrast the small-corpus DAgger collapse in §6, which was
+  dominated by force-abort states the bounded expert couldn't relabel — the larger, cleaner corpus
+  removes the degradation but adds no lift.)
 - **The noise lives on *both* axes.** Re-evaluating each intermediate DAgger round on the same
   100 held-out walls (per-round `trials.csv`, LAB-112 backfill) shows the paired Δ swinging
   *within a single training seed* across rounds — seed-0 vision-DAgger ran **−1 → −28 → −12 → +8

@@ -16,7 +16,7 @@ Each of these was a real experiment with committed artifacts, not a plan that wa
 |---|---|---|
 | **Plain behavioral cloning (F/T)** | GRU over command + force/torque history, cloning the analytical expert's per-step Δ | **Inert.** 5 training seeds, mean Δ −4.4 pp, spread 27 pp — that spread *is* the noise floor |
 | **Vision conditioning** | Wrist-camera CNN early-fused into the same GRU; the M7 premise | **Inert.** Mean Δ −8.3 pp over 3 seeds. Vision never beat F/T-only at any operating point |
-| **DAgger (on-policy relabel)** | Let the policy act, query the expert at the visited states, aggregate, retrain — the textbook fix for BC covariate shift | **Inert on success.** F/T +2.0 pp, vision +1.3 pp, both inside the floor. It *does* appear to tighten the seed distribution — confounded with batch size in the F/T arm (§5.5) |
+| **DAgger (on-policy relabel)** | Let the policy act, query the expert at the visited states, aggregate, retrain — the textbook fix for BC covariate shift | **Inert on success.** F/T +2.0 pp, vision +1.3 pp, both inside the floor. It *does* collapse the training-seed spread (27 pp → 2 pp), confirmed against a batch-size control — see below |
 | **Action-rate penalty** | Squared first-difference of the predicted Δ in the BC loss, to remove the residual's jerk cost | **Worked — on the wrong axis.** Jerk drops to human level (vision+DAgger 48.0 vs human 45.6) at no success cost. Smoothness is solved; success is untouched |
 | **A better analytical expert** | Five knobs swept on the expert that generates the training labels — the ceiling the clone imitates toward | **Refuted.** All five inert; the expert ceiling sits at ~73%, and the binding constraint proved to be operator-side pre-contact force-abort, not expert quality |
 | **Scaling to 100 paired eval seeds** | More statistical power on the headline comparison | **Done — it *is* the measurement.** More eval seeds tighten the interval around a null; they do not move it |
@@ -28,12 +28,18 @@ dashboard explain *why* per-step imitation cannot lift closed-loop seating on th
 identifiability ceiling, a far-field gating floor, and an anti-correlation between offline BC
 fidelity and closed-loop success.
 
-## The one outstanding measurement
+## The one thing DAgger does buy
 
-**F/T plain retrained at batch size 2.** The plain-vs-DAgger comparison in the F/T arm differs in
-*two* variables (batch 16 vs batch 2), so the "DAgger tightens the seed distribution" observation
-cannot currently be attributed to DAgger alone. This does not touch the headline null — both arms
-sit inside the floor either way — but it is the difference between a claim and an artifact.
+DAgger does not lift success, but it **collapses the seed spread** — F/T goes from a 27 pp range
+across training seeds to 2 pp, with all five seeds non-negative. When first observed this was
+confounded (plain trained at batch 16, DAgger at batch 2), so it was tested: retraining F/T plain
+at batch 2 with every other knob held gives a **31 pp** spread — slightly *wider* than at batch 16,
+with a near-identical center. Batch size moves neither. The tightening is DAgger's.
+
+That is worth knowing for any follow-on work. It means on-policy relabelling makes this recipe
+*reliable* without making it *better*: the outcome stops depending on the training seed, and
+settles on a value inside the noise floor. A method that removes variance without moving the mean
+is telling you the mean is the wall.
 
 ## What might actually work
 
