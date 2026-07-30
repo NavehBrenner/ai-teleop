@@ -24,6 +24,15 @@ For *what the experiments found*, see the
 
 ## 0. Prerequisites — a corpus
 
+> **A committed corpus is metadata only — the first `train` on it regenerates the episodes,
+> and that takes ~20 minutes for 200 episodes with no progress bar.** `data/dataset_*/`
+> ships `metadata.json` (a few KB) and no `.npz`; the trajectories are *regenerable* from
+> the recorded config rather than stored, which is why the repo is small. So
+> `kvn train data/dataset_10` first logs `Missing 200 episodes. Regenerating from
+> metadata...` and then a long wall of scene logs before a single training step runs.
+> It is working. Generate the corpus explicitly first if you'd rather see it as its own
+> step.
+
 Training reads a behavioral-cloning corpus (an M4 dataset dir holding `metadata.json` + episode
 `.npz` files). Generate one, or point at an existing `data/dataset_*`:
 
@@ -197,17 +206,18 @@ table is the *operational* view.
 
 | Run(s) | Seed · commit | What it is | Status |
 |---|---|---|---|
-| `lab101_ft_ar0_ds10` | 0 · `4137060` | headline recipe, GPU repro (ar0) → −4 pp | **committed** under `docs/results/phase-1/checkpoints/` |
+| `lab101_ft_ar0_ds10` | 0 · `4137060` | F/T recipe, GPU repro (ar0) → −4 pp | **committed** under `docs/results/checkpoints/legacy/` |
 | `lab101_ft_ar100_ds10` | 0 · `e899914` | ↑ + action-rate ×100 → −9 pp | **committed** (same reason) |
-| `lab114_seed{0..4}` | 0–4 · `07629ed` | the recipe's spread (the 18 pp floor) | regenerable (post-G1 sha) |
+| `lab114_seed{0..4}` | 0–4 · `07629ed` | the recipe's spread on `dataset_10` (18 pp) | **committed** under `docs/results/checkpoints/legacy/` |
 | `lab114_ds9_seed{0..3}` | 0–3 · `9b9e2d1`+ | H-B corpus arm — **byte-identical to `lab114_seed{0..3}`** | proves `dataset_9`==`dataset_10` on disk (dashboard §2.1) |
 | `lab114_cpu_seed0` | 0 · `0fd28d0` | H-C device arm (CPU) | proves device is a rounding-level perturbation |
 
-The two `lab101_*` checkpoints are committed because they back published numbers and are
-**pre-G1 (unseeded) — no command reproduces them**; retention policy in
-[`docs/results/phase-1/checkpoints/README.md`](../results/phase-1/checkpoints/README.md). The
-2026-07-07 headline checkpoint is **gone** (gitignored, never committed — finding H-8), which is
-why its 70.0% can no longer be arbitrated.
+Everything above is committed under
+[`docs/results/checkpoints/legacy/`](../results/checkpoints/) alongside the official-run
+families — see that directory's README. The `lab101_*` and `lab114_*` runs predate seeded
+training, so **no command reproduces them**; the committed copy is the only copy. The
+2026-07-07 run's checkpoint was never committed and is **gone**, which is why its result could
+not be arbitrated and is no longer quoted anywhere.
 
 ---
 
