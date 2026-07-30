@@ -22,6 +22,7 @@ Course project for *Workshop in Autonomous Systems Simulation* (OpenU course 209
 - **[docs/guides/architecture-tour.md](./docs/guides/architecture-tour.md)** — a guided walk through the code in the order the data flows: operator input → the assistance seam → sim → the episode loop → corpus → policy → evaluation. Start here to find your way around `src/`.
 - **[docs/guides/policy-guide.md](./docs/guides/policy-guide.md)** — how to train a policy, deploy one in an episode, and run a paired ablation, as three runnable recipes, plus an inventory of every checkpoint in `outputs/policy/runs/`.
 - **[docs/results/kpi-dashboard.md](./docs/results/kpi-dashboard.md)** — the consolidated M5→M7 experiment ledger: every training and eval run, its config, its measured result, and why it did or didn't work, reconstructed from artifacts.
+- **[docs/results/checkpoints/](./docs/results/checkpoints/)** — every trained policy behind a number in the dashboard, committed so you can run one: `kvn episode --policy tf --checkpoint docs/results/checkpoints/ft/bc/seed_0/checkpoint.pt`.
 - **[docs/results/further-exploration.md](./docs/results/further-exploration.md)** — every lever that was tried and what it measured, and the candidates the mechanism findings predict could still move the number.
 - **[docs/specs/milestones.md](./docs/specs/milestones.md)** — the M1–M9 plan and per-milestone status; each milestone has its own spec alongside it in [docs/specs/](./docs/specs/).
 
