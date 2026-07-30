@@ -34,7 +34,7 @@ in a vertical wall carrying distractor holes, on a Franka Emika Panda in MuJoCo.
 
 | # | Requirement | Where it is realized |
 |---|---|---|
-| F1 | A human operator issues coarse 6-DoF pose commands to the end-effector | `input/vision_input.py` + [stereohand](https://github.com/NavehBrenner/stereohand) |
+| F1 | A human operator issues coarse pose commands to the end-effector — **position by default**, with 6-DoF orientation mirroring available behind `--orientation` | `input/vision_input.py` + [stereohand](https://github.com/NavehBrenner/stereohand) |
 | F2 | A reproducible synthetic operator can stand in for the human, for benchmarking | `input/scripted_noisy_human.py` |
 | F3 | An assistance layer adds a small correction on top of the operator's command, each tick | `domain/interfaces.py::AssistProvider` |
 | F4 | Assistance is swappable at runtime between *none*, *analytical expert*, and *learned policy* | `kvn episode --assist ...` |
@@ -57,8 +57,6 @@ in a vertical wall carrying distractor holes, on a Franka Emika Panda in MuJoCo.
   seed differ *only* in the assistance layer. This is what makes the paired ablation powerful.
 - **Learning is behavioral cloning**, not reinforcement learning — the project's anti-scope.
 - **Safety is structural, not statistical** (§1.4).
-- **Solo, ~10–15 h/week, 2026-05-18 → 2026-08-31.** The grading rubric weights code quality and
-  SOLID heavily, so scope was sized to leave room for clean engineering rather than a bigger demo.
 
 ### 1.4 The safety envelope
 
@@ -145,9 +143,32 @@ flowchart TB
         TRAIN -->|checkpoint.pt| RP
         OBS --> REPORT["eval/report.py<br/><i>paired ablation</i>"]
     end
+
+    classDef inputC   fill:#dbeafe,stroke:#1d4ed8,color:#0b2545
+    classDef contract fill:#fff7cd,stroke:#b45309,color:#3f2d00,stroke-width:2px
+    classDef assistC  fill:#e9d8fd,stroke:#6b21a8,color:#2e1065
+    classDef safetyC  fill:#fee2e2,stroke:#b91c1c,color:#450a0a
+    classDef controlC fill:#dcfce7,stroke:#15803d,color:#052e16
+    classDef worldC   fill:#cffafe,stroke:#0e7490,color:#083344
+    classDef dataC    fill:#f1f5f9,stroke:#475569,color:#0f172a
+
+    class SH,VI,SNH inputC
+    class IS,AP contract
+    class NA,EX,RP assistC
+    class COMB safetyC
+    class CTRL controlC
+    class ENV,SG worldC
+    class REC,TRAIN,OBS,REPORT dataC
 ```
 
-The two rounded nodes are `Protocol`s, and they are the whole architecture. The dashed
+**Reading the colours** — one colour per responsibility: **blue** = operator input · **yellow** =
+the two `Protocol` seams · **purple** = the swappable assistance implementations · **red** = the
+safety clamp · **green** = control · **cyan** = the simulated world · **grey** = the offline
+data and measurement path.
+
+The two yellow rounded nodes are the `Protocol`s, and they are the whole architecture: everything
+purple is interchangeable behind one of them. The red node sits deliberately *between* the
+assistance layer and the controller — that placement is the safety argument. The dashed
 `step_callback` arrows are the *same* hook — the loop's only extension point, and how three
 unrelated subsystems (corpus recording, KPI observation, DAgger relabelling) attach without the
 loop knowing they exist.
@@ -180,15 +201,27 @@ One episode, from `kvn episode` to the recorded result. The inner block is the 5
 sequenceDiagram
     autonumber
     actor Op as Operator
-    participant CLI as kvn episode
-    participant R as run_episode
-    participant IN as InputStrategy
-    participant AS as AssistProvider
-    participant D as domain (apply/clamp)
-    participant C as Controller
-    participant L as LockStateMachine
-    participant E as SimEnv (MuJoCo)
-    participant CB as step_callback
+    box rgb(219,234,254) Operator input
+        participant IN as InputStrategy
+    end
+    box rgb(241,245,249) Composition
+        participant CLI as kvn episode
+        participant R as run_episode
+        participant CB as step_callback
+    end
+    box rgb(233,216,253) Assistance
+        participant AS as AssistProvider
+    end
+    box rgb(254,226,226) Safety
+        participant D as domain (apply/clamp)
+    end
+    box rgb(220,252,231) Control
+        participant C as Controller
+        participant L as LockStateMachine
+    end
+    box rgb(207,250,254) World
+        participant E as SimEnv (MuJoCo)
+    end
 
     CLI->>E: build scene (scenegen → MJCF)
     CLI->>AS: construct (NoAssist | Expert | ResidualPolicy(ckpt))
@@ -231,18 +264,87 @@ sequenceDiagram
     CLI->>Op: viewer frames / KPI row / corpus episode
 ```
 
+The participant boxes carry the same colours as the architecture diagram, so a lifeline can be
+traced back to its responsibility: blue input, purple assistance, red safety, green control, cyan
+world, grey composition.
+
 Two things the chart is meant to make obvious. First, the clamp is applied **before** the
-controller — the safety bound does not depend on the policy being well-behaved. Second, the
-policy is called with the *pre-step* observation and never with privileged state: the expert may
-read the true hole pose, the student may not, which is exactly what makes the imitation problem
-non-trivial.
+controller — the red lifeline sits between the purple one and the green one, so the safety bound
+does not depend on the policy being well-behaved. Second, the policy is called with the
+*pre-step* observation and never with privileged state: the expert may read the true hole pose,
+the student may not, which is exactly what makes the imitation problem non-trivial.
+
+---
+
+### 2.5 The residual policy — the learned component
+
+The one component the rest of the architecture exists to serve. Everything below is
+`policy/model.py` and `policy/config.py`; the rationale behind each choice is §3.2–3.3 and
+[`docs/design/policy-model.md`](./design/policy-model.md).
+
+**What it maps.** Observation + current base command → a bounded correction `Delta`
+(3 position + 3 orientation as axis-angle + 1 grip force = **7 outputs**). It never sees the true
+hole pose; the analytical expert that teaches it does.
+
+**Input streams**, concatenated per tick (early fusion):
+
+| Stream | Width | Contents |
+|---|---|---|
+| Command | 9 | the operator's target pose this tick |
+| Force / torque | 6 | wrist sensor — the contact signal |
+| Proprioception | 24 | joint state + end-effector pose |
+| *Image embedding* (Phase 2 only) | *128* | *wrist camera frame through a CNN* |
+
+Phase 1 (F/T-only) is therefore a **39-wide** input and Phase 2 a **167-wide** one — the *only*
+structural difference between the two phases, which is what makes the vision ablation a clean
+comparison rather than a different model.
+
+**The network.**
+
+```
+[streams] → concat → GRU(hidden 128, 2 layers) → MLP(128 → 128 → 7) → Delta
+                       ↑ hidden state carried across ticks
+```
+
+The image encoder, when enabled, is a **MobileNetV3-Small** initialized from ImageNet weights and
+fine-tuned end-to-end (a frozen-backbone variant exists as a fallback and was measured — see
+§3.2's sibling result in the dashboard).
+
+**Why recurrent.** A single stateful GRU core, not a fixed window over recent history. The
+history matters because a *single* tick cannot distinguish "approaching the hole" from "jammed
+against the wall" — the force signal only means something in context. §3.3 covers the alternative
+and why it was rejected.
+
+**The dual train/deploy contract.** The same weights are executed two ways, and they must agree:
+
+- `forward(...)` — runs over a whole padded episode sequence for training, supervising *every*
+  tick, with truncated BPTT over 256-step windows to bound memory on multi-thousand-step episodes.
+- `step(...)` — O(1) per tick for the 500 Hz control loop: one observation in, one `Delta` and one
+  updated hidden state out.
+
+**How it is trained.** Behavioral cloning on the expert's per-step corrections: Adam at 1e-3,
+early stopping on validation loss (patience 8), `ReduceLROnPlateau`, and an optional
+**action-rate penalty** (squared first-difference of consecutive predicted Δ) that removes the
+residual's trajectory-smoothness cost. Training is seeded end-to-end — weight init and batch
+order — with a regression test asserting that two runs of one seed produce identical weights.
+That test exists because its absence is the most expensive mistake in the project (§5.3, §6).
+
+**One documented negative in the config.** `use_command_ee_delta` appends the
+command-minus-actual tracking error to the proprioception stream. It *improves* the offline
+metric and *collapses* closed-loop success — the policy amplifies a feedback feature into its own
+tracking error. It is kept, defaulted off and commented, because a negative result that is
+reachable is worth more than one that is deleted.
 
 ---
 
 ## 3. Design alternatives
 
-The booklet asks for at least two valid architectural approaches, compared and justified. The
-top-level fork is presented first, then the two substantive sub-decisions.
+The booklet asks, under *System Architecture and Key Components*, for **at least two valid
+architectural approaches**, compared, with the final choice justified by trade-offs and technical
+rationale. §3.1 is that comparison at the architectural level — where the autonomy sits, which is
+the decision the whole system's shape follows from. §3.2 and §3.3 then record the two substantive
+*component-level* decisions inside the chosen architecture, since the model is the project's
+central artifact and its shape was not obvious either.
 
 ### 3.1 The top-level fork — where does the autonomy sit?
 
@@ -329,7 +431,7 @@ rather than a hand-edited file:
 ### 4.2 The two difficulty knobs
 
 Deliberately orthogonal, which is what makes difficulty calibration principled rather than
-fiddling (calibrated in LAB-77):
+fiddling — each was calibrated against the human-only baseline before any policy was trained:
 
 | Knob | Stresses | Range used |
 |---|---|---|
@@ -391,8 +493,8 @@ is precisely why it is primary.
 
 The project learned this the expensive way. Training was initially unseeded: weight init and
 batch shuffling came from OS entropy, so *two runs of the same command produced different
-models*, while the run folder recorded a seed and a commit and therefore looked pinned
-(LAB-114). Re-running one recipe across training seeds produced a **20–27 pp spread in success
+models*, while the run folder recorded a seed and a commit and therefore looked pinned.
+Re-running one recipe across training seeds produced a **20–27 pp spread in success
 rate** — larger than the effect any single checkpoint had appeared to show.
 
 The consequence is a standing methodological rule, and it is one of the project's more
@@ -427,7 +529,7 @@ honest accounting is part of the deliverable.
 | C1 | **A wrong policy damages the part** | Structural safety: clamp before the controller + passive compliance (§1.4) | **Held.** The guarantee is architectural and survived every negative result. |
 | C2 | **Unseeded training makes results irreproducible** | Seed every source of randomness; report distributions | **Realized, then fixed.** Cost a headline figure; produced §5.3. |
 | C3 | **Vision BC is data-hungry** — more demonstrations than F/T-only | Pretrained CNN init, fine-tuned end-to-end; frozen-encoder fallback | **Realized.** An 8 GB laptop cannot fine-tune at episode length; frozen encoder at batch 2 fits, and rendering at ~10 fps caps the corpus at ~300 episodes. Recorded as an operating-point constraint, not hidden. |
-| C4 | **The expert is a ceiling** — BC cannot exceed its teacher | Analytical expert with privileged info; expert recalibration sweeps | **Realized and bounded.** The better-expert lever was tested and refuted (LAB-108). |
+| C4 | **The expert is a ceiling** — BC cannot exceed its teacher | Analytical expert with privileged info; expert recalibration sweeps | **Realized and bounded.** The better-expert lever was tested and refuted. |
 | C5 | **Covariate shift** — BC drifts off the expert's state distribution | DAgger: on-policy rollouts relabelled by the expert | Implemented (`scripts/dagger.py`); rounds run as part of the official KPI run. |
 | C6 | **Corpus/code drift** — a config fingerprint that hashes config but not code | Code-era column in the operating-point ledger; the claim in the data schema qualified | Documented; affected corpora identified and quarantined. |
 | C7 | **Sim-only results don't transfer** | Explicit anti-scope: this is a simulation study, and says so | Accepted, stated, not papered over. |

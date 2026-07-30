@@ -19,10 +19,12 @@ Four pieces, all the deferred "still open" calibration work from
   whose cutoff rises with speed: smooth when still, responsive when moving).
 - **Grip.** The open/close scalar maps to ``Command.delta_grip_force``.
 - **Orientation.** Stereo makes the hand orientation observable, so 6-DoF
-  mirroring is usable (``track_orientation=True`` — what the stereo CLI path
-  enables). The class default stays ``False`` (round peg ⇒ roll irrelevant, and a
-  calmer translation-only baseline); when on, the held orientation follows the
-  (filtered) hand orientation.
+  mirroring is available via ``track_orientation=True`` (CLI: ``--orientation``).
+  It is **off by default** here and on the CLI path — a round peg makes roll
+  irrelevant, and translation-only is the calmer baseline. When on, the held
+  orientation follows the (filtered) hand orientation. The mapping is unit-tested
+  with synthetic readings; the 6-DoF path has not been validated in a live
+  two-camera session.
 
 Live two-camera use is manual; the deterministic math here (mapping transform,
 one-euro response, clutch/drop-out state machine) is unit-tested with synthetic
