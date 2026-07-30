@@ -31,9 +31,23 @@ Course project for *Workshop in Autonomous Systems Simulation* (OpenU course 209
 Requires [uv](https://github.com/astral-sh/uv) (Python 3.12). **After cloning, run
 the one-time setup** from this directory:
 
+> **Budget ~10 minutes and ~6 GB of disk on a cold cache.** The default install pulls the
+> full runtime stack — PyTorch and its bundled CUDA libraries are most of it — which is a
+> 2–3 GB download and a ~6 GB `.venv`. It looks like it has hung; it hasn't.
+> Only need to *read* the results? You don't need any of this — the
+> [design document](./docs/design-document.md) and
+> [KPI dashboard](./docs/results/kpi-dashboard.md) stand on their own.
+
 ```bash
 ./scripts/setup.sh          # everything needed to run the project
 ./scripts/setup.sh --dev    # the above plus dev tooling (pytest/ruff/mypy) + docs
+```
+
+On **WSL2**, the live webcam path additionally needs one system package
+(MediaPipe links against it; nothing else does):
+
+```bash
+sudo apt install libgles2
 ```
 
 On Windows (e.g. a run-only copy for the native-camera interactive viewer), use the
@@ -50,18 +64,35 @@ generation); `-D`/`--dev` adds the dev tooling and docs deliverables. Then:
 
 ```bash
 kvn                       # list every command
-kvn smoke --no-viewer     # M1 scene smoke test, headless
-kvn sim --seed 7          # generate and view a procedural wall
-kvn check                 # the full lint + typecheck + test gate
+kvn smoke --no-viewer     # scene smoke test, headless — start here
+kvn episode --headless --seed 7 --max-steps 1500      # one full episode
+kvn check                 # the full lint + typecheck + test gate (~1 min)
 ```
+
+Then run a **trained policy** — every checkpoint behind a number in the results is
+committed, so this works straight from a clean clone:
+
+```bash
+kvn episode --policy tf --headless \
+  --checkpoint docs/results/checkpoints/ft/bc/seed_0/checkpoint.pt
+```
+
+**Anything with a viewer needs a display.** `kvn sim --seed 7` and `kvn episode` without
+`--headless` open an interactive OpenGL window: they need X11 (or WSLg on WSL2), and they
+block until you close the window. Without a display they exit with
+`could not initialize GLFW`. Offscreen rendering — `kvn smoke`, the wrist camera, recording
+— works headless with no display at all.
 
 `kvn` (pronounced *"Kevin"*) is the project's command-line front door — one entry
 point for the whole workflow instead of `uv run python scripts/...`. `kvn` (or
 `kvn --help`) lists commands; `kvn <command> --help` shows a command's flags. Full
 reference: **[docs/guides/cli.md](./docs/guides/cli.md)**.
 
-> Don't want the PATH launcher? Everything also works as `uv run kvn <command>`
-> straight after `uv pip install -e ".[dev]"`.
+> Don't want the PATH launcher on your `PATH`? `uv run kvn <command>` works from the repo
+> root after setup, and `KVN_BIN_DIR=/some/dir ./scripts/setup.sh` puts the launcher
+> elsewhere. **Use `setup.sh`, not `uv pip install -e .` —** the script runs `uv sync`
+> against the committed `uv.lock`, and a bare `uv pip install` re-resolves from scratch and
+> has picked a cadquery→numba→llvmlite chain that will not build on 3.12.
 
 ## Input strategies
 
