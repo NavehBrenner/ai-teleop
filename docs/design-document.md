@@ -273,7 +273,7 @@ top-level fork is presented first, then the two substantive sub-decisions.
 step, so it cannot rescue a grossly mis-aimed approach, and its measured benefit is bounded by
 how much of the failure mass is last-millimetre error rather than gross mis-aim. That trade was
 made deliberately, and the question of whether to spend further compute lifting that ceiling is
-carried in the project's go-forward decision record (`docs/review/go-forward.md`).
+carried in [`docs/results/further-exploration.md`](./results/further-exploration.md).
 
 ### 3.2 Sub-decision — how the policy learns the operator's goal
 
@@ -392,7 +392,7 @@ is precisely why it is primary.
 The project learned this the expensive way. Training was initially unseeded: weight init and
 batch shuffling came from OS entropy, so *two runs of the same command produced different
 models*, while the run folder recorded a seed and a commit and therefore looked pinned
-(LAB-114). Re-running one recipe across training seeds produced an **18 pp spread in success
+(LAB-114). Re-running one recipe across training seeds produced a **20–27 pp spread in success
 rate** — larger than the effect any single checkpoint had appeared to show.
 
 The consequence is a standing methodological rule, and it is one of the project's more
@@ -402,10 +402,18 @@ transferable findings:
 > training seeds — mean ± range, with *n* and the noise floor printed beside it. Any single-seed
 > figure is labelled as such.
 
-Measured results are **not** reproduced here; they live in
-[`docs/results/kpi-dashboard.md`](./results/kpi-dashboard.md) (the full M5→M7 experiment ledger)
-and [`docs/results/phase-1-results.md`](./results/phase-1-results.md), which are regenerated as
-runs complete.
+**What that rule produced.** Applied to the official multi-seed run — a ~1000-episode corpus,
+all four production recipes retrained across training seeds, each evaluated on the same 100
+paired held-out seeds — the answer is a **null**: no recipe lifts closed-loop insertion success
+above the human-only baseline beyond training-seed noise (means of −4.4, +2.0, −8.3 and +1.3 pp
+against a floor of 20–27 pp). The project's standing positive results are the **bounded-force
+guarantee** (§1.4 — structural, never exceeded on any official trial) and the **mechanism
+findings** explaining why per-step imitation cannot lift closed-loop seating on this task.
+
+Per-experiment numbers are not reproduced here; they live in
+[`docs/results/kpi-dashboard.md`](./results/kpi-dashboard.md) (the full M5→M7 experiment ledger),
+with the levers already exhausted and the ones still worth trying in
+[`docs/results/further-exploration.md`](./results/further-exploration.md).
 
 ---
 
@@ -465,10 +473,11 @@ How the system is judged successful, restated as checkable conditions:
    rather than statistical.)*
 3. **The comparison is defensible.** Assist-off vs assist-on measured over paired seeds under a
    matched operator, reported as a distribution over training seeds with *n* and the noise floor
-   stated. *(The protocol is met; the sign of the effect is what the official run reports.)*
+   stated. *(Protocol met. The measured effect is a **null** — no recipe clears the noise floor;
+   see §5.3 and the note below.)*
 4. **The architecture is clean.** Input layer / controller / assistance layer separated by
    Protocols, Strategy at each seam, Dependency Inversion demonstrated by the one-argument swap.
-   *(Met — and audited: [`docs/review/code-audit.md`](./review/code-audit.md).)*
+   *(Met — and audited; the audit's findings were applied and the scaffolding retired.)*
 5. **The deliverables are complete and professional.** This document, the README, tested runnable
    code, and the self-evaluation writeup.
 
@@ -515,4 +524,4 @@ endangering the core result. That structure is why the vision negative cost the 
 | Why is each subsystem built this way? | [`docs/design/`](./design/) |
 | What was measured, in what configuration? | [`docs/results/kpi-dashboard.md`](./results/kpi-dashboard.md) |
 | What is on disk, in what format? | [`docs/reference/data-schema.md`](./reference/data-schema.md) |
-| What did the code/doc audit find? | [`docs/review/`](./review/) |
+| What was tried, and what might still work? | [`docs/results/further-exploration.md`](./results/further-exploration.md) |
