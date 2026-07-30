@@ -2,7 +2,7 @@
 
 The headline of this project is a null on **one** metric (closed-loop seating success).
 That is not the same statement as "nothing moved": the four continuous KPIs
-(``time_to_insert_s``, ``peak_contact_force``, ``contact_events``, ``jerk_integral``)
+(``time_to_insert_s``, ``peak_contact_force``, ``jerk_integral``)
 are measured on the same trials and have their own answers, and collapsing all five into
 the success rate hides them. This script prints every recipe × every metric as a
 distribution over training seeds (mean + observed range), the paired comparison against
@@ -23,6 +23,7 @@ import argparse
 import sys
 from collections.abc import Iterable, Sequence
 from pathlib import Path
+from statistics import mean
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -141,10 +142,23 @@ def p_cell(p_values: Sequence[float]) -> str:
     )
 
 
+def escape_cell(text: str) -> str:
+    """Escape pipes so a cell cannot invent a column.
+
+    ``Trajectory jerk (∫|jerk|)`` is a real metric label, and its bare pipes split the
+    header into more columns than the rows have — GitHub then renders the whole table as
+    text. Escaping at the table builder covers every caller, so no label has to remember.
+    """
+    return text.replace("|", "\\|")
+
+
 def table(header: Sequence[str], rows: Iterable[Sequence[str]]) -> str:
     """A GitHub-flavored markdown table from a header and its rows."""
-    lines = ["| " + " | ".join(header) + " |", "|" + "|".join(["---"] * len(header)) + "|"]
-    lines += ["| " + " | ".join(row) + " |" for row in rows]
+    lines = [
+        "| " + " | ".join(escape_cell(cell) for cell in header) + " |",
+        "|" + "|".join(["---"] * len(header)) + "|",
+    ]
+    lines += ["| " + " | ".join(escape_cell(cell) for cell in row) + " |" for row in rows]
     return "\n".join(lines)
 
 
@@ -338,6 +352,73 @@ def rounds_table(runs_root: Path, policy_runs_root: Path) -> str:
 # Assembly
 # ---------------------------------------------------------------------------
 
+
+SEATED_ONLY_NOTE = (
+    "> **Why this section exists.** `peak_contact_force` and `jerk_integral` are recorded on "
+    "*every* trial, seated or not, so their means above mix two populations: the runs that "
+    "inserted and the runs that ran out of budget or tripped the force cap. A treatment that "
+    "fails differently — say, by loading harder against the wall before giving up — would move "
+    "the all-trials mean without changing anything about how it behaves when it succeeds. "
+    "Restricting to trials where **both** arms seated the same wall separates the two. "
+    "`time_to_insert_s` is seated-only by definition and appears here for completeness."
+)
+
+
+def seated_only_tables(recipes: Sequence[Recipe]) -> list[tuple[str, str]]:
+    """Each always-on KPI over all trials, then over the both-arms-seated subset.
+
+    The subset is the same pairing used everywhere else — matched eval wall, both arms
+    seated — so the two columns differ only in which trials they admit, never in how the
+    numbers are computed.
+    """
+    tables: list[tuple[str, str]] = []
+    for metric in METRICS:
+        if metric.key == SUCCESS_METRIC.key or metric.success_only:
+            continue
+        header = [
+            "Recipe",
+            "all trials: baseline",
+            "all trials: treatment",
+            "all trials: Δ",
+            "seated-only: baseline",
+            "seated-only: treatment",
+            "seated-only: Δ",
+            "n seated pairs",
+        ]
+        rows: list[list[str]] = []
+        for recipe in recipes:
+            all_base, all_treat, seat_base, seat_treat, pairs = [], [], [], [], 0
+            for point in recipe.points:
+                by_seed = {t.seed: t for t in point.baseline_trials}
+                for treatment in point.treatment_trials:
+                    baseline = by_seed.get(treatment.seed)
+                    if baseline is None:
+                        continue
+                    base_value = getattr(baseline, metric.key)
+                    treat_value = getattr(treatment, metric.key)
+                    all_base.append(base_value)
+                    all_treat.append(treat_value)
+                    if baseline.success and treatment.success:
+                        seat_base.append(base_value)
+                        seat_treat.append(treat_value)
+                        pairs += 1
+            if not all_base:
+                continue
+            rows.append([
+                recipe.label,
+                f"{mean(all_base):.2f}",
+                f"{mean(all_treat):.2f}",
+                f"{mean(all_treat) - mean(all_base):+.2f}",
+                f"{mean(seat_base):.2f}" if seat_base else "—",
+                f"{mean(seat_treat):.2f}" if seat_treat else "—",
+                f"{mean(seat_treat) - mean(seat_base):+.2f}" if seat_base else "—",
+                str(pairs),
+            ])
+        if rows:
+            tables.append((f"{metric.axis_label} — {metric.direction_note}", table(header, rows)))
+    return tables
+
+
 SURVIVORSHIP_NOTE = (
     "> **For `time_to_insert_s`, read the paired Δ column — not the difference between the "
     "two mean columns. They can disagree in sign.** Each arm's mean is taken over *its own* "
@@ -376,8 +457,8 @@ def build_markdown(recipes: dict[str, Recipe], runs_root: Path, policy_runs_root
         "`contact_events` counts rising edges of the contact force past its floor "
         "(hysteresis-debounced, `eval/observer.py`). At this operating point it is **1 on "
         "every trial of every arm, including `human_only`** — the approach makes one "
-        "sustained contact and stays in it. It is reported for completeness; it separates "
-        "nothing here, and its flat rows are a property of the task, not a bug.",
+        "sustained contact and stays in it. It is therefore recorded but **not reported**; "
+        "re-add it to `CONTINUOUS_KPIS` if the operating point changes.",
         "",
         "## 1. Every metric, every recipe",
         "",
@@ -399,9 +480,13 @@ def build_markdown(recipes: dict[str, Recipe], runs_root: Path, policy_runs_root
     for title, body in per_seed_tables(ordered):
         parts += ["", f"### {title}", "", body]
 
+    parts += ["", "## 5. All trials vs seated-only, for the always-on KPIs", "", SEATED_ONLY_NOTE]
+    for title, body in seated_only_tables(ordered):
+        parts += ["", f"### {title}", "", body]
+
     parts += [
         "",
-        "## 5. DAgger across rounds (vision only)",
+        "## 6. DAgger across rounds (vision only)",
         "",
         FT_DAGGER_ROUNDS_NOTE,
         "",

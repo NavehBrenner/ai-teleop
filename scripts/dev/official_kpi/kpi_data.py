@@ -28,6 +28,7 @@ import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from statistics import stdev
 
 # `aggregate.py` owns the recipe → eval-directory mapping; importing it keeps one source
 # of truth for the globs. Sibling script, not an installed module, hence the path import
@@ -164,6 +165,7 @@ class EvalPoint:
     treatment: ConfigSummary
     paired: PairedComparison
     treatment_trials: tuple[TrialKPIs, ...]
+    baseline_trials: tuple[TrialKPIs, ...]
 
     @property
     def name(self) -> str:
@@ -202,6 +204,7 @@ def load_eval_point(directory: Path, treatment_config: str) -> EvalPoint | None:
             treatment_label=treatment_config,
         ),
         treatment_trials=tuple(treatment_trials),
+        baseline_trials=tuple(baseline_trials),
     )
 
 
@@ -274,6 +277,16 @@ class Spread:
     def width(self) -> float:
         """Observed range — how far two runs of the *same* recipe landed apart."""
         return self.maximum - self.minimum
+
+    @property
+    def deviation(self) -> float:
+        """Sample standard deviation over the training seeds; 0.0 for a single seed.
+
+        Drawn as the box height in the KPI figures. Sample (``ddof=1``) rather than
+        population: these seeds are a sample of the recipe's possible draws, not the
+        whole of it.
+        """
+        return stdev(self.values) if len(self.values) > 1 else 0.0
 
     @property
     def min_count(self) -> int:

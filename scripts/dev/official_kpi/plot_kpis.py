@@ -28,6 +28,7 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Sequence
+from math import ceil, sqrt
 from pathlib import Path
 
 import matplotlib
@@ -113,17 +114,28 @@ def apply_plain_style() -> None:
     })
 
 
-def whiskers(spreads: Sequence[Spread]) -> list[list[float]]:
-    """``yerr`` for :meth:`Axes.errorbar` — distance from the mean down to the minimum
-    and up to the maximum, i.e. the observed range drawn honestly rather than symmetrised.
+def box_stats(spreads: Sequence[Spread]) -> list[dict[str, float | list[float]]]:
+    """``Axes.bxp`` stat dicts drawn from the seed distribution rather than from quartiles.
 
-    Clamped at zero only to absorb float error: a spread whose seeds are all identical
-    (``human_only``, which uses no checkpoint) can compute a mean a machine epsilon below
-    its own minimum, and ``errorbar`` rejects a negative ``yerr``.
+    With three to five training seeds a quartile box says almost nothing, so the box is
+    redefined and the caption says so: the centre line is the **mean**, the box spans
+    **± one sample standard deviation**, and the whiskers reach the **observed minimum
+    and maximum**. Nothing is inferred — every edge is a statistic of the seeds actually
+    run.
+
+    A single-seed arm (or one whose seeds are identical, like ``human_only``) has zero
+    deviation, so its box collapses to the centre line, which is the honest picture.
     """
     return [
-        [max(0.0, spread.mean - spread.minimum) for spread in spreads],
-        [max(0.0, spread.maximum - spread.mean) for spread in spreads],
+        {
+            "med": spread.mean,
+            "q1": spread.mean - spread.deviation,
+            "q3": spread.mean + spread.deviation,
+            "whislo": spread.minimum,
+            "whishi": spread.maximum,
+            "fliers": [],
+        }
+        for spread in spreads
     ]
 
 
@@ -136,12 +148,12 @@ def draw_intervals(
     color: str = MARKER_COLOR,
     show_seeds: bool = True,
 ) -> None:
-    """Mean marker + min/max whiskers at each x position, with the raw seeds beside them.
+    """A box per recipe — mean line, ±1 SD box, min/max whiskers — with the raw seeds beside it.
 
-    The individual seeds sit a fixed step to the left of the interval rather than on it:
-    a seed that happens to equal the mean, the minimum or the maximum would otherwise
-    vanish under the marker, and the count of dots is what tells the reader how thin the
-    distribution behind a mean actually is.
+    The individual seeds sit a fixed step to the left of the box rather than inside it: a
+    seed that happens to equal the mean or an extreme would otherwise vanish under the
+    drawing, and the count of dots is what tells the reader how thin the distribution
+    behind a box actually is.
     """
     if show_seeds:
         for position, spread in zip(positions, spreads, strict=True):
@@ -155,21 +167,27 @@ def draw_intervals(
                 alpha=0.9,
                 zorder=2,
             )
-    axes.errorbar(
-        list(positions),
-        [spread.mean for spread in spreads],
-        yerr=whiskers(spreads),
-        fmt="s",
-        markersize=7,
-        color=color,
-        ecolor=color,
-        elinewidth=1.6,
-        capsize=7,
-        capthick=1.6,
-        linestyle="none",
-        label=label,
+    rendered = axes.bxp(
+        box_stats(spreads),
+        positions=list(positions),
+        widths=0.34,
+        showfliers=False,
+        patch_artist=True,
         zorder=3,
     )
+    for patch in rendered["boxes"]:
+        patch.set_facecolor(color)
+        patch.set_alpha(0.30)
+        patch.set_edgecolor(color)
+        patch.set_linewidth(1.4)
+    for line in rendered["medians"]:
+        line.set_color(color)
+        line.set_linewidth(2.2)
+    for line in (*rendered["whiskers"], *rendered["caps"]):
+        line.set_color(color)
+        line.set_linewidth(1.5)
+    if label:  # one proxy handle so the legend describes the box, not its parts
+        axes.plot([], [], color=color, linewidth=2.2, label=label)
 
 
 def annotate_counts(axes: Axes, positions: Sequence[float], spreads: Sequence[Spread]) -> None:
@@ -307,12 +325,20 @@ def plot_success_rate_spread(recipes: Sequence[Recipe], path: Path) -> Path:
 # ---------------------------------------------------------------------------
 
 
-def _metric_grid(figsize: tuple[float, float]) -> tuple[Figure, list[Axes], Axes]:
-    """A 2×3 grid for the five metrics; the sixth cell is emptied to hold the legend."""
-    figure, grid = plt.subplots(2, 3, figsize=figsize)
+def _metric_grid(figsize: tuple[float, float]) -> tuple[Figure, list[Axes], Axes | None]:
+    """A grid sized to the reported metrics, squarest first — 2×2 for four.
+
+    Derived from ``len(METRICS)`` rather than hardcoded: dropping a KPI used to leave a
+    blank cell in a fixed 2×3. Any spare cell is switched off and returned to hold a
+    legend; with an exact fit there is none, and the caller puts the legend on the figure.
+    """
+    columns = ceil(sqrt(len(METRICS)))
+    rows = ceil(len(METRICS) / columns)
+    figure, grid = plt.subplots(rows, columns, figsize=figsize, squeeze=False)
     flat = list(grid.ravel())
-    spare = flat[len(METRICS)]
-    spare.set_axis_off()
+    for axes in flat[len(METRICS) :]:
+        axes.set_axis_off()
+    spare = flat[len(METRICS)] if len(flat) > len(METRICS) else None
     return figure, flat, spare
 
 
@@ -339,8 +365,12 @@ def draw_baseline(axes: Axes, level: float, *, digits: int = 2) -> None:
     )
 
 
-def interval_legend(axes: Axes, *, extra_baseline: bool = True) -> None:
-    """The shared key for every interval chart, drawn into an otherwise empty cell."""
+def interval_legend(axes: Axes | None, figure: Figure, *, extra_baseline: bool = True) -> None:
+    """The shared key for every box chart.
+
+    Drawn into a spare grid cell when the metric count leaves one, otherwise along the
+    bottom of the figure — a 2×2 of four metrics has no cell to spare.
+    """
     handles = [
         plt.Line2D(
             [], [], marker="o", linestyle="none", color=SEED_COLOR, label="one training seed"
@@ -348,22 +378,26 @@ def interval_legend(axes: Axes, *, extra_baseline: bool = True) -> None:
         plt.Line2D(
             [],
             [],
-            marker="s",
-            linestyle="none",
             color=MARKER_COLOR,
-            label="mean over training seeds\n(whiskers: lowest–highest seed)",
+            linewidth=2.2,
+            label="mean (line) ± 1 SD (box)\nwhiskers: lowest–highest seed",
         ),
     ]
     if extra_baseline:
         handles.append(
             plt.Line2D([], [], linestyle="--", color=BASELINE_COLOR, label="human_only baseline")
         )
-    axes.legend(handles=handles, loc="center", frameon=False, fontsize=11)
+    if axes is not None:
+        axes.legend(handles=handles, loc="center", frameon=False, fontsize=11)
+    else:
+        figure.legend(
+            handles=handles, loc="lower center", ncols=len(handles), frameon=False, fontsize=11
+        )
 
 
 def plot_kpi_spread_by_recipe(recipes: Sequence[Recipe], path: Path) -> Path:
     """One interval chart per metric: recipe means with min/max over training seeds."""
-    figure, panels, spare = _metric_grid((15.0, 8.6))
+    figure, panels, spare = _metric_grid((11.5, 9.0))
     for axes, metric in zip(panels, METRICS, strict=False):
         pairs = [(r, treatment_spread(r, metric)) for r in recipes]
         usable = [(r, s) for r, s in pairs if s is not None]
@@ -397,13 +431,15 @@ def plot_kpi_spread_by_recipe(recipes: Sequence[Recipe], path: Path) -> Path:
         axes.set_title(f"{metric.label} ({metric.direction_note})")
         axes.grid(True, axis="y", alpha=0.5)
         axes.set_axisbelow(True)
-    interval_legend(spare)
+    interval_legend(spare, figure)
     figure.suptitle(
-        "All five KPIs per recipe — mean over training seeds, whiskers to the lowest and "
-        "highest seed",
+        "Every reported KPI per recipe — box: mean ± 1 SD over training seeds, "
+        "whiskers: lowest–highest seed",
         fontsize=14,
     )
-    figure.tight_layout(rect=(0, 0, 1, 0.96))
+    # Bottom margin reserved for the figure-level legend: a 2×2 leaves no spare cell,
+    # and without the inset the legend lands on the lower row's tick labels.
+    figure.tight_layout(rect=(0, 0.07, 1, 0.95))
     return finish(figure, path)
 
 
@@ -444,15 +480,14 @@ def plot_dagger_vs_plain(recipes: dict[str, Recipe], path: Path) -> Path:
             positions: list[float] = []
             labels: list[str] = []
             if baseline is not None:
-                axes.errorbar(
+                # The baseline uses no checkpoint, so it is one number repeated across
+                # every eval — a marker, with no box or whisker to draw.
+                axes.plot(
                     [0.0],
                     [baseline.mean],
-                    yerr=whiskers([baseline]),
-                    fmt="D",
+                    marker="D",
                     markersize=8,
                     color=BASELINE_COLOR,
-                    ecolor=BASELINE_COLOR,
-                    capsize=7,
                     linestyle="none",
                     zorder=3,
                 )
@@ -545,7 +580,7 @@ def plot_dagger_rounds(runs_root: Path, policy_runs_root: Path, path: Path) -> P
         log.warning("no vision DAgger round evals found — skipping the round figure")
         return None
     seeds = sorted({entry.training_seed for entry in rounds})
-    figure, panels, spare = _metric_grid((15.0, 8.6))
+    figure, panels, spare = _metric_grid((11.5, 9.0))
     for axes, metric in zip(panels, METRICS, strict=False):
         drawn: list[float] = []
         for seed in seeds:
@@ -585,22 +620,30 @@ def plot_dagger_rounds(runs_root: Path, policy_runs_root: Path, path: Path) -> P
         axes.grid(True, alpha=0.5)
         axes.set_axisbelow(True)
     handles, labels = panels[0].get_legend_handles_labels()
-    spare.legend(
-        handles=[
-            *handles,
-            plt.Line2D([], [], linestyle="--", color=BASELINE_COLOR, label="human_only baseline"),
-        ],
-        labels=[*labels, "human_only baseline"],
-        loc="center",
-        frameon=False,
-        fontsize=11,
-    )
+    round_handles = [
+        *handles,
+        plt.Line2D([], [], linestyle="--", color=BASELINE_COLOR, label="human_only baseline"),
+    ]
+    round_labels = [*labels, "human_only baseline"]
+    if spare is not None:
+        spare.legend(
+            handles=round_handles, labels=round_labels, loc="center", frameon=False, fontsize=11
+        )
+    else:
+        figure.legend(
+            handles=round_handles,
+            labels=round_labels,
+            loc="lower center",
+            ncols=min(4, len(round_handles)),
+            frameon=False,
+            fontsize=11,
+        )
     figure.suptitle(
         "Vision DAgger across rounds — the round axis is a lottery within a single training "
         "seed (the F/T arm has no per-round eval)",
         fontsize=14,
     )
-    figure.tight_layout(rect=(0, 0, 1, 0.96))
+    figure.tight_layout(rect=(0, 0.07, 1, 0.95))
     return finish(figure, path)
 
 

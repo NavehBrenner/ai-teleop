@@ -397,6 +397,14 @@ Two things visible only per seed:
   at batch 2 gives 52.69. Part of the smoothness story previously credited to DAgger is an
   optimisation-noise effect the batch-2 control isolates.
 
+**All trials vs seated-only.** Peak force and jerk are recorded on every trial, so their means
+mix the runs that inserted with the runs that ran out of budget or tripped the force cap. Split
+by that (tables §5), peak force on the *both-arms-seated* subset is far lower than across all
+trials — **≈15 N against ≈24 N** — so the all-trials figure is driven substantially by how each
+arm fails, not by how it behaves while seating. The direction of DAgger's effect survives the
+split (FT DAgger −1.04 N all-trials, −0.59 N seated-only; Vision DAgger −0.48 N, −1.05 N), which
+is what makes it a property of the controller rather than of its failure rate.
+
 **Contact events — recorded, not reported.** Exactly **1.00** on every trial of every arm,
 `human_only` included. The metric counts hysteresis-debounced rising edges past the contact floor,
 and at this operating point the approach makes one sustained contact and stays in it, so it
