@@ -21,7 +21,7 @@ are logged and the artifact wins.
 > earlier, 5× smaller corpus gave **18 pp** over five seeds — the same order, on different data.
 >
 > The environment contributes none of it. The `human_only` arm uses no checkpoint and returns
-> **exactly 50.0%** in all sixteen official evaluations — identical walls, operator, controller
+> **exactly 50.0%** in all twenty-one official evaluations — identical walls, operator, controller
 > and budget. The spread is training randomness alone.
 >
 > That spread is this project's **measurement resolution**, and three rules follow:
@@ -37,6 +37,11 @@ are logged and the artifact wins.
 > 3. **The project's standing positive results are the bounded-force guarantee and the
 >    mechanism findings** ([§7](#7-what-still-stands)) — *not* a success-rate lift, which on the
 >    seeded measurement is not established.
+>
+> **Success is not the only KPI.** The other four — time-to-insert, peak contact force, contact
+> events, jerk — are measured on the same trials and answer separately;
+> [§5.6](#56-the-full-kpi-board--what-the-success-rate-alone-hid) reports all five per recipe,
+> and the short version is that DAgger buys *reliability and a couple of newtons*, not seating.
 >
 > **Training was unseeded before 2026-07-23** — `torch.manual_seed` was absent and `--seed`
 > reached only the train/val split, so weight init and batch order came from OS entropy while the
@@ -280,14 +285,16 @@ point. Seed families are disjoint by construction, so every Δ below is genuine 
 | **Vision plain** | 3 | 2 | 50.0% | 34–54% | **−8.3 pp** | [−16, +4] | **NOISE** |
 | **Vision DAgger** | 3 | 2 | 50.0% | 46–62% | **+1.3 pp** | [−4, +12] | **NOISE** |
 
-![paired Δ per training seed for the four production recipes, against the measured training-seed noise floor](phase-1/official_multiseed_deltas.png)
+![interval chart of paired Δ success rate per recipe: mean over training seeds with whiskers to the lowest and highest seed](phase-1/success_rate_spread.png)
 
-*The same table as a picture: one row per recipe, one dot per training seed, the diamond the
-recipe mean, the bar its observed range. The shaded bands are the noise floor **measured in this
-same run** — F/T plain over 5 seeds (27 pp) and vision plain over 3 (20 pp), each a
-one-recipe-many-seeds measurement in which nothing but the training seed changed. Every recipe
-mean falls inside them, which is the result. Regenerate with
-`uv run python scripts/dev/official_kpi/plot_seed_spread.py` (§8).*
+***Figure 1 — the headline.** Paired Δ success rate against `human_only`, one interval per
+recipe: the square is the mean over training seeds, the whiskers reach the lowest and highest
+seed, and each grey dot is one seed's own Δ. **What to conclude:** every whisker crosses Δ = 0
+except FT DAgger's, and FT DAgger's mean (+2.0 pp) sits far inside the 27–31 pp span that the
+*same* plain recipe covers when only its training seed changes. No recipe is distinguishable
+from the baseline at this measurement's resolution. The one thing that does change is the
+*width*: 27 pp and 31 pp for the plain arms, 2 pp for FT DAgger. Regenerate with
+`uv run python scripts/dev/official_kpi/plot_kpis.py` (§8).*
 
 **No recipe clears the floor.** The FT-plain row *is* the floor — it is the same
 one-recipe-many-seeds measurement as §5, and its 27 pp spread swallows every mean in the table.
@@ -318,31 +325,126 @@ Two second-order structure notes:
 - **The noise lives on *both* axes.** Re-evaluating each intermediate DAgger round on the same
   100 held-out walls (per-round `trials.csv`, LAB-112 backfill) shows the paired Δ swinging
   *within a single training seed* across rounds — seed-0 vision-DAgger ran **−1 → −28 → −12 → +8
-  → −4** over rounds 0–4, a 36 pp range with no trend. A single round's checkpoint is as much a
-  lottery draw as a single seed. Reported KPI is the **pre-committed final round**, never
-  max-over-rounds (that is the LAB-114 optimistic-selection bias re-introduced on a new axis).
-
-**Full KPI, not just success** (treatment arm, mean across seeds at es0.4):
-
-| Recipe | peak contact force | ∫\|jerk\| (h = 45.6) |
-|---|---|---|
-| FT plain | 25.8 N | 70.1 |
-| FT DAgger | 22.9 N | 85.1 |
-| Vision plain | 24.7 N | 57.2 |
-| Vision DAgger | 23.5 N | **48.0** |
-
-**Peak force stays inside the ~24 N envelope for every recipe** — the bounded-force guarantee
-(§7) holds on the official run by construction, independent of the success null. Jerk is raised
-by every treatment (the known residual-costs-smoothness cost, §6), *least*
-by Vision DAgger (48.0 vs human 45.6, effectively flat) — the `--action-rate-weight 100` penalty
-plus DAgger's on-policy smoothing nearly erase the jerk cost. So the smoothness regression is a
-solved problem at the operating point; it is the success lift that does not materialize.
+  → −4** over rounds 0–4, a 36 pp range with no trend (Figure 4). A single round's checkpoint is
+  as much a lottery draw as a single seed. Reported KPI is the **pre-committed final round**,
+  never max-over-rounds (that is the LAB-114 optimistic-selection bias re-introduced on a new
+  axis).
 
 **This is the arc's closing measurement.** It does not overturn §7 — the standing positives never
 rested on a success rate — and it converts the documented negative from "one unreproducible
 checkpoint" into a rigorous, multi-seed, fresh-corpus null. See
 [`further-exploration.md`](further-exploration.md) for what (if anything) is worth further
 compute.
+
+---
+
+## 5.6 The full KPI board — what the success rate alone hid
+
+Success is one of **five** KPIs the harness records. The other four
+(`time_to_insert_s`, `peak_contact_force`, `contact_events`, `jerk_integral`) are measured on the
+same trials of the same evals, and reporting only the headline throws them away. The complete
+board — every recipe × every metric, mean over training seeds with the observed range, the paired
+comparison against `human_only`, the paired DAgger-vs-plain comparison, and the raw per-seed
+draws — is generated into
+[`phase-1/official_kpi_tables.md`](phase-1/official_kpi_tables.md) by
+`scripts/dev/official_kpi/kpi_tables.py`. The summary:
+
+| Metric | dir. | `human_only` | FT plain | FT plain (b2) | FT DAgger | Vision plain | Vision DAgger |
+|---|---|---|---|---|---|---|---|
+| **Success rate (%)** | ↑ | 50.0 | 45.6 [31.0, 58.0] | 46.6 [29.0, 60.0] | 52.0 [51.0, 53.0] | 41.7 [34.0, 54.0] | 51.3 [46.0, 62.0] |
+| **Time to insert (s)** | ↓ | 7.83 | 7.91 [7.12, 8.42] | 7.47 [7.28, 7.79] | 7.28 [6.88, 7.47] | 7.46 [7.06, 8.05] | 7.62 [6.85, 8.02] |
+| ↳ n (seated trials) | | 50 | 31–58 | 29–60 | 51–53 | 34–54 | 46–62 |
+| **Peak contact force (N)** | ↓ | 23.97 | 25.79 [23.93, 29.02] | 24.26 [21.21, 28.80] | 22.92 [21.66, 24.07] | 24.68 [23.37, 25.58] | 23.49 [20.92, 25.18] |
+| **Contact events** | ↓ | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 | 1.00 |
+| **∫\|jerk\|** | ↓ | 45.60 | 70.10 [59.62, 95.18] | 52.69 [46.60, 61.89] | 85.12 [45.08, 231.74] | 57.25 [46.01, 78.70] | 48.03 [45.84, 50.04] |
+
+![five interval charts, one per KPI, showing each recipe's mean and min/max over training seeds against the human_only line](phase-1/kpi_spread_by_recipe.png)
+
+***Figure 2 — every KPI, every recipe.** Absolute units, the dashed red line the `human_only`
+value on the same walls. **What to conclude:** the seed spread that swallows the success rate is
+not a success-rate phenomenon — it is present in *every* continuous KPI, and in jerk it is
+larger still. Note the `n=` labels under *Time to insert*: that KPI is defined only on trials
+that seated, so its means rest on 29–62 trials, not 100.*
+
+**Time to insert — every treatment is slower, and the marginal means say the opposite.**
+The paired Δ (both arms seated the same wall) is positive for all five recipes: **+0.14 s to
++0.27 s** on a 7.83 s baseline. Yet three recipes show a *lower* marginal mean than
+`human_only` — `FT plain (batch 2)` reads 7.47 s against 7.83 s while its paired Δ is **+0.27 s
+slower**. That gap is survivorship: an arm that seats fewer walls is seating the easier ones, and
+its mean is over a different population. Read the paired column; the marginal column is not a
+comparison.
+
+**Peak contact force — the one KPI where DAgger moves something, and it moves it the right way.**
+Plain BC *raises* peak force above the baseline (FT plain **+1.83 N** paired, per-seed p reaching
+<0.001); both DAgger arms *lower* it (FT DAgger **−1.04 N**, Vision DAgger **−0.48 N**). Compared
+directly against plain BC at matched training seed, **FT DAgger is gentler on all five seeds**
+(mean **−2.87 N**, range [−5.93, −0.37]); against the batch-2 control the mean is **−1.34 N**
+[−5.70, +0.45], so the sign is not unanimous once batch size is held. Vision: **−1.19 N**
+[−4.66, +1.82]. The direction is consistent, the magnitude is a couple of newtons, and none of
+it approaches the hard bound — the eval observer aborts a trial above **30 N**
+(`DEFAULT_FORCE_CAP`, `eval/observer.py`), so *no* arm can exceed that by construction. (The
+earlier "~24 N envelope" phrasing in this section was wrong: 23.97 N is the human baseline, not
+a bound, and FT plain's worst seed averages 29.02 N.)
+
+**Jerk — the smoothness cost is real, still positive everywhere, and the FT-DAgger number is one
+seed.** Every treatment raises ∫|jerk| above `human_only`; none lowers it. Vision DAgger is
+nearest flat (**+2.43** paired, range [+0.24, +4.44] — statistically non-zero, practically ~5%).
+Two corrections the per-seed view forces:
+
+- **FT DAgger's 85.12 mean is a single outlier.** Its five seeds are 45.08 / 52.64 / **231.74** /
+  47.96 / 48.19. Four of them sit at or below the batch-2 plain arm; one seed is 4.5× the others.
+  Quoting 85.1 as "FT DAgger's jerk" describes no checkpoint that exists.
+- **Batch size, not just DAgger, moves jerk.** FT plain at batch 16 gives 70.10; the *same recipe*
+  at batch 2 gives 52.69. Part of the smoothness story previously credited to DAgger is an
+  optimisation-noise effect the batch-2 control isolates.
+
+**Contact events — degenerate.** Exactly **1.00** on every trial of every arm, `human_only`
+included. The metric counts hysteresis-debounced rising edges past the contact floor; at this
+operating point the approach makes one sustained contact and stays in it. It discriminates
+nothing here and is reported only so its silence is on the record.
+
+### Did DAgger produce any result at all?
+
+![two rows (F/T, vision) by five columns (KPI) of interval charts comparing human_only, plain BC and DAgger](phase-1/dagger_vs_plain.png)
+
+***Figure 3 — the three arms side by side.** Rows are modality, columns are KPI; each panel puts
+`human_only` (red diamond), plain BC and DAgger on one axis, and prints the paired
+DAgger − plain delta per training seed above the data. **What to conclude:** on success, DAgger's
+interval collapses onto the baseline rather than rising above it — reliability, not lift. On peak
+force it sits below both the baseline and plain BC in both modalities. On jerk it is the tightest
+arm in vision and the widest in F/T (that one outlier seed). On time-to-insert and contact events
+it changes nothing.*
+
+The honest three-line answer to "did DAgger do anything":
+
+1. **On success — no.** +6.4 pp against FT plain and +9.7 pp against Vision plain sound large, but
+   the per-seed range is [−6, +20] and [−8, +28]; against the batch-2 control it is +5.4 pp
+   [−7, +22]. Every one of those intervals contains zero, and the *absolute* DAgger rate (52.0%,
+   51.3%) is inside the noise band around the 50.0% baseline.
+2. **On seed-to-seed variance — yes, and this is the real finding.** FT DAgger's five seeds land
+   in a **2 pp** band where the same recipe without DAgger spans 27 pp (batch 16) or 31 pp
+   (batch 2). Same corpus, same batch size, same everything but the on-policy relabeling. DAgger
+   makes the outcome *predictable* without making it *better*.
+3. **On smoothness and contact force — partly, with a caveat.** Peak force drops consistently
+   relative to plain BC; jerk drops in vision (−9.22 paired vs plain) and the batch-2 control
+   shows part of the F/T improvement is batch size, not DAgger.
+
+### DAgger across rounds
+
+![five panels, one per KPI, each plotting the metric against DAgger round with one line per training seed](phase-1/dagger_rounds_vision.png)
+
+***Figure 4 — vision DAgger, every round, every seed.** One line per training seed so the reader
+sees the round axis is noisy *within* a seed. **What to conclude:** there is no round trend to
+select on. Seed 0 runs 49 → 22 → 38 → 58 → 46 % success (paired Δ −1 → −28 → −12 → +8 → −4, a
+36 pp swing inside one training run); seed 1 ends on its best round (+12 pp, p=0.036) and seed 2
+on its worst. Peak force and jerk wander the same way. Reporting the pre-committed final round is
+what keeps this from becoming a max-over-rounds selection bias.*
+
+**The F/T DAgger arm has no per-round evaluation at all.** Its round checkpoints under
+`outputs/policy/runs/dag_ft_s*/dagger_round*/` hold weights and training history but no
+`trials.csv` — the intermediate rounds were never scored on the held-out walls, and the LAB-112
+backfill covered vision only. Nothing about how the F/T arm evolved across rounds can be claimed
+from this run; the gap is stated rather than filled.
 
 ---
 
@@ -417,18 +519,26 @@ uv run python scripts/report_results.py --trials runs/eval_lab101_band100_ar0/tr
 # The committed Phase-1 records (30-seed slice, flat-wall, seed-variance, H-C) live here:
 ls docs/results/phase-1/*.csv docs/results/phase-1/lab114/
 
-# The §5.5 official multi-seed distributions (all four recipes, over training seeds):
+# The §5.5 official multi-seed success distributions (all recipes, over training seeds):
 uv run python scripts/dev/official_kpi/aggregate.py       # reads runs/eval_official_*
 
-# The §5.5 figure — same statistics, plotted against the measured floor:
-uv run python scripts/dev/official_kpi/plot_seed_spread.py   # → docs/results/phase-1/official_multiseed_deltas.png
+# The §5.6 full-KPI board — every recipe × every metric, as markdown on stdout:
+uv run python scripts/dev/official_kpi/kpi_tables.py      # → docs/results/phase-1/official_kpi_tables.md
+
+# Figures 1–4 — the same statistics as plain matplotlib interval charts:
+uv run python scripts/dev/official_kpi/plot_kpis.py       # → docs/results/phase-1/*.png
 ```
 
-The §5.5 official-run eval sets (`runs/eval_official_*`) and per-round DAgger `trials.csv`
-(`outputs/policy/runs/dag_*_s*/dagger_round*/`) are **local artifacts, gitignored** like the rest
-of `runs/`/`outputs/` — the committed record is the §5.5 tables and figure plus `aggregate.py` /
-`plot_seed_spread.py` (both read-only over those dirs; the figure is regenerable only while they
-exist locally). The chunk
+All three read the eval CSVs through `ai_teleop.eval.report` (`load_trials` → `group_by_config` →
+`summarize_config` / `compare_paired`) and re-derive no statistic of their own;
+`scripts/dev/official_kpi/kpi_data.py` is the shared loader. Both entry points take
+`--runs-root` / `--policy-runs-root` if the eval sets live elsewhere.
+
+The §5.5/§5.6 official-run eval sets (`runs/eval_official_*`, `runs/backfill_dag_vis_s0_r*`) and
+per-round DAgger `trials.csv` (`outputs/policy/runs/dag_*_s*/dagger_round*/`) are **local
+artifacts, gitignored** like the rest of `runs/`/`outputs/` — the committed record is the tables,
+`phase-1/official_kpi_tables.md` and the four figures, plus the read-only scripts (regenerable
+only while the eval dirs still exist locally). The chunk
 scripts that produced them are `scripts/dev/official_kpi/*.sh` (self-resumable, self-timing).
 
 Training configs are each run's committed `outputs/policy/runs/<name>/metadata.json`. Post-G1
