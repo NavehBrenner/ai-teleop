@@ -113,23 +113,20 @@ benchmarking and `vision` covers the live demo, so nothing needed it.
 
 ### Stereo (vision) setup
 
-Install the extra (pulls `stereohand`, which brings its own OpenCV + MediaPipe):
-
-```bash
-uv pip install -e ".[dev,stereo-input]"
-```
+`setup.sh` already installs the `stereo-input` extra (it is in the default tier), so
+`stereohand` and its OpenCV + MediaPipe are present after setup — nothing extra to install.
 
 You need two rigidly co-mounted webcams and a one-time ChArUco stereo calibration
 (`stereo_calib.json`) — see the [stereohand](https://github.com/NavehBrenner/stereohand)
 README for the calibration walkthrough. Then:
 
 ```bash
-kvn episode --input vision --stereo-calib stereo_calib.json --left 0 --right 2
+kvn episode --input vision --stereo-calib stereo_calib.json --cameras 0 2
 ```
 
 **WSL2** — WSL's kernel has no webcam (UVC) driver, so there's no `/dev/video*`. Stream
-both cameras from Windows and pass their URLs to `--left` / `--right`, e.g.
-`--left "http://<windows-host>:8080/0" --right "http://<windows-host>:8080/1"`. The
+both cameras from Windows and pass their URLs to `--cameras`, e.g.
+`--cameras "http://<windows-host>:8080/0" "http://<windows-host>:8080/1"`. The
 Windows-side camera bridge (`stream_webcams.py`) and a full step-by-step WSL walkthrough
 live in the stereohand project.
 
