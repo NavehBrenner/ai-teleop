@@ -12,26 +12,37 @@ run's committed `metadata.json`. The reconstruction script and the exact paths a
 [§8](#8-provenance--how-to-regenerate). Where an artifact disagrees with the wiki, both values
 are logged and the artifact wins.
 
-> ## Read this first — the one hard constraint (LAB-114)
+> ## Read this first — the noise floor
 >
-> On 2026-07-23 the LAB-114 investigation established that **training in this project was
-> unseeded until that day**, and measured the consequence: a single fixed recipe, retrained
-> across five seeds, spans an **18 pp** closed-loop success range (paired Δ from −15 to +3 pp)
-> — [`../review/divergence-investigation.md`](../review/divergence-investigation.md) (and the
-> private wiki concept `training-seed-variance`).
+> **Retraining one fixed recipe, changing only the training seed, moves closed-loop success by
+> more than any treatment in this document.** Measured on the official corpus
+> ([§5](#5-the-noise-floor--how-it-was-measured)): the F/T recipe over five seeds spans **27 pp**
+> of paired Δ (−19 to +8); the vision recipe over three seeds spans **20 pp** (−16 to +4). An
+> earlier, 5× smaller corpus gave **18 pp** over five seeds — the same order, on different data.
 >
-> That 18 pp is the **noise floor under every single-checkpoint number in this document.**
-> Three rules follow, and this dashboard obeys them:
+> The environment contributes none of it. The `human_only` arm uses no checkpoint and returns
+> **exactly 50.0%** in all sixteen official evaluations — identical walls, operator, controller
+> and budget. The spread is training randomness alone.
 >
-> 1. **Every closed-loop rate below carries its own `n`.** A margin smaller than ~18 pp *plus
->    the eval-sampling interval at that n* (±20 pp at n=20; ±10 pp at n=100) is a **draw, not a
->    finding** — flagged `NOISE` in the verdict column, never `WIN`/`REGRESSION`.
-> 2. **The Phase-1 result is a distribution, never a standing +33 pp.** The 2026-07-07 headline
->    (36.7% → 70.0%) does not reproduce; its checkpoint and its training corpus are both gone
->    (provenance *unknown*, not disputed). See [§5](#5-the-phase-1-headline-as-a-distribution).
+> That spread is this project's **measurement resolution**, and three rules follow:
+>
+> 1. **A single checkpoint is not a measurement.** Every closed-loop claim is reported as a
+>    distribution over ≥3 training seeds, each carrying its `n`. A margin smaller than the seed
+>    spread *plus* the eval-sampling interval at that n (±20 pp at n=20; ±10 pp at n=100) is a
+>    **draw, not a finding** — flagged `NOISE` in the verdict column, never `WIN`/`REGRESSION`.
+> 2. **A p-value inside one checkpoint pair says nothing about the recipe.** In the official run,
+>    F/T seed 1 reads −19 pp at **p=0.0009** and vision-DAgger seed 1 reads +12 pp at **p=0.036**
+>    — significant results pointing in *opposite* directions inside the same recipe families.
+>    Significance there describes those two arms, not the recipe that produced them.
 > 3. **The project's standing positive results are the bounded-force guarantee and the
 >    mechanism findings** ([§7](#7-what-still-stands)) — *not* a success-rate lift, which on the
->    honest measurement is not established.
+>    seeded measurement is not established.
+>
+> **Training was unseeded before 2026-07-23** — `torch.manual_seed` was absent and `--seed`
+> reached only the train/val split, so weight init and batch order came from OS entropy while the
+> run folder recorded a seed and a git commit. It is seeded now, with a
+> train-twice-identical-weights test. Every pre-2026-07-23 number in this document is one
+> unrepeatable draw and is listed as **history, not evidence**.
 >
 > One more, from finding H-11: **never compare an `expert_success_rate` to a residual success
 > rate.** They are different actors, scored by different rules, at different difficulty — see
@@ -51,9 +62,11 @@ order:
 - **M7** — does adding **vision** raise the success ceiling into the free-space regime, and can
   **DAgger** or a **better expert** push past the F/T ceiling?
 
-M6 produced the one publishable positive (the Phase-1 headline). M7 is a documented negative,
-and LAB-114 later showed the M6 positive rests on an unreproducible checkpoint. Both stories
-are below with their numbers.
+**The answer to both closed-loop questions is no**, on the seeded multi-seed measurement (§5.5):
+neither the F/T residual nor the vision residual lifts closed-loop success above the human-only
+baseline beyond training-seed noise, with or without DAgger. What the arc contributes instead is
+the bounded-force guarantee and a mechanism-level account of *why* per-step imitation cannot lift
+closed-loop seating on this task (§6, §7). The numbers for both are below.
 
 ---
 
@@ -68,7 +81,7 @@ back to them.
 | Corpus | Fingerprint | Created | n_ep | Schema | `expert_success_rate` | Role |
 |---|---|---|---|---|---|---|
 | `dataset_1` | `290f1750` | 2026-06-16 | 200 | 1.0 | — | M5 first BC (`lab34_baseline`). Old geometry/schema — **not comparable** to later corpora. |
-| `dataset_9` | `54dccad9` | 2026-07-06 | 200 | 2.0 | 71.5% | The Phase-1 headline corpus. **Overwritten in place** — see caveat below. |
+| `dataset_9` | `54dccad9` | 2026-07-06 | 200 | 2.0 | 71.5% | Trained the 2026-07-07 M6 run. **Overwritten in place** — see caveat below. |
 | `dataset_10` | `54dccad9` | 2026-07-22 | 200 | 2.0 | 71.5% | Regeneration of `dataset_9`'s config; trains every LAB-101/114 run. |
 | `dataset_vision` | `de0eeb3b` | 2026-07-07 | 300 | 2.0 | 72.3% | All M6/M7 F/T + vision ablations (`ftonly_*`, `vision_*`). |
 | `dagger_ft_agg` | `de0eeb3b` base | 2026-07-10 | 340→420 | 2.0 | — | Aggregated on-policy corpus, grows per DAgger round. |
@@ -81,7 +94,7 @@ back to them.
   flipped baseline outcome, corpus baseline 22.5% → 23.0%). The original 2026-07-06 episode
   files were then **overwritten in place** by that regeneration — proven byte-for-byte by
   `scripts/dev/lab114_corpus_identity.py` — so `data/dataset_9/` now holds `dataset_10`'s
-  arrays under `dataset_9`'s stale manifest. **The corpus that trained the headline no longer
+  arrays under `dataset_9`'s stale manifest. **The corpus that trained the 2026-07-07 M6 run no longer
   exists on disk.**
 - **A "code era" column is load-bearing.** `dataset_0`/`dataset_1` (schema 1.0) already drift —
   their manifests predate `generated_walls` entering the fingerprint payload (finding C-1a).
@@ -96,8 +109,8 @@ back to them.
 | `eval_ftgate_es1p0` | 1.0 | 20 | flat-wall | 15.0% | " |
 | `eval_stageC_band04` | 0.4 | 20 | in-band | 35.0% | M7 Stage-C vision ablation (3 arms). |
 | `eval_stageC` | 1.0 | 20 | flat-wall | 15.0% | " |
-| `band_scale0.4` *(committed)* | 0.4 | 30 | in-band | **36.7%** | The 2026-07-07 headline slice. |
-| `flatwall_scale1.0` *(committed)* | 1.0 | 30 | flat-wall | 20.0% | Headline's ceiling-check control. |
+| `band_scale0.4` *(committed)* | 0.4 | 30 | in-band | **36.7%** | The 2026-07-07 M6 30-seed slice. |
+| `flatwall_scale1.0` *(committed)* | 1.0 | 30 | flat-wall | 20.0% | That run's ceiling-check control. |
 | `eval_lab101_band100*` | 0.4 | 100 | in-band | **50.0%** | LAB-101 reproduction (both ar0/ar100). |
 | `eval_lab114_*` (×10) | 0.4 | 100 | in-band | **50.0%** | The seed-variance + H-B/H-C study. |
 
@@ -108,7 +121,7 @@ The three "contradictory" human baselines quoted across old docs — **36.7 / 31
 
 - **50.0%** is the true in-band (es0.4) baseline, measured at 100 seeds, five independent times
   in LAB-114, all *exactly* 50.0% (the arm uses no checkpoint, so it is bit-stable).
-- **36.7%** is that same baseline on the **hard 30-seed slice** (seeds 0–29) the headline
+- **36.7%** is that same baseline on the **hard 30-seed slice** (seeds 0–29) the 2026-07-07 run
   happened to draw: 36.7% on 0–29 vs 55.7% on 30–99.
 - **31.0%** is the LAB-53 run at an **older step-budget era** (pre-LAB-100) — a different
   contact regime, not a different sample.
@@ -143,14 +156,14 @@ predictive but **anti-predictive across interventions** (LAB-106) — do not ran
 | `dagger_round1` | 07-10 | `dagger_ft_agg` (380) | round 1 | 0.00214 (9) | 30% | **REGRESSION** (§6) |
 | `dagger_round2` | 07-10 | `dagger_ft_agg` (420) | round 2 | 0.00194 (13) | 15% | **REGRESSION** (§6) |
 | `probe_b2` | 07-07 | `dataset_vision_probe` (10) | vision batch-2 smoke probe | 0.00702 (2) | — | fits-in-8GB probe only |
-| `lab101_ft_ar0_ds10` | 07-22 | `dataset_10` (`54dc`) | headline recipe, GPU repro, ar0 | 0.00130 (22) | **−4.0 pp** (100s) | §5 |
+| `lab101_ft_ar0_ds10` | 07-22 | `dataset_10` (`54dc`) | F/T recipe, GPU repro, ar0 | 0.00130 (22) | **−4.0 pp** (100s) | §5 |
 | `lab101_ft_ar100_ds10` | 07-22 | `dataset_10` | ↑ + action-rate ×100 | 0.00178 (13) | **−9.0 pp** (100s) | §5 |
-| `lab114_seed{0..4}` | 07-22 | `dataset_10` | headline recipe, seeds 0–4 (**seeded**) | 0.00117–0.00197 | −15…+3 pp | §5 the spread |
+| `lab114_seed{0..4}` | 07-22 | `dataset_10` | F/T recipe, seeds 0–4 (**seeded**) | 0.00117–0.00197 | −15…+3 pp | §5 the spread |
 | `lab114_ds9_seed{0..3}` | 07-22 | `dataset_9` | H-B corpus arm — **identical to `_seed`** | ≡ `lab114_seed*` | ≡ | H-B unanswerable |
 | `lab114_cpu_seed0` | 07-22 | `dataset_10` | H-C device arm, CPU | 0.00144 (21) | −1.0 pp (100s) | H-C null |
 
 **The offline-val trap, stated once.** `vision_frozen_lab82` has the *best* val loss of the
-whole arc (0.00107) and is a closed-loop non-improver; the headline recipe's own five seeds
+whole arc (0.00107) and is a closed-loop non-improver; the F/T recipe's own five seeds
 span 18 pp of success at val losses 0.00117–0.00197. **A lower validation loss did not buy
 closed-loop success across these interventions** — the central M7 mechanism (LAB-106,
 [§7](#7-what-still-stands)).
@@ -160,14 +173,13 @@ closed-loop success across these interventions** — the central M7 mechanism (L
 ## 4. Closed-loop experiment ledger
 
 Reconstructed from the per-trial CSVs via `compare_paired`. Δ is paired (McNemar exact p);
-`b/c` is discordant wins/losses. **Verdict uses the noise floor:** `NOISE` = |Δ| within
-~18 pp training spread + the eval interval at that n.
+`b/c` is discordant wins/losses. **Verdict uses the noise floor (§5):** `NOISE` = |Δ| within the
+20–27 pp training-seed spread + the eval interval at that n.
 
 | Eval set | Op. point | Arm | Success | Paired Δ (n, p) | Verdict |
 |---|---|---|---|---|---|
-| `band_scale0.4` | es0.4, 30s, `dataset_9` | residual | **70.0%** vs 36.7% | **+33.3 pp** (30, p=0.006) | **historical, unreproducible** — §5 |
 | `flatwall_scale1.0` | es1.0, 30s | residual | 20.0% vs 20.0% | +0.0 pp (30, p=1.0) | flat-wall ceiling control (expected) |
-| `runs/eval/` (LAB-53) | es0.4, 100s, old budget | residual | 43.0% vs 31.0% | +12.0 pp (100, p=0.043) | **NOISE** — inside 18 pp; a re-run, not a first measurement (H-7) |
+| `runs/eval/` (LAB-53) | es0.4, 100s, old budget | residual | 43.0% vs 31.0% | +12.0 pp (100, p=0.043) | **NOISE** — inside the floor; unseeded training (H-7) |
 | `eval_ftgate_es0p4` | es0.4, 20s | ar100 (`residual`) | 40.0% vs 35.0% | +5.0 pp (20, p=1.0) | **NOISE** |
 | `eval_ftgate_es0p4` | es0.4, 20s | `command_ee_delta` (`ftonly`) | **10.0%** vs 35.0% | −25.0 pp (20, p=0.125) | **REGRESSION** (mechanism, §6) |
 | `eval_ftgate_es1p0` | es1.0, 20s | ar100 / gate | 20% / 15% vs 15% | ≤+5 pp (20, p=1.0) | **NOISE** (flat wall) |
@@ -188,89 +200,105 @@ the parallel rollout-success decline (0.325 → 0.25) are the real signal (§6).
 
 ---
 
-## 5. The Phase-1 headline, as a distribution
+## 5. The noise floor — how it was measured
 
-The M6 result was published (2026-07-07) as **human 36.7% → residual 70.0%, +33.3 pp**
-(McNemar p=0.006, 30 seeds, es0.4). It is kept in the ledger as a historical point because its
-records are committed — **not because it stands.**
+Every comparison in this document is a difference between two success rates. Before any
+difference can mean anything, one number has to be established: **how far apart can two runs of
+the *same* recipe land?** That is the floor, and it is measured, not assumed.
 
-**It does not reproduce.** Two GPU retrains of the same recipe on `dataset_10`, each at 100
-paired seeds:
+**The design.** Fix a recipe — same corpus, same hyperparameters, same everything. Train it N
+times, varying only the **training seed**, which controls weight initialization and batch
+shuffling order. Evaluate every resulting checkpoint on the **same** 100 paired held-out eval
+seeds against `human_only`. Any spread in the outcome is attributable to training randomness and
+nothing else.
 
-| Run | `human_only` | `residual` | Paired Δ | p | jerk (h→r) |
-|---|---|---|---|---|---|
-| published 07-07 (CPU, `dataset_9`, ep22) | 36.7% | **70.0%** | **+33.3 pp** | 0.006 | 31.1 → 149.1 |
-| `lab101_ft_ar0_ds10` (GPU, ep22) | 50.0% | 46.0% | **−4.0 pp** | 0.557 | 45.6 → 153.6 |
-| `lab101_ft_ar100_ds10` (GPU, ep13) | 50.0% | 41.0% | **−9.0 pp** | 0.136 | 45.6 → **85.7** |
+**On the official corpus** (`dataset_official_ft` / `_vision`, 1000 episodes, es0.4, 100 paired
+eval seeds — the same data every production recipe was trained on):
 
-**The environment is exonerated:** `human_only` uses no checkpoint and scores 36.7%
-*seed-for-seed* on all three runs' shared 30 seeds. The only variable is the checkpoint. And
-the checkpoint was an unseeded, unrepeatable draw (root cause H-10, fixed in LAB-114).
-
-**The recipe's true behavior is the spread**, measured five seeded ways
-(`docs/results/phase-1/lab114/`):
-
-| train seed | `val` | residual | paired Δ | on the 30 headline seeds |
+| Recipe | train seed | treatment success | paired Δ | p |
 |---|---|---|---|---|
-| 0 | 0.00144 | 48.0% | −2.0 pp | 53.3% |
-| 1 | 0.00170 | 47.0% | −3.0 pp | 46.7% |
-| 2 | 0.00182 | **35.0%** | **−15.0 pp** (p=0.008) | 26.7% |
-| 3 | 0.00197 | 47.0% | −3.0 pp | 46.7% |
-| 4 | 0.00117 | 53.0% | +3.0 pp | 53.3% |
-| **mean** | | **46.0%** | **−4.0 pp** | span 26.7–53.3% |
+| F/T | 0 | 47.0% | −3.0 pp | 0.711 |
+| F/T | 1 | **31.0%** | **−19.0 pp** | **0.0009** |
+| F/T | 2 | 58.0% | +8.0 pp | 0.115 |
+| F/T | 3 | 47.0% | −3.0 pp | 0.678 |
+| F/T | 4 | 45.0% | −5.0 pp | 0.458 |
+| **F/T spread** | 5 seeds | 31–58% | **27 pp** [−19, +8] | |
+| vision | 0 | 37.0% | −13.0 pp | 0.041 |
+| vision | 1 | 34.0% | −16.0 pp | 0.009 |
+| vision | 2 | 54.0% | +4.0 pp | 0.503 |
+| **vision spread** | 3 seeds | 34–54% | **20 pp** [−16, +4] | |
 
-**Mean −4 pp, range [−15, +3], spread 18 pp.** The headline's 70.0% sits **16.7 pp above the
-best of these five** on its own scenarios — so seed variance (H-A) explains why *no
-single-checkpoint claim is safe* but does **not** reach the headline. The other two suspects
-were tested: **corpus drift (H-B) is unanswerable** (the 2026-07-06 corpus was overwritten;
-today's drift is 1 flipped outcome in 200) and **device (H-C) is null** (CPU vs GPU is
-‖Δw‖/‖w‖ = 5e-04, one eval seed of 100). Two of the three artifacts behind the headline — its
-checkpoint (H-8, `outputs/` gitignored) and its corpus (H-B) — no longer exist. **Its
-provenance is unknown, not disputed.**
+**The environment is exonerated.** `human_only` uses no checkpoint and returned **exactly 50.0%
+in every one of these evaluations** — identical walls, operator, controller config, step budget
+and scoring. The checkpoint is the only variable.
 
-Free result worth keeping: across those five seeds, `best_val_loss` vs closed-loop success is
-Spearman **ρ = −0.82** (p=0.089, n=5) — offline loss is directionally predictive *within one
-recipe*, the opposite of its across-intervention behavior. Selecting the best-val checkpoint of
-a fixed recipe is therefore not actively harmful; tuning *recipes* by val loss is.
+**Seed 1 is the point.** On its own it reads as a strongly significant regression, p=0.0009,
+produced by nothing but a different random initialization. Read seed 1 alone and you would
+report a broken recipe; read seed 2 alone and you would report an +8 pp win. Neither is true.
+The same trap fires positive elsewhere — vision-DAgger seed 1 (§5.5) reads **+12 pp at p=0.036**
+while its two sibling seeds both read −4.
 
-![Insertion success, assist off vs on](phase-1/success_rates.png)
-![Per-KPI distributions by config](phase-1/kpi_distributions.png)
+**Corroborated on independent data.** The floor was first measured (LAB-114, 2026-07-22) on
+`dataset_10` — a 5× smaller, 200-episode corpus with a different master seed — giving a **18 pp**
+spread over five seeds (paired Δ −15 to +3, records in `phase-1/lab114/`). Two corpora, two
+generations of the pipeline, the same order of magnitude. The floor is a property of the task
+and the recipe, not of any one dataset.
+
+**Why it existed unmeasured for so long.** Training was **unseeded** until 2026-07-23:
+`torch.manual_seed` was never called, and `--seed` reached only the train/val split — so weight
+init and batch order came from OS entropy while each run folder faithfully recorded a seed and a
+git commit. Two runs of the same command produced different models and the artifacts could not
+show it. Fixed in one line, with a train-twice-identical-weights regression test. Results
+predating that fix are single unrepeatable draws and are marked as history throughout this
+document.
+
+**A free result worth keeping.** Across the five `dataset_10` seeds, `best_val_loss` vs
+closed-loop success is Spearman **ρ = −0.82** (p=0.089, n=5): offline loss is directionally
+predictive *within one recipe*, the opposite of its behavior *across* interventions (§6).
+Selecting the best-val checkpoint of a fixed recipe is therefore fine; tuning *recipes* by val
+loss is not.
+
 ![val loss vs closed-loop success across seeds](phase-1/lab114_val_loss_vs_success.png)
 
 ---
 
 ## 5.5 The official multi-seed run — the definitive measurement
 
-§5 retired the single-checkpoint headline; this section replaces it with the measurement the
-project stands on. Per the D-6 mandate (LAB-114): a fresh **~1000-episode** official corpus (F/T
+§5 established the measurement resolution; this section is the measurement the project stands
+on. Per the D-6 mandate: a fresh **~1000-episode** official corpus (F/T
 and vision, separate), each of the four production recipes **retrained over multiple seeds** and
 reported as a **distribution**, evaluated on 100 paired held-out seeds at the es0.4 operating
 point. Seed families are disjoint by construction, so every Δ below is genuine held-out **test**
 (corpus master-seed 100; DAgger rollouts 300/301/302; eval walls seed 0). Re-aggregate with
 `scripts/dev/official_kpi/aggregate.py`.
 
-| Recipe | seeds (n) | `human_only` | treatment success | **mean Δ** | range | verdict @ 18 pp floor |
-|---|---|---|---|---|---|---|
-| **FT plain** | 5 | 50.0% | 31–58% | **−4.4 pp** | [−19, +8] | **NOISE** |
-| **FT DAgger** | 5 | 50.0% | 51–53% | **+2.0 pp** | [+1, +3] | **NOISE** (tightest; all 5 seeds ≥ 0) |
-| **Vision plain** | 3 | 50.0% | 34–54% | **−8.3 pp** | [−16, +4] | **NOISE** |
-| **Vision DAgger** | 3 | 50.0% | 46–62% | **+1.3 pp** | [−4, +12] | **NOISE** |
+| Recipe | seeds (n) | batch | `human_only` | treatment success | **mean Δ** | range | verdict vs floor |
+|---|---|---|---|---|---|---|---|
+| **FT plain** | 5 | 16 | 50.0% | 31–58% | **−4.4 pp** | [−19, +8] | **NOISE** |
+| **FT DAgger** | 5 | 2 | 50.0% | 51–53% | **+2.0 pp** | [+1, +3] | **NOISE** (all 5 seeds ≥ 0, but see the confound below) |
+| **Vision plain** | 3 | 2 | 50.0% | 34–54% | **−8.3 pp** | [−16, +4] | **NOISE** |
+| **Vision DAgger** | 3 | 2 | 50.0% | 46–62% | **+1.3 pp** | [−4, +12] | **NOISE** |
 
-**No recipe clears the floor.** The largest single-seed swing (FT plain, −19 to +8 across
-retrains) *is* the 18 pp spread, reproduced on a brand-new corpus — LAB-114 was not an artifact
-of the old data. The honest reading of all four rows is one sentence: **on the seeded
-measurement, none of {F/T, vision} × {plain BC, DAgger} lifts closed-loop seating above the
-human-only baseline beyond training-seed noise.**
+**No recipe clears the floor.** The FT-plain row *is* the floor — it is the same
+one-recipe-many-seeds measurement as §5, and its 27 pp spread swallows every mean in the table.
+The honest reading of all four rows is one sentence: **on the seeded measurement, none of
+{F/T, vision} × {plain BC, DAgger} lifts closed-loop seating above the human-only baseline
+beyond training-seed noise.**
 
-Two second-order structure notes that *are* signal, not noise:
+Two second-order structure notes, one of them qualified:
 
-- **DAgger tightens the distribution without moving its center.** Both DAgger arms collapse the
-  seed spread (FT: [−19,+8]→[+1,+3]; vision: partial) around a mean a hair above zero. FT DAgger
-  is the only arm where all 5 seeds land non-negative — the most *stable* recipe, but +2 pp is
-  still inside the floor, so it is a tighter draw of the same null, not a win. (This is the F/T
-  DAgger story on a *large* corpus; contrast the small-corpus collapse in §6, which was dominated
-  by force-abort states the bounded expert couldn't relabel — the larger, cleaner corpus removes
-  the degradation but adds no lift.)
+- **DAgger appears to tighten the distribution without moving its center** — both DAgger arms
+  show a narrower seed spread (FT: [−19,+8]→[+1,+3]; vision: [−16,+4]→[−4,+12], barely) around a
+  mean a hair above zero. FT DAgger is the only arm where all five seeds land non-negative.
+  **⚠️ In the F/T arm this claim is confounded:** plain trained at **batch 16**, DAgger at
+  **batch 2**, so the two arms differ in *two* variables and an 8× smaller batch is itself a
+  large change to optimization noise. The vision arm is clean on batch size (both at 2) and
+  there the tightening is much weaker — which is itself evidence that batch size is doing some
+  of the work. A batch-2 FT-plain re-run is the outstanding measurement that would separate them.
+  Either way +2 pp is inside the floor, so this is at most a tighter draw of the same null, never
+  a win. (Contrast the small-corpus DAgger collapse in §6, which was dominated by force-abort
+  states the bounded expert couldn't relabel — the larger, cleaner corpus removes the degradation
+  but adds no lift.)
 - **The noise lives on *both* axes.** Re-evaluating each intermediate DAgger round on the same
   100 held-out walls (per-round `trials.csv`, LAB-112 backfill) shows the paired Δ swinging
   *within a single training seed* across rounds — seed-0 vision-DAgger ran **−1 → −28 → −12 → +8
@@ -289,7 +317,7 @@ Two second-order structure notes that *are* signal, not noise:
 
 **Peak force stays inside the ~24 N envelope for every recipe** — the bounded-force guarantee
 (§7) holds on the official run by construction, independent of the success null. Jerk is raised
-by every treatment (the known residual-costs-smoothness cost, §6/`phase-1-results.md`), *least*
+by every treatment (the known residual-costs-smoothness cost, §6), *least*
 by Vision DAgger (48.0 vs human 45.6, effectively flat) — the `--action-rate-weight 100` penalty
 plus DAgger's on-policy smoothing nearly erase the jerk cost. So the smoothness regression is a
 solved problem at the operating point; it is the success lift that does not materialize.
@@ -297,7 +325,7 @@ solved problem at the operating point; it is the success lift that does not mate
 **This is the arc's closing measurement.** It does not overturn §7 — the standing positives never
 rested on a success rate — and it converts the documented negative from "one unreproducible
 checkpoint" into a rigorous, multi-seed, fresh-corpus null. See
-[`../review/go-forward.md`](../review/go-forward.md) for what (if anything) is worth further
+[`further-exploration.md`](further-exploration.md) for what (if anything) is worth further
 compute.
 
 ---
@@ -307,10 +335,10 @@ compute.
 Surfacing the failures is an explicit goal of this document — each is a mechanism, not just a
 missing win.
 
-- **Action-rate penalty — works exactly as designed, and it is *not* the headline's problem.**
+- **Action-rate penalty — works exactly as designed, and it is *not* the arc's problem.**
   `ar0` vs `ar100` on `dataset_10` are indistinguishable on success (46% vs 41%, inside the
   floor) but jerk drops **153.6 → 85.7** (p<1e-15). The penalty buys smoothness at no success
-  cost — which *retires* the D-6 "apply the action-rate penalty to the headline run" candidate:
+  cost — which *retires* the "apply the action-rate penalty" candidate:
   it was already applied and does nothing to success.
 - **The offline-fix collapse (`command_ee_delta`) — REGRESSION, and the sharpest mechanism.**
   Adding a `(command − ee_position)` **feedback feature** + pos-loss ×10 drove offline error
@@ -370,7 +398,7 @@ Every table above is a pure function of committed artifacts. Re-aggregate any ev
 # One eval set → success + paired McNemar + per-KPI Wilcoxon, from raw per-trial rows.
 uv run python scripts/report_results.py --trials runs/eval_lab101_band100_ar0/trials.csv
 
-# The committed Phase-1 records (headline, flat-wall, seed-variance, H-C) live here:
+# The committed Phase-1 records (30-seed slice, flat-wall, seed-variance, H-C) live here:
 ls docs/results/phase-1/*.csv docs/results/phase-1/lab114/
 
 # The §5.5 official multi-seed distributions (all four recipes, over training seeds):
@@ -390,8 +418,8 @@ committed under `docs/results/phase-1/checkpoints/` (retention policy: that dir'
 
 | Gap | Finding | Consequence |
 |---|---|---|
-| The 2026-07-07 headline **checkpoint** is gone | H-8 (`outputs/` gitignored) | 70.0% cannot be re-evaluated. |
-| The headline **corpus** was overwritten in place | H-B / G-4 | `dataset_9`'s trajectories are unrecoverable. |
+| The 2026-07-07 M6 **checkpoint** is gone | H-8 (`outputs/` gitignored) | 70.0% cannot be re-evaluated. |
+| That run's **corpus** was overwritten in place | H-B / G-4 | `dataset_9`'s trajectories are unrecoverable. |
 | `dataset_0`/`dataset_1` fingerprints predate `generated_walls` | C-1a | Pre-LAB-91 corpora do not regenerate byte-identically. |
 
 The reconstruction that built §3–§4 is a read-only sweep over `outputs/policy/runs/`,
@@ -401,7 +429,5 @@ The reconstruction that built §3–§4 is a read-only sweep over `outputs/polic
 
 ---
 
-**See also:** [`phase-1-results.md`](phase-1-results.md) (the headline record, kept
-verbatim) · [`review/divergence-investigation.md`](../review/divergence-investigation.md) (the
-full LAB-114 investigation) · [`architecture-tour.md`](../guides/architecture-tour.md) (where each of
+**See also:** [`architecture-tour.md`](../guides/architecture-tour.md) (where each of
 these modules lives).

@@ -27,9 +27,9 @@ milestone is started.
 | M8 | Human teleop input (stereo hand tracking) | Phase 2 | 5 | ✅ done |
 | M9 | Final evaluation + polish | Delivery | 6, 7 | 🟡 in progress |
 
-† The Phase-1 success-rate **headline is under revision** — it did not reproduce under seeded
-training (LAB-114); the standing results are the bounded-force guarantee + the mechanism
-findings. See [`phase-1-results.md`](../results/phase-1-results.md) and
+† On the seeded multi-seed measurement, **no recipe lifts closed-loop success above the
+human-only baseline beyond training-seed noise**; the standing results are the bounded-force
+guarantee + the mechanism findings. See
 [`results/kpi-dashboard.md`](../results/kpi-dashboard.md).
 ‡ M7 closed as a **documented negative result** (vision/DAgger/better-expert all explored, none
 lifted closed-loop success); the mechanism is the deliverable. Spec:

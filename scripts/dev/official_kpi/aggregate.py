@@ -12,6 +12,7 @@ RUNS = Path("runs")
 # recipe label -> (glob of eval dirs, treatment config label)
 RECIPES = {
     "FT plain": ("eval_official_ft_s*", "residual"),
+    "FT plain (batch 2)": ("eval_official_ft_b2_s*", "residual"),
     "FT DAgger": ("eval_official_dag_ft_s*", "residual"),
     "Vision plain": ("eval_official_vis_s*", "vision"),
     "Vision DAgger": ("eval_official_dag_vis_s*", "vision"),

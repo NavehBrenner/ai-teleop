@@ -125,7 +125,7 @@ needed its wording audited, not its experiments re-run. No new M7 compute was sp
 
 ## Handoff
 
-M7 closes Phase 2. The go-forward decision (D-6, `docs/review/go-forward.md`) weighs whether to
+M7 closes Phase 2. The close-out ([`../results/further-exploration.md`](../results/further-exploration.md)) weighs whether to
 pursue any of the out-of-imitation levers or to declare the training arc a documented negative and
 spend the remaining budget strengthening what already works. The Phase-1 result it strengthens is
 itself under revision (LAB-114) — see [`results/kpi-dashboard.md`](../results/kpi-dashboard.md).
