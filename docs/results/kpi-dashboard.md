@@ -279,6 +279,15 @@ point. Seed families are disjoint by construction, so every Δ below is genuine 
 | **Vision plain** | 3 | 2 | 50.0% | 34–54% | **−8.3 pp** | [−16, +4] | **NOISE** |
 | **Vision DAgger** | 3 | 2 | 50.0% | 46–62% | **+1.3 pp** | [−4, +12] | **NOISE** |
 
+![paired Δ per training seed for the four production recipes, against the measured training-seed noise floor](phase-1/official_multiseed_deltas.png)
+
+*The same table as a picture: one row per recipe, one dot per training seed, the diamond the
+recipe mean, the bar its observed range. The shaded bands are the noise floor **measured in this
+same run** — F/T plain over 5 seeds (27 pp) and vision plain over 3 (20 pp), each a
+one-recipe-many-seeds measurement in which nothing but the training seed changed. Every recipe
+mean falls inside them, which is the result. Regenerate with
+`uv run python scripts/dev/official_kpi/plot_seed_spread.py` (§8).*
+
 **No recipe clears the floor.** The FT-plain row *is* the floor — it is the same
 one-recipe-many-seeds measurement as §5, and its 27 pp spread swallows every mean in the table.
 The honest reading of all four rows is one sentence: **on the seeded measurement, none of
@@ -403,11 +412,16 @@ ls docs/results/phase-1/*.csv docs/results/phase-1/lab114/
 
 # The §5.5 official multi-seed distributions (all four recipes, over training seeds):
 uv run python scripts/dev/official_kpi/aggregate.py       # reads runs/eval_official_*
+
+# The §5.5 figure — same statistics, plotted against the measured floor:
+uv run python scripts/dev/official_kpi/plot_seed_spread.py   # → docs/results/phase-1/official_multiseed_deltas.png
 ```
 
 The §5.5 official-run eval sets (`runs/eval_official_*`) and per-round DAgger `trials.csv`
 (`outputs/policy/runs/dag_*_s*/dagger_round*/`) are **local artifacts, gitignored** like the rest
-of `runs/`/`outputs/` — the committed record is the §5.5 tables plus `aggregate.py`. The chunk
+of `runs/`/`outputs/` — the committed record is the §5.5 tables and figure plus `aggregate.py` /
+`plot_seed_spread.py` (both read-only over those dirs; the figure is regenerable only while they
+exist locally). The chunk
 scripts that produced them are `scripts/dev/official_kpi/*.sh` (self-resumable, self-timing).
 
 Training configs are each run's committed `outputs/policy/runs/<name>/metadata.json`. Post-G1

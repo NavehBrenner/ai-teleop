@@ -19,9 +19,14 @@ RECIPES = {
 }
 
 
-def per_seed(glob: str, treat: str):
+# One finished (or unfinished) eval directory: (dir name, human%, treat%, paired Δpp, p).
+# The four value slots are None together when the eval has not produced both arms yet.
+SeedRow = tuple[str, float | None, float | None, float | None, float | None]
+
+
+def per_seed(glob: str, treat: str) -> list[SeedRow]:
     """Return [(seed_dir, human%, treat%, paired_Δpp, p)] for every finished eval in the glob."""
-    rows = []
+    rows: list[SeedRow] = []
     for d in sorted(RUNS.glob(glob)):
         csv = d / "trials.csv"
         if not csv.is_file():
@@ -47,31 +52,37 @@ def per_seed(glob: str, treat: str):
     return rows
 
 
-print("=" * 78)
-print("OFFICIAL KPI RUN — per-recipe distribution over training seeds (es 0.4, 100 eval seeds)")
-print("=" * 78)
-for label, (glob, treat) in RECIPES.items():
-    rows = per_seed(glob, treat)
-    done = [r for r in rows if r[3] is not None]
-    print(f"\n### {label}   ({len(done)}/{len(rows)} evals complete)")
-    if not rows:
-        print("    (no eval dirs yet)")
-        continue
-    for name, h, t, d, p in rows:
-        if d is None:
-            print(f"    {name:32} (incomplete)")
-        else:
-            print(f"    {name:32} human {h:4.1f}%  {treat} {t:4.1f}%  Δ {d:+5.1f} pp  p={p}")
-    if done:
-        deltas = [r[3] for r in done]
-        treats = [r[2] for r in done]
-        print(
-            f"    --> DISTRIBUTION: mean Δ {sum(deltas) / len(deltas):+.1f} pp, "
-            f"range [{min(deltas):+.1f}, {max(deltas):+.1f}]  |  "
-            f"{treat} success {min(treats):.1f}–{max(treats):.1f}% "
-            f"(human_only {done[0][1]:.1f}%)"
-        )
-print(
-    "\nRead every row at the 18 pp training-seed noise floor (LAB-114). The DISTRIBUTION line is "
-    "\nthe claim; a single seed's Δ is one draw. See docs/results/kpi-dashboard.md."
-)
+def main() -> None:
+    print("=" * 78)
+    print("OFFICIAL KPI RUN — per-recipe distribution over training seeds (es 0.4, 100 eval seeds)")
+    print("=" * 78)
+    for label, (glob, treat) in RECIPES.items():
+        rows = per_seed(glob, treat)
+        done = [r for r in rows if r[3] is not None]
+        print(f"\n### {label}   ({len(done)}/{len(rows)} evals complete)")
+        if not rows:
+            print("    (no eval dirs yet)")
+            continue
+        for name, h, t, d, p in rows:
+            if d is None or h is None or t is None:
+                print(f"    {name:32} (incomplete)")
+            else:
+                print(f"    {name:32} human {h:4.1f}%  {treat} {t:4.1f}%  Δ {d:+5.1f} pp  p={p}")
+        if done:
+            deltas = [r[3] for r in done if r[3] is not None]
+            treats = [r[2] for r in done if r[2] is not None]
+            print(
+                f"    --> DISTRIBUTION: mean Δ {sum(deltas) / len(deltas):+.1f} pp, "
+                f"range [{min(deltas):+.1f}, {max(deltas):+.1f}]  |  "
+                f"{treat} success {min(treats):.1f}–{max(treats):.1f}% "
+                f"(human_only {done[0][1]:.1f}%)"
+            )
+    print(
+        "\nRead every row against the training-seed noise floor measured in this same run "
+        "\n(F/T plain, 5 seeds: 27 pp; vision plain, 3 seeds: 20 pp). The DISTRIBUTION line is "
+        "\nthe claim; a single seed's Δ is one draw. See docs/results/kpi-dashboard.md."
+    )
+
+
+if __name__ == "__main__":
+    main()
