@@ -2,7 +2,7 @@
 
 The imitation-learning arc (M5 → M7) closed as a **documented negative**: on the seeded
 multi-seed measurement, no recipe lifts closed-loop insertion success above the human-only
-baseline beyond training-seed noise ([KPI dashboard §5.5](kpi-dashboard.md#55-the-official-multi-seed-run--the-definitive-measurement)).
+baseline beyond training-seed noise ([the official multi-seed run](noise-floor.md#55-the-official-multi-seed-run--the-definitive-measurement)).
 
 That is a result, not an abandonment — and it is only useful if it says *where the wall is* and
 *what is on the other side of it*. This document does both: the levers that were tried and
@@ -23,7 +23,7 @@ Each of these was a real experiment with committed artifacts, not a plan that wa
 | **Frozen vs fine-tuned image encoder** | Stage-C unfreeze of the CNN, to test whether frozen features were the bottleneck | **Inert.** A linear probe showed frozen features decode depth-to-hole (R² = 0.88) but *not* lateral offset (R² ≈ 0); unfreezing did not fix closed-loop success |
 
 **Every lever inside imitation learning has been measured, not merely left untried.** That is
-what makes this a result rather than a stopping point: the space was covered, and §6–§7 of the
+what makes this a result rather than a stopping point: the space was covered, and [negative results](mechanisms.md#6-negative-results)–[what stands](mechanisms.md#7-what-still-stands) of the
 dashboard explain *why* per-step imitation cannot lift closed-loop seating on this task — an
 identifiability ceiling, a far-field gating floor, and an anti-correlation between offline BC
 fidelity and closed-loop success.
@@ -88,4 +88,4 @@ project would need re-measuring. It changes the benchmark, not the result.
 ---
 
 **See also:** [`kpi-dashboard.md`](kpi-dashboard.md) — every experiment with its config and
-measured result; §6 for the mechanism findings, §7 for what still stands.
+measured result; [negative results](mechanisms.md#6-negative-results) for the mechanism findings, [what stands](mechanisms.md#7-what-still-stands) for what still stands.

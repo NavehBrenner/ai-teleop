@@ -12,7 +12,7 @@ It is written to stand on its own. Where a subject has a deeper treatment in the
 the section links to it — [`project-scope.md`](../project-scope.md) is the authoritative scope,
 [`docs/guides/architecture-tour.md`](./guides/architecture-tour.md) is the code walkthrough,
 [`docs/design/`](./design/) holds the per-subsystem rationale, and
-[`docs/results/kpi-dashboard.md`](./results/kpi-dashboard.md) holds every measured result.
+[`docs/results/`](./results/kpi-dashboard.md) holds every measured result.
 
 ---
 
@@ -70,7 +70,7 @@ even if the learned policy emits garbage.
    *reaction*, which carries impact transients the quasi-static argument does not cover; measured
    peaks reach 77.86 N on trials that hit the wall hard. Layer 3 exists precisely because layer 1
    does not bound that. Measured distributions:
-   [`kpi-dashboard.md` §5.6.2](./results/kpi-dashboard.md#562-the-distribution-behind-the-force-mean).
+   [`results/within-seed.md`](./results/within-seed.md).
 2. **Hard clamps on the residual.** `clamp_delta` bounds every correction to **±3 cm position,
    ±10° orientation, ±5 N grip force per step**, applied *before* the controller sees the
    augmented command (`domain/delta.py`).
