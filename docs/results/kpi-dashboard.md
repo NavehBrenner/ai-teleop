@@ -63,9 +63,13 @@ The short version: **DAgger buys reliability and a couple of newtons, not seatin
 *The within-seed question, and a different one.* Hold the checkpoint fixed and look at
 individual trials: how does this one policy compare to the human, wall by wall? The answer is
 invisible in any mean — peak contact force is **bimodal**, so its average falls in the trough
-between the two modes and describes no trial that ran.
+between the two modes and describes no trial that ran. Every KPI then gets both views per
+training seed: the absolute distributions, and the deltas paired **on the same wall**.
 
 [![per-trial peak contact force by arm and outcome, showing a bimodal distribution](phase-1/trial_force_distribution.png)](within-seed.md)
+
+The short version: **a near-zero Δ is not an inert policy** — every checkpoint flips the
+outcome on 20–37 walls of 100, in both directions at once.
 
 ## 4. [Mechanisms](mechanisms.md) — why it does not work, and what stands
 
@@ -126,6 +130,12 @@ uv run python scripts/dev/official_kpi/kpi_tables.py      # → docs/results/pha
 
 # Figures 1–5 — the same statistics as plain matplotlib box charts:
 uv run python scripts/dev/official_kpi/plot_kpis.py       # → docs/results/phase-1/*.png
+
+# Figure 6 — per-trial peak force by arm and outcome, seeds pooled:
+uv run python scripts/dev/official_kpi/plot_trial_forces.py
+
+# Figures 7–13 — per-training-seed trial distributions and paired per-wall deltas:
+uv run python scripts/dev/official_kpi/plot_within_seed.py   # → phase-1/within_seed_*.png
 ```
 
 All three read the eval CSVs through `ai_teleop.eval.report` (`load_trials` → `group_by_config` →
