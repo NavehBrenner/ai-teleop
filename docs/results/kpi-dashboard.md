@@ -381,9 +381,10 @@ directly against plain BC at matched training seed, **FT DAgger is gentler on al
 (mean **−2.87 N**, range [−5.93, −0.37]); against the batch-2 control the mean is **−1.34 N**
 [−5.70, +0.45], so the sign is not unanimous once batch size is held. Vision: **−1.19 N**
 [−4.66, +1.82]. The direction is consistent, the magnitude is a couple of newtons, and none of
-it approaches the hard bound. The eval observer aborts a trial above **30 N**
-(`DEFAULT_FORCE_CAP`, `eval/observer.py`), so no arm can exceed that by construction; 23.97 N is
-the `human_only` mean, not a bound, and FT plain's worst seed averages 29.02 N.
+it approaches the abort threshold. The eval observer ends a trial
+above **30 N** (`DEFAULT_FORCE_CAP`, `eval/observer.py`); that terminates the trial rather than
+bounding the force, and the peak recorded on such a trial reaches 77.86 N (§5.6.2). 23.97 N is
+the `human_only` mean, not a bound.
 
 **Jerk — the smoothness cost is real, still positive everywhere, and the FT-DAgger number is one
 seed.** Every treatment raises ∫|jerk| above `human_only`; none lowers it. Vision DAgger is
@@ -415,9 +416,8 @@ conclude:** the population, not the treatment, is the larger effect on both metr
 them in opposite directions.*
 
 **Peak force nearly halves on the success group: 15.46 N against 23.97 N for `human_only`.** The
-high all-trials figure is mostly the failures, which include force-cap trips. The 30 N bound is a
-statement about the worst trial; it says little about a successful insertion, which peaks around
-15 N. **DAgger's advantage survives the split** — FT DAgger −1.04 N over all trials and −0.59 N
+high all-trials figure is mostly the failures, which include force-cap trips. 30 N is where the watchdog *aborts*, not a force the
+system cannot reach — see §5.6.2. **DAgger's advantage survives the split** — FT DAgger −1.04 N over all trials and −0.59 N
 seated-only, Vision DAgger −0.48 N and −1.05 N — so it is a property of how the controller seats,
 not of how often it fails.
 
@@ -438,6 +438,40 @@ table. Both populations are reported in
 and at this operating point the approach makes one sustained contact and stays in it, so it
 separates nothing. It stays in the recorded schema and is dropped from the reported set; a lower
 force floor or a bouncing regime would make it informative again.
+
+### 5.6.2 The distribution behind the force mean
+
+Every chart above plots a distribution over **training seeds**, where one point is a seed's mean
+over 100 trials — it answers *how much does retraining move the average?* This one plots the
+**individual trials**, which answers a different question and gives a different answer.
+
+![six panels, one per arm, each a histogram of per-trial peak contact force stacked by outcome, with the commanded-force bound and the watchdog threshold marked](phase-1/trial_force_distribution.png)
+
+***Figure 6 — peak contact force per trial, by arm and outcome.** Green line: the ≈18.9 N
+commanded-force bound (stiffness × command clamp). Black dashed: the 30 N watchdog abort.
+**What to conclude:** the distribution is bimodal and the mean falls between its two modes.*
+
+**The mean describes no trial that ran.** Peak force is **bimodal** — a seated cluster below
+~20 N and a force-abort cluster above 30 N — so `human_only`'s 23.97 N mean sits in the trough
+between them. Its per-trial spread is **8.60 to 54.70 N, SD 12.51**, against a spread across
+training seeds of **exactly zero** (it uses no checkpoint, so all 21 evals return the identical
+number). Those are two different variances and only one of them is what the other figures show.
+
+**The 30 N line is visibly a cut, not a ceiling.** Successes and timeouts stop dead at it and
+force-aborts begin there, because exceeding it *is* what makes a trial a `force_abort`. The
+recorded peak on those trials runs to **77.86 N** — the force spikes within the tick before the
+watchdog fires.
+
+**The ≈18.9 N commanded-force bound is not a bound on the measurement.** 33% of *successful*
+trials sit above it. The quasi-static `K·Δx` argument bounds what the controller can *ask for*;
+the F/T sensor reads the contact reaction, which carries impact transients and the full distal
+load. Both statements are true and they are about different quantities — §7 now separates them.
+
+**The policies' worst impacts are harder than the human's** (max 64–78 N against 54.70 N) while
+their *rate* of hard impacts is lower for both DAgger arms. Fewer bad contacts, but a heavier
+tail when one happens.
+
+Regenerate with `uv run python scripts/dev/official_kpi/plot_trial_forces.py`.
 
 ### Did DAgger produce any result at all?
 
@@ -523,10 +557,37 @@ missing win.
 Two classes of result do **not** rest on a sampled success rate, so LAB-114 leaves them intact.
 These are the project's standing positives.
 
-- **The bounded-force guarantee.** The residual is hard-clamped (±5 N/step) and the impedance
-  backbone bounds contact force mechanically, so even a 100%-wrong network output cannot exceed
-  the envelope. Peak contact force was **never exceeded across any trial in any eval set** —
-  this is a property of the controller, proven by construction, not an estimated rate.
+- **The force argument, stated precisely.** Three things are true by construction, and one
+  commonly-assumed fourth is **not**:
+
+  1. **The residual is clamped** — ±3 cm / ±10° / ±5 N per step, applied *before* the controller
+     sees the augmented command (`domain/delta.py`). A maximally wrong network cannot enlarge its
+     own authority.
+  2. **The commanded restoring force is bounded at ≈18.9 N.** The impedance backbone's
+     translational stiffness is `[400, 400, 500]` N/m and the per-step command clamp is 0.025 m
+     (`control/backbone.py`), so `‖K·Δx‖ ≤ 18.9 N` is the most force the controller can ever
+     *ask* for.
+  3. **No trial continues past 30 N** — the eval observer aborts it (`eval/observer.py`).
+  4. **Measured contact force is *not* bounded.** The wrist F/T sensor reads the contact
+     *reaction*, which includes impact transients the quasi-static `K·Δx` argument says nothing
+     about. **1712 of 4200 official trials exceed 30 N, reaching 77.86 N** — every one of them a
+     `force_abort`, the overshoot occurring within the tick before the watchdog fires. 33% of
+     *successful* trials also exceed 18.9 N. See [§5.6.2](#562-the-distribution-behind-the-force-mean).
+
+  What the measurements *do* support is a comparison rather than a bound, and two independent
+  metrics agree on it: **DAgger lowers both the mean peak force and the force-abort rate; plain
+  BC at batch 16 raises both.**
+
+  | Arm | mean peak force vs baseline | force-abort rate (baseline 41.0%) |
+  |---|---|---|
+  | FT DAgger | **−1.04 N** | **36.4%** (−4.6 pp) |
+  | Vision DAgger | **−0.48 N** | **38.3%** (−2.7 pp) |
+  | FT plain (batch 2) | +0.30 N | 39.0% (−2.0 pp) |
+  | Vision plain | +0.71 N | 44.3% (+3.3 pp) |
+  | FT plain | +1.83 N | 45.2% (+4.2 pp) |
+
+  Two measures that could have disagreed do not, which is what makes this the arc's most solid
+  positive result — stronger than the success-rate null and, unlike it, consistent in sign.
 - **The mechanism findings**, each theory or a byte-identical/exact probe:
   - **Identifiability ceiling** (LAB-77) — the operator command proxies the hole; a no-vision
     residual cannot lift success outside the chamfer band. A structurally-flat flat-wall delta
@@ -538,7 +599,8 @@ These are the project's standing positives.
   - **The bounded-expert/DAgger argument** (LAB-105/106) — on-policy relabeling can only teach
     what the expert can perform, and it cannot un-jam a force-aborted peg.
 
-An honest engineering summary: **Phase 1 delivers a provably safe assist and a mechanized
+An honest engineering summary: **Phase 1 delivers an assist whose authority is bounded by
+construction and which measurably reduces contact force and force-aborts, plus a mechanized
 account of why per-step imitation cannot lift closed-loop seating success on this task. The
 success-rate *lift* is, on the seeded measurement, not established.**
 

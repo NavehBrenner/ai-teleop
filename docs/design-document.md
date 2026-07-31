@@ -63,23 +63,30 @@ in a vertical wall carrying distractor holes, on a Franka Emika Panda in MuJoCo.
 Three layers, strongest first. The first is the one that matters: it is mechanical, so it holds
 even if the learned policy emits garbage.
 
-1. **Passive compliance.** Peak contact force is bounded by stiffness × maximum deflection in the
-   impedance controller. No command — including a maximally wrong network output — can produce a
-   large force.
+1. **Passive compliance.** The commanded restoring force is bounded by stiffness × the per-step
+   command clamp: `[400, 400, 500]` N/m × 0.025 m gives **‖K·Δx‖ ≤ 18.9 N**. No command —
+   including a maximally wrong network output — can ask for more than that.
+   **This bounds the command, not the measurement.** The wrist F/T sensor reads the contact
+   *reaction*, which carries impact transients the quasi-static argument does not cover; measured
+   peaks reach 77.86 N on trials that hit the wall hard. Layer 3 exists precisely because layer 1
+   does not bound that. Measured distributions:
+   [`kpi-dashboard.md` §5.6.2](./results/kpi-dashboard.md#562-the-distribution-behind-the-force-mean).
 2. **Hard clamps on the residual.** `clamp_delta` bounds every correction to **±3 cm position,
    ±10° orientation, ±5 N grip force per step**, applied *before* the controller sees the
    augmented command (`domain/delta.py`).
 3. **Trip-and-lock watchdog.** `control/lock.py` monitors the runtime; exceeding the wrist-force
-   cap (50 N in data generation), hitting the step budget, or a NaN/out-of-distribution residual
-   drives the controller into **hold lock**, and the trial is recorded as a failure. **Park lock**
-   returns the arm to a base pose between trials.
+   cap (50 N in data generation, 30 N in evaluation), hitting the step budget, or a
+   NaN/out-of-distribution residual drives the controller into **hold lock**, and the trial is
+   recorded as a failure. **Park lock** returns the arm to a base pose between trials. This layer
+   guarantees *termination* on a force breach, not that the breach cannot happen — 41% of
+   evaluation trials end this way, across every arm including the unassisted baseline.
 
 ### 1.5 Expected outcomes
 
 - A working integrated demo: webcam → hand tracking → robot, with assistance toggleable at runtime.
 - A statistically defensible paired comparison of *assist off* vs *assist on* under a matched,
   seeded operator, reporting the KPIs of §5.
-- A peak-force guarantee that follows from the architecture rather than from measurement.
+- A bound on the assist's authority that follows from the architecture rather than from measurement.
 - The full booklet deliverable set: this document, a README, and runnable, tested code.
 
 ---
@@ -528,8 +535,9 @@ transferable findings:
 all four production recipes retrained across training seeds, each evaluated on the same 100
 paired held-out seeds — the answer is a **null**: no recipe lifts closed-loop insertion success
 above the human-only baseline beyond training-seed noise (means of −4.4, +2.0, −8.3 and +1.3 pp
-against a floor of 20–27 pp). The project's standing positive results are the **bounded-force
-guarantee** (§1.4 — structural, never exceeded on any official trial) and the **mechanism
+against a floor of 20–27 pp). The project's standing positive results are the **bounded assist
+authority** (§1.4 — the residual's clamp and the ≤18.9 N commanded-force bound, both structural),
+the **measured reduction in contact force and force-aborts under DAgger**, and the **mechanism
 findings** explaining why per-step imitation cannot lift closed-loop seating on this task.
 
 Per-experiment numbers are not reproduced here; they live in
@@ -603,7 +611,7 @@ against what was measured. Two of them were not met.
 | # | Success criterion, as originally written | Verdict |
 |---|---|---|
 | 1 | *"Working integrated demo: webcam-driven teleop produces visible insertion attempts in MuJoCo, with assistance mode toggleable at runtime."* | ✅ **Met** |
-| 2 | *"Phase 1 (F/T-only residual) outperforms human-only on success rate; peak force bounded by construction."* | ❌ **Not met** on success rate · ✅ met on the force bound |
+| 2 | *"Phase 1 (F/T-only residual) outperforms human-only on success rate; peak force bounded by construction."* | ❌ **Not met** on success rate · ⚠️ **partly met** on the force clause — the *commanded* force is bounded (≤18.9 N) and the residual is clamped, but *measured* contact force is not; see §1.4 |
 | 3 | *"Phase 2 (vision-conditioned residual) outperforms human-only on success rate **and** peak force, statistically meaningful; and beats Phase 1 (the vision ablation)."* | ❌ **Not met** |
 | 4 | *"Architecture cleanly separates input layer / backbone controller / assistance layer; Strategy pattern at each seam; SOLID compliance defensible during the design review."* | ✅ **Met** |
 | 5 | *"All booklet-required deliverables submitted on time and to professional quality, including self-evaluation writeup."* | 🎬 **In progress** — this document, the README and the code are complete; the demo media (§7) and the self-evaluation are being finished ahead of the 2026-08-31 deadline |
