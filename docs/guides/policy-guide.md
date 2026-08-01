@@ -43,7 +43,7 @@ uv run kvn gen --episodes 200 --out-dir data/my_corpus
 ```
 
 `kvn gen --help` lists the operating-point knobs (error scale, step budget, hole geometry). The
-committed corpora and their lineage are in the [dashboard §2.1](../results/kpi-dashboard.md#21-corpus-lineage-datadataset_metadatajson).
+committed corpora and their lineage are in the [the experiment ledger](../results/experiment-ledger.md#21-corpus-lineage-datadataset_metadatajson).
 
 ---
 
@@ -168,7 +168,7 @@ kvn episode --policy tf --checkpoint docs/results/checkpoints/ft/bc/seed_0/check
 
 Anything *not* committed is recoverable only if regenerable (corpus + `seed` + `commit`, all in
 its `metadata.json` — true for every run after training was seeded on 2026-07-23). Results
-columns are in the [dashboard §3–§4](../results/kpi-dashboard.md#3-training-runs-m5m7); this
+columns are in the [the experiment ledger](../results/experiment-ledger.md#3-training-runs-m5m7); this
 table is the *operational* view.
 
 **M5 — first behavioral clone**

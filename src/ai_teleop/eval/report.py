@@ -59,13 +59,17 @@ class KpiSpec:
     lower_is_better: bool
 
 
-# The four continuous KPIs (success rate is the headline, handled separately).
+# The reported continuous KPIs (success rate is the headline, handled separately).
+#
+# `contact_events` is recorded by the observer and kept in the CSV, but is NOT reported:
+# it reads exactly 1 on every trial of every arm, including `human_only`, so at this
+# operating point it separates nothing. Re-add it here if the operating point changes
+# (a lower force floor, or a regime where the peg is expected to bounce).
 CONTINUOUS_KPIS: tuple[KpiSpec, ...] = (
     KpiSpec("time_to_insert_s", "Time to insert", "s", success_only=True, lower_is_better=True),
     KpiSpec(
         "peak_contact_force", "Peak contact force", "N", success_only=False, lower_is_better=True
     ),
-    KpiSpec("contact_events", "Contact events", "", success_only=False, lower_is_better=True),
     KpiSpec(
         "jerk_integral", "Trajectory jerk (∫|jerk|)", "", success_only=False, lower_is_better=True
     ),
