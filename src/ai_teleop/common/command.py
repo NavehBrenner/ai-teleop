@@ -17,7 +17,7 @@ sim-specific imports is what lets all those layers stay independent of
 The controller (see `ai_teleop.control.backbone.Controller`) enforces the
 following per-step clamps before the command reaches the impedance law:
 
-- `|target_position − current_ee_position| ≤ 2 cm`
+- `|target_position − current_ee_position| ≤ 2.5 cm` (`_DEFAULT_MAX_DPOS`)
 - angle between `target_quaternion` and current EE quaternion ≤ 10°
 - `|delta_grip_force| ≤ 5 N`
 

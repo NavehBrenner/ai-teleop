@@ -104,7 +104,7 @@ DEFAULT_DRIFT_POSITION_STD: float = 0.005
 
 # Cap on how fast the command sweeps toward the (drifting) goal, m/s. Sets the
 # approach duration and near-field command speed; the LAB-78 fit target. The
-# controller's per-step clamp (2 cm/step) sits well above the per-tick move this
+# controller's per-step clamp (2.5 cm/step) sits well above the per-tick move this
 # implies, so the actor — not the clamp — owns the approach.
 DEFAULT_MAX_APPROACH_SPEED: float = 0.35
 

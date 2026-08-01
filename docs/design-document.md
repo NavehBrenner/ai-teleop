@@ -623,16 +623,19 @@ on success rate. Over the official multi-seed run the four recipes measure −4.
 failed on their own terms, and the phrasing above is left exactly as it was written before any
 result existed.
 
-The half of criterion 2 that *was* met is the half that never depended on a sampled rate: peak
-contact force stayed inside the envelope on every official trial, and does so **by construction**
-(§1.4) rather than by measurement — the clamp and the compliant backbone bound it even for a
-maximally wrong network output.
+The part of criterion 2 that *was* met is the part that never depended on a sampled rate: the
+residual's **authority** is bounded **by construction** (§1.4) rather than by measurement. The
+per-step clamp and the backbone's stiffness cap the *commanded* restoring force at ≈18.9 N even
+for a maximally wrong network output. The criterion's own wording — "peak force bounded by
+construction" — reads as a claim about the *measured* contact force, and that does not hold: the
+wrist sensor reads the contact reaction, which reaches 77.86 N on force-aborted trials. Hence
+partly met rather than met.
 
 What the arc produced instead of the lift is a mechanism-level account of *why* per-step imitation
-cannot lift closed-loop seating on this task, and a measurement discipline strong enough to
-retract the project's own earlier positive result when it failed to reproduce. Whether that is an
-adequate substitute for the criterion is a judgement for the reader; this document's obligation is
-to state the criterion as written and report that it was not achieved.
+cannot lift closed-loop seating on this task, and a measured reduction in contact force and
+force-aborts under DAgger (see [conclusions](./conclusions.md)). Whether that is an adequate
+substitute for the criterion is a judgement for the reader; this document's obligation is to state
+the criterion as written and report that it was not achieved.
 
 ---
 
@@ -665,6 +668,7 @@ endangering the core result. That structure is why the vision negative cost the 
 
 | Question | Document |
 |---|---|
+| What came of it, in one read? | [`docs/conclusions.md`](./conclusions.md) |
 | What exactly is in scope? | [`project-scope.md`](../project-scope.md) |
 | How do I find my way around `src/`? | [`docs/guides/architecture-tour.md`](./guides/architecture-tour.md) |
 | What does every command do? | [`docs/guides/cli.md`](./guides/cli.md) |
