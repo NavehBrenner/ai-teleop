@@ -41,13 +41,20 @@ argument, which is what makes the paired comparison trustworthy. Nothing in the 
 input layer, or the simulation had to change to add vision to the policy — Phase 2 is a widening
 of one input vector.
 
-**Safety by construction rather than by measurement.** Peak contact force is bounded by the
-impedance backbone's stiffness times its maximum deflection, and every residual correction is
-hard-clamped before the controller ever sees it. The consequence is that a *maximally wrong*
-network output still cannot produce a dangerous force. This is the one project claim that
-survived every negative result, because it never depended on a measurement in the first place.
-🖊️ *Worth saying whether you designed it that way on purpose from the start, or realised its
-value later.*
+**Authority bounded by construction rather than by measurement.** Every residual correction is
+hard-clamped to ±3 cm / ±10° / ±5 N per step before the controller sees it, and the impedance
+backbone can therefore *command* no more than ‖K·Δx‖ = 18.9 N of restoring force
+(K = [400, 400, 500] N/m × the 0.025 m per-step clamp). A maximally wrong network output changes
+neither number. This is a bound on the policy's **authority**, and it holds without reference to
+any measurement.
+
+It is **not** a bound on the measured contact force, and the results say so: the F/T sensor reads
+the contact reaction — impact transients and the full distal load — which reaches 77.86 N, and 33%
+of *successful* trials sit above 18.9 N. What holds on the measurement is a weaker, separate
+statement: no trial continues past 30 N, because exceeding it is what makes a trial a
+`force_abort` ([results](results/mechanisms.md#7-what-still-stands)).
+🖊️ *Worth saying whether you designed the authority bound in on purpose from the start, or
+realised its value later.*
 
 **Determinism as a research tool.** The scripted operator is open-loop: its command stream
 depends only on a seed and a tick, never on what the robot did. Two runs of one seed therefore
@@ -140,10 +147,10 @@ verdicts are not.
 |---|---|---|---|
 | Code Quality | 25% | 61 modules, 239 tests, ruff + mypy + pytest gate on every commit, enforced by CI | 🖊️ |
 | SOLID Principles | 15% | two `Protocol` seams; Dependency Inversion exercised for real by the one-argument assist swap; design document §2–§3 | 🖊️ |
-| Reliability, Error Handling, Robustness | 15% | three-layer safety envelope; trip-and-lock watchdog; force bound holds by construction under adversarial policy output | 🖊️ |
+| Reliability, Error Handling, Robustness | 15% | three-layer safety envelope; trip-and-lock watchdog; the residual's authority is clamped by construction, so an adversarial policy output cannot raise the commanded force | 🖊️ |
 | Project Structure & Design | 15% | dependency DAG with `common/` as leaf; design alternatives compared and justified; per-subsystem rationale documents | 🖊️ |
 | Documentation & Developer Experience | 10% | design document, README, architecture tour, policy guide, CLI reference, KPI dashboard; clean-clone setup script; every checkpoint committed and runnable | 🖊️ |
-| Meeting KPIs and Performance Goals | 20% | success-rate criteria **not met**; force-bound criterion met by construction; the measurement itself is rigorous and multi-seeded | 🖊️ |
+| Meeting KPIs and Performance Goals | 20% | success-rate criteria **not met**; the force criterion met as an authority bound, not as a bound on measured contact; the measurement itself is rigorous and multi-seeded | 🖊️ |
 
 🖊️ *The 20% row is the hard one and the reader will look at it first. My suggestion — take it or
 leave it — is to be straightforwardly honest that the performance goal was not met, and to argue
