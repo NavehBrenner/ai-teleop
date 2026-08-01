@@ -10,7 +10,7 @@ For *what the experiments found*, see the
 
 > **The policy is a residual.** A base command source (a scripted noisy operator, or a live
 > human in M8/M9) drives the arm; the trained network adds a clamped micro-correction
-> (±2 cm / ±10° / ±5 N per step) on top of the always-on impedance backbone. "Train a policy"
+> (±3 cm / ±10° / ±5 N per step) on top of the always-on impedance backbone. "Train a policy"
 > means clone the analytical expert's corrections by behavioral cloning; "deploy" means load
 > that checkpoint as the correction layer in a live episode.
 
