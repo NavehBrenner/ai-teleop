@@ -17,7 +17,8 @@ Course project for *Workshop in Autonomous Systems Simulation* (OpenU course 209
 
 ## Documents
 
-- **[docs/design-document.md](./docs/design-document.md)** — **start here.** The submission design document: requirements, system architecture (with architectural diagram and sequence chart), design alternatives and their justification, simulation scenarios, KPIs, challenges and risks, evaluation criteria, timeline.
+- **[docs/conclusions.md](./docs/conclusions.md)** — **read this for the outcome.** What the project set out to do, what it delivered, what every KPI measured, what was not possible and why. The short reading of the whole results set.
+- **[docs/design-document.md](./docs/design-document.md)** — **start here for the system.** The submission design document: requirements, system architecture (with architectural diagram and sequence chart), design alternatives and their justification, simulation scenarios, KPIs, challenges and risks, evaluation criteria, timeline.
 - **[project-scope.md](./project-scope.md)** — full scope, design decisions, KPIs, architecture overview, deferred design questions.
 - **[docs/guides/architecture-tour.md](./docs/guides/architecture-tour.md)** — a guided walk through the code in the order the data flows: operator input → the assistance seam → sim → the episode loop → corpus → policy → evaluation. Start here to find your way around `src/`.
 - **[docs/guides/policy-guide.md](./docs/guides/policy-guide.md)** — how to train a policy, deploy one in an episode, and run a paired ablation, as three runnable recipes, plus an inventory of every checkpoint in `outputs/policy/runs/`.

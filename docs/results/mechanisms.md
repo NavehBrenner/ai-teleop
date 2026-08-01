@@ -5,7 +5,7 @@ success-rate null is a measurement; this file is the account of *why* per-step i
 cannot lift closed-loop seating on this task, which is the part that transfers.
 
 It also states precisely what the architecture does and does not guarantee about contact
-force — a claim this project got wrong once and corrected against the data.
+force.
 
 **Related:** [experiment ledger](experiment-ledger.md) · [noise floor](noise-floor.md) ·
 [KPI board](kpi-board.md) · [within-seed](within-seed.md) ·
