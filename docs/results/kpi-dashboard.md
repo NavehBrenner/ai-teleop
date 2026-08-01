@@ -66,7 +66,7 @@ invisible in any mean — peak contact force is **bimodal**, so its average fall
 between the two modes and describes no trial that ran. Every KPI then gets both views per
 training seed: the absolute distributions, and the deltas paired **on the same wall**.
 
-[![per-trial peak contact force by arm and outcome, showing a bimodal distribution](phase-1/trial_force_distribution.png)](within-seed.md)
+[![per-trial peak contact force by arm and outcome, showing a bimodal distribution](phase-1/trial_peak_contact_force_distribution.png)](within-seed.md)
 
 The short version: **a near-zero Δ is not an inert policy** — every checkpoint flips the
 outcome on 20–37 walls of 100, in both directions at once.
@@ -131,7 +131,7 @@ uv run python scripts/dev/official_kpi/kpi_tables.py      # → docs/results/pha
 # Figures 1–5 — the same statistics as plain matplotlib box charts:
 uv run python scripts/dev/official_kpi/plot_kpis.py       # → docs/results/phase-1/*.png
 
-# Figure 6 — per-trial peak force by arm and outcome, seeds pooled:
+# Figures 6/6b/6c — per-trial distributions by arm and outcome, seeds pooled (one per KPI):
 uv run python scripts/dev/official_kpi/plot_trial_forces.py
 
 # Figures 7–13 — per-training-seed trial distributions and paired per-wall deltas:

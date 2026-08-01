@@ -21,13 +21,22 @@ answered.
 
 ---
 
-### 5.6.2 The distribution behind the force mean
+### 5.6.2 The distributions behind the means
 
 Every chart above plots a distribution over **training seeds**, where one point is a seed's mean
-over 100 trials — it answers *how much does retraining move the average?* This one plots the
-**individual trials**, which answers a different question and gives a different answer.
+over 100 trials — it answers *how much does retraining move the average?* These plot the
+**individual trials**, pooled over every checkpoint of a recipe, which answers a different
+question and gives a different answer.
 
-![six panels, one per arm, each a histogram of per-trial peak contact force stacked by outcome, with the commanded-force bound and the watchdog threshold marked](phase-1/trial_force_distribution.png)
+> **What pooling is and is not good for here.** A recipe's 500 trials are five clusters of 100
+> sharing a checkpoint, not 500 independent draws, so nothing in this subsection is a
+> recipe-level effect estimate — for that the correct n is the number of *training seeds*, and
+> [the noise floor](noise-floor.md) and [KPI board](kpi-board.md) own it. What pooling buys is
+> trial-level **structure**: where the modes sit, and where the thresholds fall against them.
+> [§5.6.3](#563-two-views-per-training-seed) then unpools the same trials per seed, which is
+> where the checkpoint-to-checkpoint disagreement becomes visible.
+
+![six panels, one per arm, each a histogram of per-trial peak contact force stacked by outcome, with the commanded-force bound and the watchdog threshold marked](phase-1/trial_peak_contact_force_distribution.png)
 
 ***Figure 6 — peak contact force per trial, by arm and outcome.** Green line: the ≈18.9 N
 commanded-force bound (stiffness × command clamp). Black dashed: the 30 N watchdog abort.
@@ -53,7 +62,30 @@ load. Both statements are true and they are about different quantities — [what
 their *rate* of hard impacts is lower for both DAgger arms. Fewer bad contacts, but a heavier
 tail when one happens.
 
-Regenerate with `uv run python scripts/dev/official_kpi/plot_trial_forces.py`.
+![six panels, one per arm, each a log-axis histogram of per-trial jerk integral stacked by outcome](phase-1/trial_jerk_integral_distribution.png)
+
+***Figure 6b — ∫|jerk| per trial, by arm and outcome, logarithmic axis.** The values run from
+6.38 to 6128, so the axis is logarithmic. **What to conclude:** jerk is bimodal too, and the
+modes are outcomes — the **lower** mode is red (force-aborted), because a trial that stops early
+accumulates less corrective motion, and the upper mode is blue (seated). Any all-trials jerk mean
+is therefore a mixture weighted by how often that arm fails, which is why `human_only`'s jerk
+*rises* from 45.60 to 64.90 when restricted to the seated subset ([§5.6.1](kpi-board.md#561-the-same-kpis-on-the-success-group-only)).*
+
+This figure also shows where `FT DAgger`'s 85.12 pooled mean comes from: a handful of trials in
+the 10³ decade, one at **6128**, against a body that sits where the other arms' do. That single
+recipe-level number is not a property of any of its five checkpoints, whose own means are 45.08,
+52.64, 231.74, 47.96 and 48.19 — the outlier lives in one seed.
+
+![six panels, one per arm, each a histogram of per-trial time to insert, defined only on trials that seated](phase-1/trial_time_to_insert_s_distribution.png)
+
+***Figure 6c — time to insert per trial, by arm.** Defined only on trials that seated, so each
+panel's n is its seated count and every trial shown is a success. **What to conclude:** the six
+distributions overlap almost entirely, spanning ~1.4 s to ~17.9 s around means separated by less
+than 0.6 s. The `human_only` panel is visibly combed because it is the same 100 walls re-run in
+all 21 evals — 21 identical copies of 50 seated trials, so its bars land on ~50 distinct values.
+That comb is the zero between-seed variance of the baseline, drawn.*
+
+Regenerate all three with `uv run python scripts/dev/official_kpi/plot_trial_forces.py`.
 
 ---
 
