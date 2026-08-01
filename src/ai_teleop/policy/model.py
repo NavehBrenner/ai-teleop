@@ -38,7 +38,7 @@ class ResidualPolicy(nn.Module):
             batch_first=True,
         )
 
-        # construc the regression hed network
+        # construct the regression head network
         head_dims = [config.hidden_size, *config.head_hidden, config.output_dim]
         layers: list[nn.Module] = []
         for i in range(len(head_dims) - 1):
@@ -78,6 +78,21 @@ class ResidualPolicy(nn.Module):
         lengths: Tensor | None = None,
         hidden=None,
     ):
+        """Score a whole sequence at once — the **training** half of the model's contract.
+
+        Takes ``(B, T, …)`` streams and returns ``(delta, h_n)`` with delta shaped
+        ``(B, T_max, output_dim)``, so one call covers a full TBPTT chunk. ``lengths``
+        (if given) packs the batch so padding contributes no gradient, and ``hidden``
+        carries the GRU state across chunks.
+
+        Vision callers pass **either** ``image_embedding`` (already encoded, the training
+        path) **or** ``images`` + ``image_frame_index`` (raw frames, eval and tests) — see
+        the branch below for why both exist.
+
+        The deployment half is :meth:`step`, which must stay numerically equivalent to a
+        one-timestep ``forward``. ``test_step_matches_first_timestep_of_forward`` in
+        ``tests/test_policy_model.py`` pins that equivalence.
+        """
         streams = [command, force_torque, proprioception]
         if self.config.use_vision:
             # Prefer a precomputed per-step embedding stream (B, T, embed): the training
@@ -120,6 +135,18 @@ class ResidualPolicy(nn.Module):
         image: Tensor | None = None,
         hidden: Tensor | None = None,
     ):
+        """Advance one timestep — the **deployment** half of the model's contract.
+
+        Takes ``(B, …)`` streams for a single tick and returns ``(delta, h_n)`` with delta
+        shaped ``(B, output_dim)``. The caller owns the recurrent state: pass the returned
+        ``h_n`` back on the next tick. Cost is O(1) in episode length, which is what lets
+        the residual run inside the 500 Hz control loop — :meth:`forward` would re-score
+        the whole history every tick.
+
+        Numerically equivalent to a one-timestep :meth:`forward` on the same weights and
+        state; that equivalence is what makes a checkpoint trained by the former valid
+        under the latter (``test_step_matches_first_timestep_of_forward``).
+        """
         streams = [command, force_torque, proprioception]
         if self.config.use_vision:
             if image is None:
