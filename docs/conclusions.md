@@ -41,8 +41,9 @@ A complete, runnable system, and this part met its criteria.
   standalone [`stereohand`](https://github.com/NavehBrenner/stereohand) package and
   integrated back as a dependency.
 - **The measurement infrastructure** — every number in the results is recomputed from
-  committed artifacts by a script, and every checkpoint behind a published number is
-  committed and runnable from a clean clone.
+  committed artifacts by a script — the 4200 raw per-trial rows behind every figure are in
+  [`results/phase-1/official-evals/`](results/phase-1/official-evals/), and every checkpoint
+  behind a published number is committed and runnable from a clean clone.
 
 ---
 
@@ -64,55 +65,70 @@ against the same operator.
 
 **No recipe lifts insertion success beyond the resolution of the measurement.** The two
 DAgger recipes are positive in the mean; neither margin approaches the spread that retraining
-alone produces.
+the plain recipe alone produces. Across all 21 checkpoints, 9 are above the baseline and 12
+below.
 
-That spread is the central methodological finding. Retraining one fixed recipe, changing
-**only the training seed**, moves the paired outcome by 20–31 pp. The environment contributes
+That spread is the central methodological finding. Retraining a fixed *plain-BC* recipe,
+changing **only the training seed**, moves the paired outcome by 20–31 pp; the two DAgger
+families are tighter (2 pp and 16 pp) around means that are themselves near zero. The environment contributes
 none of it: the `human_only` arm uses no checkpoint and returns **exactly 50.0%** in all 21
 evaluations — identical walls, operator, controller and budget. An independent, five-times
 smaller corpus reproduces the same order of magnitude (18 pp).
 
 The consequence is stated once and obeyed everywhere: **a single checkpoint is not a
-measurement of its recipe.** Inside this project, two significant results point in opposite
-directions within the same recipe family — F/T seed 1 reads −19 pp at p=0.0009, vision-DAgger
-seed 1 reads +12 pp at p=0.036.
+measurement of its recipe.** Inside the F/T plain recipe, seed 1 reads a significant regression
+(−19 pp, p=0.0009) while seed 2 reads +8 pp; across recipes, vision-DAgger seed 1 reads a
+significant +12 pp (p=0.036) while its two sibling seeds both read −4.
 
 → [The noise floor](results/noise-floor.md)
 
-### 3.2 Contact force — a real, consistent reduction under DAgger
+### 3.2 Contact force — no established effect
 
-Two metrics that could have disagreed do not:
+DAgger's recipe-level means are negative (FT DAgger −1.04 N, Vision DAgger −0.48 N) and plain
+BC's are positive. Applying the same noise-floor test the success rate is judged by, that
+pattern does not survive.
 
-| Arm | mean peak force vs baseline | force-abort rate (baseline 41.0%) |
+| Recipe | mean Δ peak force | its own training-seed floor |
 |---|---|---|
-| F/T DAgger | **−1.04 N** | **36.4%** (−4.6 pp) |
-| Vision DAgger | **−0.48 N** | **38.3%** (−2.7 pp) |
-| F/T plain BC (batch 2) | +0.30 N | 39.0% |
-| Vision plain BC | +0.71 N | 44.3% |
-| F/T plain BC (batch 16) | +1.83 N | 45.2% (+4.2 pp) |
+| F/T plain BC (batch 16) | +1.83 N | 5.10 N |
+| F/T plain BC (batch 2) | +0.30 N | 7.59 N |
+| F/T DAgger | −1.04 N | 2.41 N |
+| Vision plain BC | +0.71 N | 2.21 N |
+| Vision DAgger | −0.48 N | 4.26 N |
 
-DAgger lowers both the average contact force and the rate at which trials are aborted for
-excessive force. Plain BC at batch 16 raises both. This is the arc's most solid positive
-result and, unlike the success rate, it is consistent in sign.
+Every mean is smaller than the spread its own recipe produces by retraining alone. Counting
+signs across all 21 checkpoints, **11 of 21 are above the baseline** — indistinguishable from
+the success rate's 9 of 21. The two DAgger arms disagree with each other at seed level: F/T
+DAgger is gentler on 4 of 5 seeds, Vision DAgger *rougher* on 2 of 3. No per-seed Wilcoxon for
+F/T DAgger peak force reaches p = 0.05.
 
-**Two qualifications belong with it.** First, the reduction is a *minority* effect, not a
-uniform improvement: paired wall by wall, the policy is the gentler arm on only 31–58 of 100
-walls even where the mean drop is largest — the mean is carried by a few walls with large
-reductions. Second, the policies' **worst single impacts are harder than the human's**
-(64–78 N against 54.70 N). Fewer bad contacts, heavier tail when one occurs.
+Mean force and force-abort rate are not independent confirmation of each other — the abort rate
+is a threshold count of the same quantity on the same trials.
 
-### 3.3 Trajectory smoothness — a real cost
+Two things remain true and are worth separating from the null. Paired wall by wall, the policy
+is the gentler arm on only 31–58 of 100 walls across all 21 checkpoints (41–58 restricted to
+the checkpoints whose mean actually dropped), so even the negative means are carried by a
+minority of walls. And the policies' **worst single impacts are harder than the operator's**
+(64–78 N against 54.70 N).
 
-The residual makes motion rougher, and this is the one KPI that is a per-wall property rather
-than an average: F/T plain BC is the rougher arm on **79–95 of 100 walls**. Even
-`Vision DAgger`, whose seed-level mean reads nearly flat, is rougher on 64–71. The
-action-rate penalty reduces the cost substantially (jerk 153.6 → 85.7, p<1e-15) at no
-success-rate cost, but does not remove it.
+### 3.3 Trajectory smoothness — a real cost, and the clearest effect in the project
 
-### 3.4 Time to insert — no measurable cost
+**20 of 21 checkpoints are rougher than the operator alone.** That near-unanimous sign across
+every recipe, modality and batch size is stronger evidence than any mean clearing a floor, and
+it is the only KPI besides time-to-insert where the direction is established at all. The
+magnitude is not: the per-seed spread reaches 186 on F/T DAgger, driven by one outlier seed.
 
-On the walls where both arms seat, the difference is a shift of a fraction of a second inside
-a distribution running from under 4 s to nearly 18 s.
+It is also a per-wall property rather than an average — F/T plain BC is the rougher arm on
+**79–95 of 100 walls**, and `Vision DAgger`, whose seed-level mean reads nearly flat, is still
+rougher on 64–71. The action-rate penalty reduces the cost substantially (jerk 153.6 → 85.7,
+p<1e-15) without removing it; whether it costs success is untested — the single checkpoint pair
+behind that claim moved the point estimate 46% → 41%, inside the floor either way.
+
+### 3.4 Time to insert — a real cost, small in absolute terms
+
+**20 of 21 checkpoints are slower**, by +0.14 s to +0.27 s on a 7.83 s baseline. The direction
+is established; the magnitude is a fraction of a second inside a distribution running from
+1.4 s to nearly 18 s.
 
 This KPI is only interpretable as a **survivorship-conditioned** number: it exists only on
 trials that succeeded, so it compares the trials each arm happened to win. The same effect
@@ -189,12 +205,14 @@ Three statements hold by construction, and a commonly-assumed fourth does not.
 
 1. **The residual is clamped** to ±3 cm / ±10° / ±5 N per step, applied before the controller
    sees the augmented command. A maximally wrong network cannot enlarge its own authority.
-2. **The commanded restoring force is bounded at ≈18.9 N** — stiffness `[400, 400, 500]` N/m
-   against a 0.025 m per-step command clamp.
-3. **No trial continues past 30 N** — the evaluation observer aborts it.
+2. **The commanded restoring force is bounded at 12.5 N.** The clamp applies to the Euclidean
+   *norm* of the position delta (‖Δx‖ ≤ 0.025 m), so the bound is `λ_max·‖Δx‖` = 500 × 0.025.
+3. **No trial continues past 30 N** — the evaluation observer aborts it. This bounds how long a
+   breach lasts, not whether one happens.
 4. **Measured contact force is not bounded.** The wrist sensor reads the contact *reaction*,
-   including impact transients the quasi-static `K·Δx` argument does not cover: 1712 of 4200
-   trials exceed 30 N, reaching 77.86 N, and 33% of *successful* trials exceed 18.9 N.
+   including impact transients the quasi-static `K·Δx` argument does not cover, and the
+   commanded wrench also carries a damping term no clamp bounds: 1712 of 4200 trials exceed
+   30 N, reaching 77.86 N, and 58% of *successful* trials exceed 12.5 N.
 
 The bound is on the assist's **authority**, which is the property a safety argument needs, and
 it holds without reference to any measurement. It is not a bound on what the robot feels.
@@ -210,8 +228,9 @@ force clause, which holds as a bound on the assist's authority but not on measur
 The one in progress is the submission deliverables themselves.
 
 The project does not demonstrate that a behavioral-cloned residual improves insertion success
-for a human operator on this task. It demonstrates, with a stated measurement resolution, that
-it does not — and it identifies why.
+for a human operator on this task, nor that it reduces contact force. It demonstrates, with a
+stated measurement resolution, that it does neither — that it costs a slower and rougher
+trajectory — and it identifies why.
 
 ---
 

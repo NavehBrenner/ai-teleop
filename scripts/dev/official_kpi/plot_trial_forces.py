@@ -62,12 +62,17 @@ from ai_teleop.common.log import (  # noqa: E402
 log = get_logger("trial-kpis")
 
 # Stiffness (N/m) on the translational axes and the per-step command clamp (m), both from
-# `control/backbone.py`. Their product is the largest restoring force the controller can
-# *command* — a bound on the command, which is not the same thing as a bound on the
-# measured contact reaction.
+# `control/backbone.py`. The largest restoring force the controller can *command* — a bound
+# on the command, which is not the same thing as a bound on the measured contact reaction.
+#
+# The clamp is applied to the **Euclidean norm** of the position delta (`backbone.py`:
+# `if norm > max_dpos_per_step: delta_pos *= max_dpos_per_step / norm`), so ‖Δx‖ ≤ 0.025 m
+# and the bound is `λ_max · ‖Δx‖` = 500 × 0.025 = 12.5 N. Taking each axis at the full clamp
+# independently (the root-sum-square, 18.9 N) describes a Δx of norm 0.043 m, which the
+# clamp makes unreachable — it is a valid bound but a 51% loose one.
 STIFFNESS_TCP = (400.0, 400.0, 500.0)
 MAX_DPOS_PER_STEP = 0.025
-COMMAND_FORCE_BOUND = sum((k * MAX_DPOS_PER_STEP) ** 2 for k in STIFFNESS_TCP) ** 0.5
+COMMAND_FORCE_BOUND = max(STIFFNESS_TCP) * MAX_DPOS_PER_STEP
 
 # The eval observer aborts a trial whose contact force exceeds this (`eval/observer.py`).
 FORCE_ABORT_THRESHOLD = 30.0

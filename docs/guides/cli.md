@@ -119,7 +119,7 @@ uv run kvn smoke --no-viewer    # headless (CI)
 | `--stereo-calib PATH` | — | **Required** for `--input vision`: a stereohand `stereo_calib.json` (one-time ChArUco calibration). Camera sources are `--cameras`. |
 | `--cameras LEFT RIGHT` | `0 2` | Left and right camera sources for `--input vision`: device indices (e.g. `0`) or stream URLs (e.g. `http://<host>:8080/0`). Use URLs on WSL2 — stream both cameras from Windows with the stereohand bridge. |
 | `--no-cam-window` | off | Hide the live stereo camera + 3D-skeleton window (`--input vision`; shown by default). |
-| `--seed N` | `0` | Seed for the scripted human's noise (the scene seed is `--wall-seed`). |
+| `--seed N` | `0` | Seed for the scripted human's noise **and the SimEnv** (the procedural-wall seed is `--wall-seed`). |
 | `--max-steps N` | recorded length on replay, else script default | Episode step budget (one step = one 2 ms sim tick). Defaults to the recorded length when `--input` is an episode path (so a replay reproduces it to the step). **`0` = no limit** — run until you close the viewer or Ctrl-C (free-play). |
 | `--wall-seed N` | — | Run on a freshly generated procedural wall from this seed. Omit for the static task scene. |
 | `--cam {main,wrist}` | `main` | Which camera the interactive viewer opens with: `main` (free camera) or `wrist` (locked to the Panda's wrist camera, robot's-eye POV). Viewer keys still switch cameras live. |
@@ -166,7 +166,7 @@ fingerprint. On-disk schema: [`docs/reference/data-schema.md`](../reference/data
 | Flag | Default | Meaning |
 |---|---|---|
 | `--episodes N` | `200` | Number of episodes to run. |
-| `--out PATH` | `data/runs/dev` | Output directory for the NPZ files. |
+| `--out PATH` | `data/dataset_<seed>` | Output directory for the NPZ files. |
 | `--seed N` | `0` | Master seed. |
 | `--max-steps N` | script default | Per-episode step cap. |
 | `--max-dpos M` | script default | Controller command clamp in m/step. |

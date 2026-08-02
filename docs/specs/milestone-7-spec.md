@@ -14,11 +14,12 @@ expert were the two fallback levers if plain BC-on-more-data stalled.
 > whole imitation-learning family on this task — not a success number.
 >
 > **Read every rate below at its power (LAB-114).** M7's closed-loop comparisons are single
-> checkpoints at **20 eval seeds**; the training-seed noise floor was later measured at **18 pp**
+> checkpoints at **20 eval seeds**; the training-seed noise floor was later measured at **20–31 pp**
 > and a 20-seed arm carries a ±20 pp exact interval. So M7's *directional* margins (35 vs 40; 40
 > vs 30) are draws — its honest conclusion is **"no vision benefit was detectable at this
 > power"**, and the large margins that survive (40 vs 10) plus the *mechanism* carry the result.
-> Full numbers: [`results/kpi-dashboard.md`](../results/kpi-dashboard.md) §4/§6. Mechanism:
+> Full numbers: [`results/noise-floor.md`](../results/noise-floor.md) §5.5 and
+> [`results/kpi-board.md`](../results/kpi-board.md) §5.6. Mechanism:
 > wiki `synthesis/imitation-limits-closed-loop`, `concepts/vision-conditioned-policy`,
 > `concepts/training-seed-variance`.
 
@@ -107,7 +108,7 @@ seating reward. Per-step BC on this task has been shown, mechanistically, to be 
 ## The LAB-114 recalibration (applied 2026-07-23)
 
 M7's numbers were single checkpoints at 20 seeds. After the training-seed spread was measured
-(18 pp), M7's **directional** claims were down-weighted to *"no benefit detectable at this
+(20–31 pp), M7's **directional** claims were down-weighted to *"no benefit detectable at this
 power"*, while the **mechanism** claims — which rest on theory and exact probes, not point
 estimates — stand unchanged. Crucially, **underpowering cannot manufacture a null**: a weak test
 failing to find an effect is "not shown", which is close to what M7 already concludes. (The
@@ -128,4 +129,4 @@ needed its wording audited, not its experiments re-run. No new M7 compute was sp
 M7 closes Phase 2. The close-out ([`../results/further-exploration.md`](../results/further-exploration.md)) weighs whether to
 pursue any of the out-of-imitation levers or to declare the training arc a documented negative and
 spend the remaining budget strengthening what already works. The Phase-1 result it strengthens is
-itself under revision (LAB-114) — see [`results/kpi-dashboard.md`](../results/kpi-dashboard.md).
+itself a null on the seeded measurement — see [`results/conclusions`](../conclusions.md).

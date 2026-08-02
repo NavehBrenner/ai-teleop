@@ -14,7 +14,7 @@ This document specifies `π_θ`: the network that, every control step, maps the 
 
 ## Output
 
-`Δ = (Δposition ∈ ℝ³, Δorientation ∈ ℝ³ axis-angle, Δgrip ∈ ℝ¹)` — 7 numbers, identical signature to the expert. The clamp (`±3 cm / ±10° / ±5 N` per step) is applied **outside** the network, before the controller, so the policy is safe-by-construction even if it emits garbage. The network itself can output unbounded reals; we may add a `tanh`-scaled head to keep raw outputs near the clamp range and ease training, but the hard safety bound is the external clamp, not the activation.
+`Δ = (Δposition ∈ ℝ³, Δorientation ∈ ℝ³ axis-angle, Δgrip ∈ ℝ¹)` — 7 numbers, identical signature to the expert. The clamp (`±3 cm / ±10° / ±5 N` per step) is applied **outside** the network, before the controller, so the policy is safe-by-construction even if it emits garbage. The network itself can output unbounded reals; a `tanh`-scaled head was tried and retired (`use_tanh_head`, now an ignored legacy config key) to keep raw outputs near the clamp range and ease training, but the hard safety bound is the external clamp, not the activation.
 
 ## Inputs — the four streams (recap)
 
@@ -46,7 +46,7 @@ A **single stateful recurrent core over an early-fused observation**. Each contr
 - **Capacity from depth, not a deeper cell.** Add capacity by stacking GRU layers / widening the hidden state, plus the MLP head — never by replacing the cell's gated-affine transition with a deep MLP. Deepening the per-step *recurrent transition* lengthens the through-time gradient path and hurts trainability (the gated near-identity update is what lets gradients survive hundreds of steps); depth *outside* the recurrence — input side, head, stacked layers — does not have this problem.
 - **The MLP head** (a few layers, ReLU/GELU → 7 outputs) is the final nonlinear mapping; cross-modal reasoning ("F/T says catching on the +x rim, command says still pushing +x, image says hole at −x → correct toward −x") now happens both in the recurrent state and the head.
 - **Phase 1 vs 2 is a clean input-width change**: Phase 1 `x_t = [cmd, ft, proprio]`; Phase 2 widens it with `e_img`. Core and head are otherwise identical, preserving the `Phase2 − Phase1` ablation.
-- **Latency budget**: one 500 Hz control step (2 ms). Statefulness makes the recurrent path **O(1) per step** (consume one `x_t`, advance `h_t`). The image CNN is the only real cost driver (Phase 2); it runs once per new frame (decimate frames if rendering throughput demands), and the all-holes aux head runs at *training* time only and is dropped at inference.
+- **Latency budget**: one 500 Hz control step (2 ms). Statefulness makes the recurrent path **O(1) per step** (consume one `x_t`, advance `h_t`). The image CNN is the only real cost driver (Phase 2); it runs once per new frame (decimate frames if rendering throughput demands), and the all-holes auxiliary head was specified but **never built** (`policy/image_encoder.py`).
 
 ## Encoder decisions (locked)
 

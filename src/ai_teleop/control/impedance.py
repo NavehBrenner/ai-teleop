@@ -67,9 +67,9 @@ def impedance_torque(
         Diagonal stiffness/damping in the TCP frame, ordered
         [Kx, Ky, Kz, Krx, Kry, Krz] (translation N/m, rotation N·m/rad;
         damping in N·s/m and N·m·s/rad correspondingly). The diagonal
-        layout is what enables direction-dependent compliance: e.g.
-        Kz = 800 (stiff insertion), Kx = Ky = 200 (soft laterally),
-        Krx = Kry = 5 (soft pitch/roll).
+        layout is what enables direction-dependent compliance. Shipped
+        default (``_DEFAULT_STIFFNESS_TCP``): Kz = 500 (stiff insertion),
+        Kx = Ky = 400 (softer laterally), rotational = 3 (soft pitch/roll).
     q_nominal : (7,)
         Posture toward which the null-space projector biases joint
         positions. Defaults to the M1 home pose at the `Controller` layer.

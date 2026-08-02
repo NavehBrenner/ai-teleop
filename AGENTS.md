@@ -5,11 +5,18 @@
 The implementation of the AI-assisted teleoperation project, plus its authoritative
 specs:
 
-- `project-scope.md` — the authoritative project definition (scope, KPIs, architecture,
-  deferred design). **Source of truth for design decisions.** If a decision changes,
-  update it here rather than letting code and spec drift.
-- `docs/` — milestone specs (currently `milestone-1-spec.md`).
+- `docs/design-document.md` — the authoritative project definition (requirements, architecture,
+  design alternatives, scenarios, KPIs, evaluation criteria). **Source of truth for design
+  decisions**, including the four runtime contracts in §2.3 that the source cites by name. If a
+  decision changes, update it here rather than letting code and doc drift.
+- `docs/conclusions.md` — what the measurements support, in one read.
+- `docs/results/` — the experiment record; `docs/guides/` — CLI, architecture tour, policy guide;
+  `docs/design/` — per-subsystem rationale; `docs/specs/` — the M1–M9 milestone specs.
 - `src/ai_teleop/` — the package. See its `__init__.py` docstring for the module map.
+
+`project-wiki/…` citations appear in the milestone specs and in some source comments. That wiki
+is a **private** knowledge base in the (non-public) workspace parent, not part of this
+repository — the citations are provenance markers, not links a reader can follow.
 
 ## Python environment — uv
 
@@ -20,7 +27,8 @@ on PATH. The individual steps, from this directory:
 
 - `uv venv` — create the venv.
 - `uv pip install -e ".[dev]"` — package + dev tooling.
-- `uv pip install -e ".[dev,ml,vision-input]"` — full stack incl. torch + mediapipe.
+- `uv pip install -e ".[dev,ml,stereo-input]"` — full stack incl. torch + mediapipe.
+  (Prefer `./scripts/setup.sh --dev`, which syncs the committed `uv.lock` instead of re-resolving.)
 - `uv run python scripts/<script>.py` — run inside the venv.
 
 ### Project CLI — `kvn`

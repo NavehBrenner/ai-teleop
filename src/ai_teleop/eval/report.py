@@ -23,7 +23,7 @@ with one command (``scripts/report_results.py``), which is the LAB-38 acceptance
 
 The peak-force KPI is reported as any other column, and it is a **measurement**, not a
 guarantee. What is bounded by construction is the assist's *authority* — the residual is
-hard-clamped and the backbone can command at most ``‖K·Δx‖`` ≈ 18.9 N of restoring force.
+hard-clamped and the backbone can command at most ``λ_max·‖Δx‖`` = 12.5 N of restoring force.
 The wrist sensor reads the contact *reaction*, which includes impact transients and is not
 bounded: peaks reach 77.86 N on force-aborted trials. See ``docs/results/mechanisms.md``.
 """

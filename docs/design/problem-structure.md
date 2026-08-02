@@ -12,7 +12,7 @@ A human operator drives a Franka Panda toward a chamfered hole using coarse 6-Do
 
 - **World frame** `W`, origin at the robot base, `z` up. Every pose below is expressed in `W` (one convention, declared once — same rule as the scope doc).
 - A **pose** is `(position ∈ ℝ³, orientation ∈ SO(3))`. Orientation is stored as a rotation matrix `R` internally and as a 6D continuous representation when fed to the network (see [policy-model.md](policy-model.md)).
-- Discrete control step index `t`, running at ~100 Hz.
+- Discrete control step index `t`, running at 500 Hz.
 
 Key symbols, used consistently across all four docs:
 

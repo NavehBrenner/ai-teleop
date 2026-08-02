@@ -1,6 +1,8 @@
 # AI-Assisted Robotic Teleoperation for Precision Insertion
 
-A simulated robotic arm performs peg-in-hole insertions under shared-autonomy control: a human operator provides coarse 6-DoF commands (webcam-tracked hand motion), and a vision-conditioned residual policy issues real-time micro-corrections so insertions reliably succeed even when the human's input is noisy.
+A simulated robotic arm performs peg-in-hole insertions under shared-autonomy control: a human operator provides coarse 6-DoF commands (webcam-tracked hand motion), and a vision-conditioned residual policy issues real-time micro-corrections intended to absorb the human's aim error.
+
+**The result is negative.** Across five production recipes retrained over training seeds and evaluated on 100 paired held-out walls, no recipe lifts insertion success above the human-only baseline beyond training-seed noise, and no reduction in contact force is established either. What the project contributes is a bound on the assist's authority that holds by construction, and a mechanism-level account of why per-step imitation cannot lift closed-loop seating on this task — see **[docs/conclusions.md](./docs/conclusions.md)**.
 
 Built in [MuJoCo](https://mujoco.org) for the Franka Emika Panda. The residual policy is trained via behavioral cloning against a scripted privileged-info expert. Two configurations — human-only and human + learned residual — are compared head-to-head in a KPI ablation, on a shared always-on impedance backbone.
 

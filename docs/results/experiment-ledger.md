@@ -48,8 +48,8 @@ Every closed-loop number is only interpretable against *which corpus trained the
 | `eval_ftgate_es1p0` | 1.0 | 20 | flat-wall | 15.0% | " |
 | `eval_stageC_band04` | 0.4 | 20 | in-band | 35.0% | M7 Stage-C vision ablation (3 arms). |
 | `eval_stageC` | 1.0 | 20 | flat-wall | 15.0% | " |
-| `band_scale0.4` *(committed)* | 0.4 | 30 | in-band | **36.7%** | The 2026-07-07 M6 30-seed slice. |
-| `flatwall_scale1.0` *(committed)* | 1.0 | 30 | flat-wall | 20.0% | That run's ceiling-check control. |
+| `band_scale0.4` *(not committed)* | 0.4 | 30 | in-band | **36.7%** | The 2026-07-07 M6 30-seed slice. |
+| `flatwall_scale1.0` *(not committed)* | 1.0 | 30 | flat-wall | 20.0% | That run's ceiling-check control. |
 | `eval_lab101_band100*` | 0.4 | 100 | in-band | **50.0%** | LAB-101 reproduction (both ar0/ar100). |
 | `eval_lab114_*` (×10) | 0.4 | 100 | in-band | **50.0%** | The seed-variance + H-B/H-C study. |
 
@@ -117,7 +117,7 @@ Reconstructed from the per-trial CSVs via `compare_paired`. Δ is paired (McNema
 
 | Eval set | Op. point | Arm | Success | Paired Δ (n, p) | Verdict |
 |---|---|---|---|---|---|
-| `flatwall_scale1.0` | es1.0, 30s | residual | 20.0% vs 20.0% | +0.0 pp (30, p=1.0) | flat-wall ceiling control (expected) |
+| `flatwall_scale1.0` *(not committed)* | es1.0, 30s | residual | 20.0% vs 20.0% | +0.0 pp (30, p=1.0) | flat-wall ceiling control (expected) |
 | `runs/eval/` (LAB-53) | es0.4, 100s, old budget | residual | 43.0% vs 31.0% | +12.0 pp (100, p=0.043) | **NOISE** — inside the floor; unseeded training (H-7) |
 | `eval_ftgate_es0p4` | es0.4, 20s | ar100 (`residual`) | 40.0% vs 35.0% | +5.0 pp (20, p=1.0) | **NOISE** |
 | `eval_ftgate_es0p4` | es0.4, 20s | `command_ee_delta` (`ftonly`) | **10.0%** vs 35.0% | −25.0 pp (20, p=0.125) | **REGRESSION** (mechanism, [negative results](mechanisms.md#6-negative-results)) |
