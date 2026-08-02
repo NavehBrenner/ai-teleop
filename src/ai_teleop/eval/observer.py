@@ -5,7 +5,7 @@ A :class:`TrialObserver` watches a runtime episode through the existing
 record. It is a **passive observer**: it reads the ``Observation`` stream and
 never calls into the controller — the controller stays mode-less and knows
 nothing about trials, success, or KPIs. *Trial concepts live only here.* This
-Dependency-Inversion split is a pillar from ``project-scope.md``; a structural
+Dependency-Inversion split is a pillar from ``docs/design-document.md §2.3 (runtime contracts)``; a structural
 test asserts no ``eval/`` ↔ ``control/`` import either way.
 
 Plug it in as the runner's ``step_callback``::

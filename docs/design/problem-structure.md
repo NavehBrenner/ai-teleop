@@ -1,6 +1,6 @@
 # Problem Structure — What We Are Learning
 
-Companion docs: [human-generation.md](human-generation.md) · [expert-corrections.md](expert-corrections.md) · [policy-model.md](policy-model.md) · [evaluation-protocol.md](evaluation-protocol.md). The authoritative high-level scope is [`../../project-scope.md`](../../project-scope.md); this file pins down the *learning problem* those documents assume.
+Companion docs: [human-generation.md](human-generation.md) · [expert-corrections.md](expert-corrections.md) · [policy-model.md](policy-model.md) · [evaluation-protocol.md](evaluation-protocol.md). The authoritative high-level scope is [`../design-document.md`](../design-document.md); this file pins down the *learning problem* those documents assume.
 
 This document fixes notation and states, precisely, the inputs, the ground truth, and the supervised target for the residual policy. Read it first — the other three design docs use the symbols defined here.
 
@@ -105,4 +105,4 @@ The problem structure is identical across phases; only the observation `o_t` wid
 
 ### Provenance note
 
-This document records design decisions reached in the scoping discussions of 2026-05 / 2026-06, refining [`../../project-scope.md`](../../project-scope.md) (Component 4, previously "deferred"). The key refinement over the scope draft: the explicit treatment of the **four independent observation streams** and the clarification that intent/goal is inferred from **command history**, not supplied by any external pointing device. No `raw/` literature source backs this page directly — it is project-internal design rationale.
+This document records design decisions reached in the scoping discussions of 2026-05 / 2026-06, refining [`../design-document.md`](../design-document.md) (Component 4, previously "deferred"). The key refinement over the scope draft: the explicit treatment of the **four independent observation streams** and the clarification that intent/goal is inferred from **command history**, not supplied by any external pointing device. No `raw/` literature source backs this page directly — it is project-internal design rationale.

@@ -15,8 +15,7 @@ force.
 
 ## 6. Negative results
 
-Surfacing the failures is an explicit goal of this document — each is a mechanism, not just a
-missing win.
+Each is a mechanism, not just a missing win.
 
 - **Action-rate penalty — works exactly as designed, and it is *not* the arc's problem.**
   `ar0` vs `ar100` on `dataset_10` are indistinguishable on success (46% vs 41%, inside the
@@ -81,14 +80,16 @@ These are the project's standing positives.
   | Vision plain | +0.71 N | 44.3% (+3.3 pp) |
   | FT plain | +1.83 N | 45.2% (+4.2 pp) |
 
-  Two measures that could have disagreed do not, which is what makes this the arc's most solid
-  positive result — stronger than the success-rate null and, unlike it, consistent in sign.
+  Two measures that could have disagreed do not: the direction is consistent in sign across both.
 - **The mechanism findings**, each theory or a byte-identical/exact probe:
   - **Identifiability ceiling** (LAB-77) — the operator command proxies the hole; a no-vision
     residual cannot lift success outside the chamfer band. A structurally-flat flat-wall delta
     is a *result*, not a failure.
-  - **Far-field gating failure** (LAB-106) — trained GRUs emit a ~5.6 mm correction floor
-    across the ~60% free-space steps where the expert is exactly zero.
+  - **Far-field gating failure** (LAB-106) — trained GRUs emit a **5.64 mm** correction floor
+    across the 123797 of 209143 held-out steps (59%) beyond `d_far` where the expert is
+    exactly zero. Near and close in, the same GRU beats the zero baseline (8.78 vs 9.42 mm;
+    12.02 vs 13.56 mm) — the entire offline deficit is the free-space floor
+    ([probe output](phase-1/probes/lab106-error-decomposition.md)).
   - **Offline/closed-loop anti-correlation** (LAB-106) — fixing offline BC error made
     closed-loop worse; only a closed-loop ablation is a valid signal here.
   - **The bounded-expert/DAgger argument** (LAB-105/106) — on-policy relabeling can only teach

@@ -9,8 +9,8 @@ justification, simulation scenarios, performance metrics, challenges and risks, 
 evaluation criteria, and the timeline.
 
 It is written to stand on its own. Where a subject has a deeper treatment in the repository,
-the section links to it — [`project-scope.md`](../project-scope.md) is the authoritative scope,
-[`docs/guides/architecture-tour.md`](./guides/architecture-tour.md) is the code walkthrough,
+the section links to it — [`docs/guides/architecture-tour.md`](./guides/architecture-tour.md) is the
+code walkthrough,
 [`docs/design/`](./design/) holds the per-subsystem rationale, and
 [`docs/results/`](./results/kpi-dashboard.md) holds every measured result.
 
@@ -37,7 +37,7 @@ in a vertical wall carrying distractor holes, on a Franka Emika Panda in MuJoCo.
 | F1 | A human operator issues coarse pose commands to the end-effector — **position by default**, with 6-DoF orientation mirroring available behind `--orientation` | `input/vision_input.py` + [stereohand](https://github.com/NavehBrenner/stereohand) |
 | F2 | A reproducible synthetic operator can stand in for the human, for benchmarking | `input/scripted_noisy_human.py` |
 | F3 | An assistance layer adds a small correction on top of the operator's command, each tick | `domain/interfaces.py::AssistProvider` |
-| F4 | Assistance is swappable at runtime between *none*, *analytical expert*, and *learned policy* | `kvn episode --assist ...` |
+| F4 | Assistance is swappable at runtime between *none*, *analytical expert*, and *learned policy* | `kvn episode --policy {noassist,expert,tf}` |
 | F5 | An always-on compliant controller converts the corrected command into joint torques | `control/backbone.py`, `control/impedance.py` |
 | F6 | The system records episodes to a training corpus with a versioned on-disk contract | `data/`, [`data-schema.md`](./reference/data-schema.md) |
 | F7 | A residual policy is trained from that corpus by behavioral cloning | `policy/train.py` |
@@ -189,7 +189,7 @@ loop knowing they exist.
 | Layer | Package | Responsibility |
 |---|---|---|
 | Vocabulary | `common/` | `Observation`, `Command`, geometry, seating, logging. Imports nothing from `sim/`. The leaf of the dependency DAG. |
-| Contracts | `domain/` | `Delta`, `apply_delta`, `clamp_delta`, `NoAssist`, and the two Protocols. 29 lines carry the design. |
+| Contracts | `domain/` | `Delta`, `apply_delta`, `clamp_delta`, `NoAssist`, and the two Protocols — the two `Protocol` definitions are 29 lines and carry the design. |
 | Input | `input/` | Where a base command comes from: scripted operator, or stereo hand tracking split into a sensor half (`hand_tracker`) and a robot half (`vision_input`). |
 | World | `sim/` | `SimEnv` (MuJoCo wrapper), `scenegen/` (procedural wall + hole field), and `runner.py` — the one composition loop. |
 | Control | `control/` | Task-space impedance backbone, command clamps, hold/park lock watchdog. Always on, in every configuration. |
@@ -203,6 +203,34 @@ controller, the input strategy, or the loop. That is the Dependency Inversion th
 to demonstrate, and it is exercised for real: the headline experiment is literally the same code
 path run twice with a different `assist` argument. Full walkthrough:
 [`architecture-tour.md`](./guides/architecture-tour.md).
+
+<a id="runtime-contracts"></a>
+
+**Four runtime contracts** are referenced by name from the source. They are stated here once and
+nowhere else, so the code and the document cannot drift apart.
+
+- **World frame and conventions.** World frame at the robot base, **z up**; every pose (EE, peg,
+  hole, target) is reported in it. Quaternions are `(w, x, y, z)`, unit norm — MuJoCo's layout.
+  SI throughout. The wrist F/T signal is **baselined at trial start**: with no contact the reading
+  is dominated by the pre-grasped peg's weight, so the no-contact value is recorded and subtracted
+  and the policy sees only contact-induced wrenches.
+- **Residual policy interface.** The assist is a *pose-delta + grip-force-delta* layer on top of
+  the active input command: Δposition (3-D, ±3 cm/step), Δorientation (3-D axis-angle, ±10°/step),
+  Δgrip force (1-D, ±5 N/step). Clamping is enforced **before** the controller sees the augmented
+  command, so the assist's authority is bounded whatever the policy emits (§1.4). All-zero deltas
+  recover no-assist for free, and the analytical expert and the learned policy share this exact
+  output signature — which is what makes them interchangeable.
+- **Compliance profile.** Impedance control with **direction-dependent stiffness**: stiff along
+  the insertion axis (push in), compliant laterally (the chamfered rim guides the peg — passive
+  alignment), compliant in off-axis rotation (the peg can tilt to fit). On-axis yaw is irrelevant
+  for a round peg. Translational stiffness is `[400, 400, 500]` N/m.
+- **Runtime state — two modes only.** The controller is **mode-less in the autonomy sense**: it
+  has no notion of task progress, success or failure. It is either **active** (input strategy in
+  control, residual assisting) or **locked** — *hold lock* (frozen in place: safety trip, setup,
+  manual pause) or *park lock* (returning to a known safe pose between trials). Trial-level
+  concepts live in the evaluation harness, a passive observer that watches the runtime and
+  computes KPIs offline. The controller has no dependency on the harness. That decoupling is the
+  project's Dependency-Inversion pillar.
 
 ### 2.4 Sequence chart
 
@@ -325,8 +353,10 @@ comparison rather than a different model.
 ```
 
 The image encoder, when enabled, is a **MobileNetV3-Small** initialized from ImageNet weights and
-fine-tuned end-to-end (a frozen-backbone variant exists as a fallback and was measured — see
-§3.2's sibling result in the dashboard).
+used as a **frozen** feature extractor — every shipped vision checkpoint carries
+`freeze_image_encoder: true`, because an 8 GB laptop cannot fine-tune at episode length (§6, C3).
+A fine-tuned end-to-end variant was measured as a one-off ablation (`vision_stageC`) and did not
+lift closed-loop success; see [mechanisms](./results/mechanisms.md#6-negative-results).
 
 **Why recurrent.** A single stateful GRU core, not a fixed window over recent history. The
 history matters because a *single* tick cannot distinguish "approaching the hole" from "jammed
@@ -342,10 +372,11 @@ and why it was rejected.
 
 **How it is trained.** Behavioral cloning on the expert's per-step corrections: Adam at 1e-3,
 early stopping on validation loss (patience 8), `ReduceLROnPlateau`, and an optional
-**action-rate penalty** (squared first-difference of consecutive predicted Δ) that removes the
-residual's trajectory-smoothness cost. Training is seeded end-to-end — weight init and batch
-order — with a regression test asserting that two runs of one seed produce identical weights.
-That test exists because its absence is the most expensive mistake in the project (§5.3, §6).
+**action-rate penalty** (squared first-difference of consecutive predicted Δ) that substantially
+reduces the residual's trajectory-smoothness cost — jerk 153.6 → 85.7 at no success-rate cost,
+against a human baseline of 45.6, so it narrows the gap rather than closing it. Training is
+seeded end-to-end — weight init and batch order — with a regression test asserting that two runs
+of one seed produce identical weights.
 
 **One documented negative in the config.** `use_command_ee_delta` appends the
 command-minus-actual tracking error to the proprioception stream. It *improves* the offline
@@ -371,17 +402,18 @@ central artifact and its shape was not obvious either.
 | Shape | Policy plans and executes the whole insertion; human supervises | Human drives; an arbiter *hands over* to an autonomous controller near the hole | Human drives continuously; policy adds a bounded Δ every tick |
 | Human authority | None during execution | Discrete — all or nothing, per phase | Continuous — human always dominates gross motion |
 | Failure mode | Silent divergence; no human recovery path | Hand-off transients, mode confusion, "who is flying?" | Graceful — a wrong Δ is bounded and the human overrides it |
-| Safety argument | Statistical (measure success rate) | Statistical, plus arbitration correctness | **Structural** — clamp + impedance bound force regardless of the policy |
+| Safety argument | Statistical (measure success rate) | Statistical, plus arbitration correctness | **Structural** — clamp + impedance bound the assist's *authority* regardless of the policy |
 | What it demonstrates | Robot learning | Supervisory control | **Teleoperation assistance** — the actual thesis |
 | Cost | Longest-horizon learning problem; needs RL or very large corpora | Extra arbitration subsystem and its own tuning surface | One extra Protocol; the loop is unchanged |
 
 **Chosen: C.** Three reasons, in order of weight.
 
-1. **It is the only one whose safety claim is a guarantee.** Under A and B the answer to "what if
-   the network is wrong?" is a measurement. Under C it is arithmetic: the Δ is hard-clamped and
-   the backbone is compliant, so a 100 %-wrong output still cannot exceed the force envelope.
-   That property survived every negative result in the project (§6) and is the standing
-   contribution.
+1. **It is the only one whose safety claim is arithmetic rather than statistical.** Under A and B
+   the answer to "what if the network is wrong?" is a measurement. Under C it is arithmetic: the Δ
+   is hard-clamped and the backbone is compliant, so a 100 %-wrong output cannot enlarge its own
+   authority — the *commanded* restoring force stays under ≈18.9 N whatever the network emits.
+   That bounds the command, not the measured contact reaction (§1.4). The property survived every
+   negative result in the project (§6) and is the standing contribution.
 2. **It matches the problem statement.** The claim is about *teleoperation* — that a human plus a
    small learned correction beats the human alone. A removes the human from the claim; B changes
    the claim to "when should the robot take over?", a different project.
@@ -484,7 +516,7 @@ not per-step i.i.d. Gaussian, which would reduce the expert to a trivial noise-n
 |---|---|---|
 | **Insertion success** | bool | The headline metric. Scored on *sustained* seating, not first contact. |
 | **Time-to-insert** | s | Efficiency; distinguishes "succeeded" from "succeeded before the budget ran out". |
-| **Peak contact force** | N | Safety proxy — the KPI the architecture *guarantees* rather than measures. |
+| **Peak contact force** | N | Safety proxy — a **measurement**. What the architecture guarantees is the assist's *authority* (≤18.9 N commanded), not this number (§1.4). |
 | **Trajectory smoothness** | integrated jerk | Whether the assist buys success at the cost of a jittery arm. |
 
 A fifth KPI, **contact events before success**, was defined and is still recorded per trial. It
@@ -518,24 +550,23 @@ is precisely why it is primary.
 
 ### 5.3 Reporting rule — a distribution, never a checkpoint
 
-The project learned this the expensive way. Training was initially unseeded: weight init and
+Training was initially unseeded: weight init and
 batch shuffling came from OS entropy, so *two runs of the same command produced different
 models*, while the run folder recorded a seed and a commit and therefore looked pinned.
-Re-running one recipe across training seeds produced a **20–27 pp spread in success
+Re-running one recipe across training seeds produced a **20–31 pp spread in success
 rate** — larger than the effect any single checkpoint had appeared to show.
 
-The consequence is a standing methodological rule, and it is one of the project's more
-transferable findings:
+The consequence is a standing reporting rule:
 
 > **A single checkpoint is not a measurement.** Every recipe is reported as a distribution over
 > training seeds — mean ± range, with *n* and the noise floor printed beside it. Any single-seed
 > figure is labelled as such.
 
-**What that rule produced.** Applied to the official multi-seed run — a ~1000-episode corpus,
-all four production recipes retrained across training seeds, each evaluated on the same 100
-paired held-out seeds — the answer is a **null**: no recipe lifts closed-loop insertion success
+Applied to the official multi-seed run — 1000-episode F/T and 500-episode vision corpora, all
+four production recipes retrained across training seeds, each evaluated on the same 100 paired
+held-out seeds — the answer is a **null**: no recipe lifts closed-loop insertion success
 above the human-only baseline beyond training-seed noise (means of −4.4, +2.0, −8.3 and +1.3 pp
-against a floor of 20–27 pp). The project's standing positive results are the **bounded assist
+against a floor of 20–31 pp). The project's standing positive results are the **bounded assist
 authority** (§1.4 — the residual's clamp and the ≤18.9 N commanded-force bound, both structural),
 the **measured reduction in contact force and force-aborts under DAgger**, and the **mechanism
 findings** explaining why per-step imitation cannot lift closed-loop seating on this task.
@@ -549,37 +580,37 @@ with the levers already exhausted and the ones still worth trying in
 
 ## 6. Challenges and risks
 
-Stated as they were encountered, with what actually happened. Several were realized, and the
-honest accounting is part of the deliverable.
+Stated as they were encountered, with what actually happened.
 
 | # | Challenge | Mitigation | Outcome |
 |---|---|---|---|
-| C1 | **A wrong policy damages the part** | Structural safety: clamp before the controller + passive compliance (§1.4) | **Held.** The guarantee is architectural and survived every negative result. |
-| C2 | **Unseeded training makes results irreproducible** | Seed every source of randomness; report distributions | **Realized, then fixed.** Cost a headline figure; produced §5.3. |
-| C3 | **Vision BC is data-hungry** — more demonstrations than F/T-only | Pretrained CNN init, fine-tuned end-to-end; frozen-encoder fallback | **Realized.** An 8 GB laptop cannot fine-tune at episode length; frozen encoder at batch 2 fits, and rendering at ~10 fps caps the corpus at ~300 episodes. Recorded as an operating-point constraint, not hidden. |
+| C1 | **A wrong policy damages the part** | Structural safety: clamp before the controller + passive compliance (§1.4) | **Held.** The bound on the assist's authority is architectural and survived every negative result; it does not bound measured contact force (§1.4). |
+| C2 | **Unseeded training makes results irreproducible** | Seed every source of randomness; report distributions | **Realized, then fixed.** Seeding was added with a train-twice-identical-weights test; every closed-loop claim is now a distribution over seeds (§5.3). |
+| C3 | **Vision BC is data-hungry** — more demonstrations than F/T-only | Pretrained CNN init, fine-tuned end-to-end; frozen-encoder fallback | **Realized.** An 8 GB laptop cannot fine-tune at episode length; frozen encoder at batch 2 fits, and rendering at ~10 fps capped the M7 ablation corpus (`dataset_vision`) at 300 episodes and the official vision corpus at 500. Recorded as an operating-point constraint, not hidden. |
 | C4 | **The expert is a ceiling** — BC cannot exceed its teacher | Analytical expert with privileged info; expert recalibration sweeps | **Realized and bounded.** The better-expert lever was tested and refuted. |
 | C5 | **Covariate shift** — BC drifts off the expert's state distribution | DAgger: on-policy rollouts relabelled by the expert | Implemented (`scripts/dagger.py`); rounds run as part of the official KPI run. |
-| C6 | **Corpus/code drift** — a config fingerprint that hashes config but not code | Code-era column in the operating-point ledger; the claim in the data schema qualified | Documented; affected corpora identified and quarantined. |
+| C6 | **Corpus/code drift** — a config fingerprint that hashes config but not code | Code era recorded as a caveat on the operating-point ledger; the claim in the data schema qualified | Documented; affected corpora identified and quarantined. |
 | C7 | **Sim-only results don't transfer** | Explicit anti-scope: this is a simulation study, and says so | Accepted, stated, not papered over. |
 | C8 | **Solo project, fixed deadline** | Phased scope with Phase 1 (F/T-only) as the guaranteed floor and Phase 2 (vision) as upside | Held — M1–M8 landed on schedule. |
 
-The honest headline: the imitation arc was **exhausted and diagnosed**, not quietly abandoned.
-BC and DAgger were both taken to their limits, perception was shown to be decoupled from closed-loop
-success, and the expert ceiling was measured. What stands are the **force-bound guarantee** and the
-**mechanism findings**; what does not stand is a success-rate lift. That distinction is drawn
-explicitly in [`docs/results/kpi-dashboard.md`](./results/kpi-dashboard.md) §7.
+BC and DAgger were both taken to their limits, perception was measured to be decoupled from
+closed-loop success, and the expert ceiling was swept. What stands are the **bound on the assist's
+authority** and the **mechanism findings**; what does not stand is a success-rate lift. That
+distinction is drawn in [`results/mechanisms.md`](./results/mechanisms.md#7-what-still-stands).
 
 ---
 
 ## 7. Prototype and demo
 
-The system is fully implemented and runnable — this is not a paper design.
+The system is fully implemented and runnable.
 
 ```bash
 ./scripts/setup.sh                        # one-time (uv, Python 3.12)
-uv run kvn episode --input scripted --assist none      # baseline, with viewer
-uv run kvn episode --input scripted --assist policy --checkpoint <run>/checkpoint.pt
-uv run kvn episode --input vision  --assist policy     # live: two webcams → robot
+uv run kvn episode --input scripted --policy noassist   # baseline, with viewer
+uv run kvn episode --input scripted --policy tf \
+    --checkpoint docs/results/checkpoints/ft/bc/seed_0/checkpoint.pt
+uv run kvn episode --input vision --policy tf \
+    --checkpoint docs/results/checkpoints/ft/bc/seed_0/checkpoint.pt  # live: two webcams → robot
 ```
 
 Every command and flag: [`docs/guides/cli.md`](./guides/cli.md). Train / deploy / evaluate as
@@ -604,8 +635,7 @@ runs only — the failure modes are the more informative half, and §6 explains 
 
 ## 8. Evaluation criteria
 
-These are the success criteria as committed in
-[`project-scope.md`](../project-scope.md) at the planning phase, **quoted unchanged**, each
+These are the success criteria as committed at the planning phase, **quoted unchanged**, each
 against what was measured. Two of them were not met.
 
 | # | Success criterion, as originally written | Verdict |
@@ -618,7 +648,7 @@ against what was measured. Two of them were not met.
 
 **On criteria 2 and 3 — what "not met" means here.** The residual does not outperform human-only
 on success rate. Over the official multi-seed run the four recipes measure −4.4, +2.0, −8.3 and
-+1.3 pp against a training-seed noise floor of 20–27 pp, so no arm clears it in either direction
++1.3 pp against a training-seed noise floor of 20–31 pp, so no arm clears it in either direction
 (§5.3). Vision does not beat F/T-only either, at any operating point tested. Both criteria are
 failed on their own terms, and the phrasing above is left exactly as it was written before any
 result existed.
@@ -659,8 +689,7 @@ Runway 2026-05-18 → 2026-08-31, ~15 weeks at 10–15 h/week. Milestone specs:
 **Work-plan note.** Phasing was deliberate: **Phase 1 (F/T-only residual) was the guaranteed
 deliverable** and Phase 2 (vision) the upside, so a complete and defensible submission never
 depended on the harder arc landing. M8 was independent of M5–M7 and could slip without
-endangering the core result. That structure is why the vision negative cost the project a
-*headline* rather than a *submission*.
+endangering the core result.
 
 ---
 
@@ -669,7 +698,6 @@ endangering the core result. That structure is why the vision negative cost the 
 | Question | Document |
 |---|---|
 | What came of it, in one read? | [`docs/conclusions.md`](./conclusions.md) |
-| What exactly is in scope? | [`project-scope.md`](../project-scope.md) |
 | How do I find my way around `src/`? | [`docs/guides/architecture-tour.md`](./guides/architecture-tour.md) |
 | What does every command do? | [`docs/guides/cli.md`](./guides/cli.md) |
 | How do I train / deploy / evaluate a policy? | [`docs/guides/policy-guide.md`](./guides/policy-guide.md) |

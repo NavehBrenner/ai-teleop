@@ -1,6 +1,6 @@
 """Lock state machine and force-cap watchdog for the backbone controller.
 
-Three runtime states (per `project-scope.md` *Runtime state — two modes only*
+Three runtime states (per `docs/design-document.md` §2.3 *Runtime state — two modes only*
 plus the M2-spec park variant):
 
 ==========  ==========================================  ====================================

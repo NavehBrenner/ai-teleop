@@ -274,7 +274,7 @@ def main() -> int:
     # ------------------------------------------------------------------
     # Phase 3 — force-trip: keep pushing deeper.
     # ------------------------------------------------------------------
-    # The ±2 cm/step command clamp caps the impedance's sustained Cartesian
+    # The ±2.5 cm/step command clamp caps the impedance's sustained Cartesian
     # force at K_z · 0.02 (≈ 10 N at K_z=500), so "ramp commanded depth" alone
     # never reaches the 30 N watchdog. Per spec Step 7 we *stiffen the
     # lateral impedance* for this phase instead — the same safety clamp now

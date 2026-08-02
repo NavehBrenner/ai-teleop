@@ -604,7 +604,7 @@ def add_run_args(parser: argparse.ArgumentParser) -> None:
         choices=["commands", "images", "all"],
         default=None,
         help="Record the episode (off by default). 'commands' saves the trajectory to "
-        "episode.npz; 'images' saves wrist-camera PNG frames to an imgs/ folder (the vision "
+        "episode.npz; 'images' saves wrist-camera JPEG frames (224x224, q90) to an imgs/ folder (the vision "
         "stream the M7 policy is fed); 'all' saves both. Stops automatically on a successful "
         "insertion. Output dir is --record-out.",
     )

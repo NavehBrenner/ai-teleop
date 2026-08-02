@@ -12,7 +12,7 @@ field                             type   role
 ================================  =====  =================================
 ``outcome`` / ``success``         enum   **headline** — did the peg seat?
 ``time_to_insert_s``              s      supporting (None unless success)
-``peak_contact_force``            N      safety proxy — bounded by design
+``peak_contact_force``            N      safety proxy — measured, not bounded
 ``contact_events``                count  supporting
 ``jerk_integral``                 —      trajectory smoothness (∫|jerk|dt)
 ================================  =====  =================================

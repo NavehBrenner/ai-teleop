@@ -34,7 +34,7 @@ directly** every tick: `command = held(goal + drift)`, `goal = hole + bias`. Two
 
 1. **No approach phase.** The command is parked at the hole from tick 0 (net travel ≈ the
    bias+drift magnitude, ~8 mm). The *realized* arm approach you see is manufactured entirely
-   by the **controller's 2 cm/step command clamp** (see the class docstring, lines 30–34), not
+   by the **controller's 2.5 cm/step command clamp** (see the class docstring, lines 30–34), not
    by the operator. So the command *stream itself* never sweeps in.
 2. **Staircase.** Drift is an OU process refreshed at `refresh_hz` (8 Hz) and **held** between
    refreshes (`_hold_steps`, `_refresh_held_target`). Between refreshes the command is

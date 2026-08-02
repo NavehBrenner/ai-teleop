@@ -136,7 +136,7 @@ exceed the envelope.
 
 The harness is a **passive observer**: it watches the `Observation` stream a running
 episode produces and never calls into the controller. The decoupling is a
-**Dependency-Inversion pillar** from `project-scope.md` — the controller stays
+**Dependency-Inversion pillar** from `docs/design-document.md` — the controller stays
 mode-less and knows nothing about trials, success, or KPIs; *trial concepts live
 only in `eval/`*.
 

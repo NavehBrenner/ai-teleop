@@ -30,7 +30,7 @@ By the end of M2 we can:
 - **The assistance seam** (the Δ-source interface) → M3.
 - **Any input strategy** (scripted noisy-human, keyboard, vision) → M3 / M8. M2's harness uses hardcoded waypoints; the production command source comes later.
 - **Expert, policy, training, evaluation, data logging** → M4+. Per-step trajectory logging exists only in the dev harness for tuning, not in the controller itself.
-- **Trial-level concepts** (success, failure, timeout). The controller is mode-less in the autonomy sense — see `project-scope.md` *Runtime state — two modes only*. Trial bookkeeping lives in the (future) eval harness.
+- **Trial-level concepts** (success, failure, timeout). The controller is mode-less in the autonomy sense — see `docs/design-document.md` *Runtime state — two modes only*. Trial bookkeeping lives in the (future) eval harness.
 - **Gripper control beyond a baseline grip force**. M2 sets the gripper to a fixed closing force at reset and exposes a `Δgrip-force` channel in `Command`, but the channel is plumbed and clamped only — it is not exercised in the harness. The expert / residual policy will exercise it in M4+.
 - **Adaptive / model-predictive impedance**, force-control modes, hybrid position-force schemes. The impedance law is static and direction-dependent — that's enough.
 - **Configuration system**. Controller gains, force cap, stiffness profile etc. are constants in code (or constructor args). Hydra / YAML comes in M4+ when there are many configs to manage.
@@ -59,7 +59,7 @@ class Command:
     delta_grip_force: float = 0.0 # N, additive on top of baseline grip
 ```
 
-Document in the docstring: same world-frame and quaternion convention as `Observation`. Clamping (Δposition ≤ 2 cm/step, Δorientation ≤ 10°/step, Δgrip-force ≤ 5 N/step) is enforced *inside* the controller — see `project-scope.md` *Residual policy interface*.
+Document in the docstring: same world-frame and quaternion convention as `Observation`. Clamping (Δposition ≤ 2 cm/step, Δorientation ≤ 10°/step, Δgrip-force ≤ 5 N/step) is enforced *inside* the controller — see `docs/design-document.md` *Residual policy interface*.
 
 ### Step 3 — Differential IK with null-space posture cost (~2–3 h)
 
@@ -162,7 +162,7 @@ class Controller:
 Notes:
 
 - Constructor caches actuator IDs (analogous to how `SimEnv` caches sensor / joint IDs in M1) so `compute()` does no name lookups in the hot loop.
-- Clamping: hard-clip `target_position` to the current EE position ± 2 cm and `target_quaternion` to within 10° of current EE orientation (axis-angle) — see `project-scope.md` *Residual policy interface*. The same clamps will protect M5's learned residual.
+- Clamping: hard-clip `target_position` to the current EE position ± 2 cm and `target_quaternion` to within 10° of current EE orientation (axis-angle) — see `docs/design-document.md` *Residual policy interface*. The same clamps will protect M5's learned residual.
 - The `Controller` owns the home pose (defaulted from `SimEnv`'s home keyframe via a one-time `mj_resetDataKeyframe` introspection at construction).
 
 ### Step 7 — Dev harness script (~1–2 h)
@@ -189,7 +189,7 @@ The starting gains in Step 4 will be wrong. Plan to:
 - Adjust damping until there's no visible oscillation when the arm hits a waypoint.
 - Adjust DLS λ until the arm passes near (but does not lock at) the workspace boundary without exploding joint velocities.
 
-Tuning is iterative and the per-axis numbers will change; the *shape* of the stiffness profile (stiff-along-insertion, soft-laterally) is the design contract and should not change. If it does, that's a design-doc update — go modify `project-scope.md`.
+Tuning is iterative and the per-axis numbers will change; the *shape* of the stiffness profile (stiff-along-insertion, soft-laterally) is the design contract and should not change. If it does, that's a design-doc update — go modify `docs/design-document.md`.
 
 ## Acceptance criteria
 

@@ -45,15 +45,14 @@ training config, `history.json`, and the training curve as `history.png`.
 ## Two things to know before quoting one
 
 **A single checkpoint is not a measurement.** Retraining any of these recipes with a different
-training seed moves closed-loop success by 20–27 pp — the reason each family ships as a *set* of
+training seed moves closed-loop success by 20–31 pp — the reason each family ships as a *set* of
 seeds rather than a best-of. Whichever one you load, it is one draw from a distribution, and the
-distribution is what [`../kpi-dashboard.md`](../kpi-dashboard.md) §5–§5.5 reports.
+distribution is what [`../noise-floor.md`](../noise-floor.md) reports.
 
 **Every DAgger round is retained; the reported round is the last one.** Round-to-round Δ swings
 36 pp *within a single training seed* with no trend (vision seed 0 ran −1 → −28 → −12 → +8 → −4).
-The rounds are here so the trajectory is inspectable, not so a good one can be picked — selecting
-the best round is the same optimistic-selection bias that produced an earlier headline this
-project had to retract.
+The rounds are here so the trajectory is inspectable, not so a good one can be picked: choosing
+the best round post hoc is optimistic-selection bias.
 
 ## `legacy/`
 

@@ -5,7 +5,7 @@ Static project assets — MJCF (MuJoCo) scene files, meshes, textures.
 ```
 mjcf/
 ├── menagerie_panda/    # Franka Panda + Franka Hand from mujoco_menagerie (vendored)
-├── wall_with_holes.xml # Custom: vertical wall, three through-openings (chamfer pending M2)
+├── wall_with_holes.xml # Custom: vertical wall, three through-openings (static task scene; procedural walls come from sim/scenegen)
 ├── peg.xml             # Custom: 8 mm × 60 mm cylindrical peg
 └── full_scene.xml      # Combined: panda + wall + peg + ambient/wrist lights + wrist camera + weld
 ```

@@ -10,7 +10,7 @@ The two answers differ, and the most visible way is that a mean can describe no 
 ran: peak contact force is bimodal, so its average falls in the trough between the two
 modes.
 
-The page has two halves. [§5.6.2](#562-the-distribution-behind-the-force-mean) pools every
+The page has two halves. [§5.6.2](#562-the-distributions-behind-the-means) pools every
 seed of a recipe and asks what one *trial* looks like. [§5.6.3](#563-two-views-per-training-seed)
 holds one **training seed** fixed and puts both views — absolute distributions and paired
 per-wall deltas — on **every** KPI, which is where the wall-by-wall question is actually
@@ -109,7 +109,7 @@ what the exact test is computed on and whose difference *is* the paired Δ.
 
 **Fixing the seed removes the lottery from the picture, not from the result.** Several panels
 below show a checkpoint that looks clearly better than the operator. Each is one draw from a
-recipe whose seeds span the **20–27 pp** success-rate noise floor ([noise floor](noise-floor.md)),
+recipe whose seeds span the **20–31 pp** success-rate noise floor ([noise floor](noise-floor.md)),
 and the panel beside it usually shows the opposite. Reading one panel as a result is the selection
 trap the seed-level figures exist to prevent.
 

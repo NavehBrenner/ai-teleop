@@ -1,6 +1,6 @@
 """Stereo hand sensor — metric 3-D landmarks → hand-pose readings (LAB-50/74).
 
-The off-the-shelf **sensor** layer per `project-scope.md`: two calibrated webcams
+The off-the-shelf **sensor** layer per `docs/design-document.md` §4.4: two calibrated webcams
 feed the :mod:`stereohand` package, which triangulates each frame into 21 *metric*
 3-D landmarks, and we distill those into a small typed :class:`HandReading` (wrist
 position in metres, an orientation estimate, an open/close grip proxy, and a

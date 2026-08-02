@@ -1,6 +1,6 @@
 # Expert Corrections — The Analytical Privileged-Info Expert
 
-Companion docs: [problem-structure.md](problem-structure.md) (notation, ground truth) · [human-generation.md](human-generation.md) · [policy-model.md](policy-model.md). Refines [`../../project-scope.md`](../../project-scope.md) Component 3.
+Companion docs: [problem-structure.md](problem-structure.md) (notation, ground truth) · [human-generation.md](human-generation.md) · [policy-model.md](policy-model.md). Refines [`../design-document.md`](../design-document.md) Component 3.
 
 This document specifies the **expert**: the closed-form, geometry-driven controller that generates the supervised target `Δ*_t` for behavioral cloning. The expert is a *tool*, not a research contribution — the contribution is the deployed policy reproducing its output *without* privileged state. The expert is allowed to "cheat" (it reads true poses); the policy is not.
 
@@ -104,4 +104,4 @@ The expert's one job is to be *correct given the state*, even on failing traject
 
 ### Provenance note
 
-Records the analytical expert design from the 2026-05/06 scoping discussions, refining [`../../project-scope.md`](../../project-scope.md) Component 3. Key decisions captured: the **align-then-advance phased law**, the residual `Δ_full = pose_des ⊖ c_t` formulation, and the **smoothstep distance gate `g(d)` guaranteeing far-field zero by construction**, plus the four-stage validation. Project-internal rationale; geometric-expert-for-peg-in-hole is standard in the BC literature but no specific `raw/` source backs this page.
+Records the analytical expert design from the 2026-05/06 scoping discussions, refining [`../design-document.md`](../design-document.md) Component 3. Key decisions captured: the **align-then-advance phased law**, the residual `Δ_full = pose_des ⊖ c_t` formulation, and the **smoothstep distance gate `g(d)` guaranteeing far-field zero by construction**, plus the four-stage validation. Project-internal rationale; geometric-expert-for-peg-in-hole is standard in the BC literature but no specific `raw/` source backs this page.
