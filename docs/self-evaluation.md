@@ -16,7 +16,7 @@ a robot arm toward a peg-in-hole insertion with coarse hand motion, and a learne
 supplies the last-millimetre corrections the human cannot. Nine implementation milestones, two
 phases — a force/torque-only residual first (Phase 1), then vision-conditioned (Phase 2).
 
-**All nine milestones were built.** The simulation, the impedance control backbone, the assistance
+**All eight implementation milestones were built** (M9 — final evaluation and delivery — is in progress). The simulation, the impedance control backbone, the assistance
 seam, the privileged-information expert and data generation, both policy arcs, live stereo-hand
 teleoperation from two webcams, and the evaluation harness all exist, are tested, and run from a
 clean clone. 61 modules, ~10,500 lines of Python, 239 tests, a green ruff/mypy/pytest gate on
@@ -82,8 +82,7 @@ success. A policy can clone the expert's outputs more and more accurately while 
 at the task, because the failure that matters — the peg jamming against the wall before it is
 aligned — is a state the residual cannot recover from at all. It can nudge the next command; it
 cannot retract and retry. That diagnosis is what points at contact-recovery control as the lever
-worth trying next, and it is knowledge the project would not have if the first experiment had
-simply worked.
+worth trying next.
 
 🖊️ *Your call whether to claim this as a real contribution or present it more modestly. I would
 claim it — a mechanism is more transferable than a success rate — but it should sound like you.*
@@ -104,7 +103,7 @@ weights.
 
 The deeper cost was not the wasted compute. It was that **every single-checkpoint conclusion in
 the project up to that point had to be requalified.** Retraining one fixed recipe across seeds
-moves closed-loop success by 20–27 percentage points — larger than any effect the project had
+moves closed-loop success by 20–31 percentage points — larger than any effect the project had
 been trying to measure. One seed of the F/T recipe reads as a statistically significant
 regression (p = 0.0009); another reads as a win. Both are the same recipe.
 
@@ -130,9 +129,9 @@ bias in new clothes.
 
 **Separate confounds at design time.** The one secondary claim the project makes beyond the null —
 that DAgger tightens the seed distribution — was measured with plain BC at batch size 16 and
-DAgger at batch size 2. Two variables, one comparison. I caught it during the final review and
-spent a compute slot resolving it rather than shipping the flattering version, but it should not
-have been built that way.
+DAgger at batch size 2. Two variables, one comparison. The confound was resolved by retraining
+plain BC at batch 2 as a control, which showed the tightening is DAgger's and not the batch
+size's. It should not have been built that way.
 
 🖊️ *Add anything else — including non-technical: time management, scope, how you'd approach a
 solo research project differently.*
