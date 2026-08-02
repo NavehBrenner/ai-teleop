@@ -214,7 +214,7 @@ rotates the wrong way. Unit-test a known rotation through `apply_delta`.
   model. (Known unknown: confirm the peg geometry / which body axis is `a`.)
 - `n` and `p_hole` come from `Observation.hole_poses[target_hole_index]` — the
   hole *site* frame. Which site axis points *into* the hole is a convention to
-  confirm (see `scripts/probe_cadquery_hole_frame.py` for prior probing).
+  confirm (see `scripts/dev/probe_cadquery_hole_frame.py` for prior probing).
 
 ### 4. Data-generation rollout + trajectory schema (LAB-28)
 

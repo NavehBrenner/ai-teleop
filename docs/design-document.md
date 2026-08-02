@@ -27,7 +27,7 @@ assembly pin). The system demonstrates, in simulation, that a learned *residual 
 conditioned on wrist camera and contact force can absorb that last-millimetre error while the
 human keeps authority over the gross motion.
 
-The task is **peg-in-hole insertion**: an 8 mm peg, pre-grasped, into a ~10 mm chamfered bore
+The task is **peg-in-hole insertion**: an 8 mm peg, pre-grasped, into a chamfered bore (10–30 mm Ø, mean 19.8 mm over the generated wall set)
 in a vertical wall carrying distractor holes, on a Franka Emika Panda in MuJoCo.
 
 ### 1.2 Functional requirements
@@ -64,7 +64,8 @@ Three layers, strongest first. The first is the one that matters: it is mechanic
 even if the learned policy emits garbage.
 
 1. **Passive compliance.** The commanded restoring force is bounded by stiffness × the per-step
-   command clamp: `[400, 400, 500]` N/m × 0.025 m gives **‖K·Δx‖ ≤ 18.9 N**. No command —
+   command clamp. The clamp applies to the Euclidean **norm** of the position delta
+   (`backbone.py`), so ‖Δx‖ ≤ 0.025 m and **‖K·Δx‖ ≤ λ_max·‖Δx‖ = 500 × 0.025 = 12.5 N**. No command —
    including a maximally wrong network output — can ask for more than that.
    **This bounds the command, not the measurement.** The wrist F/T sensor reads the contact
    *reaction*, which carries impact transients the quasi-static argument does not cover; measured
@@ -74,10 +75,11 @@ even if the learned policy emits garbage.
 2. **Hard clamps on the residual.** `clamp_delta` bounds every correction to **±3 cm position,
    ±10° orientation, ±5 N grip force per step**, applied *before* the controller sees the
    augmented command (`domain/delta.py`).
-3. **Trip-and-lock watchdog.** `control/lock.py` monitors the runtime; exceeding the wrist-force
-   cap (50 N in data generation, 30 N in evaluation), hitting the step budget, or a
-   NaN/out-of-distribution residual drives the controller into **hold lock**, and the trial is
-   recorded as a failure. **Park lock** returns the arm to a base pose between trials. This layer
+3. **Trip-and-lock watchdog.** `control/lock.py` monitors the wrist force; exceeding the cap
+   (50 N in data generation, 30 N in evaluation) drives the controller into **hold lock** and the
+   trial is recorded as a failure. That is its only automatic trip — the step budget ends the
+   episode at the runner level and is recorded as a timeout, and there is no finiteness check on
+   the residual. **Park lock** returns the arm to a base pose between trials. This layer
    guarantees *termination* on a force breach, not that the breach cannot happen — 41% of
    evaluation trials end this way, across every arm including the unassisted baseline.
 
@@ -296,7 +298,7 @@ sequenceDiagram
         R->>C: compute(observation, Command)
         C->>C: clamp command vs current EE pose
         C->>L: resolve_target(obs, pos, quat)
-        alt force cap exceeded / NaN residual / timeout
+        alt wrist force exceeds the cap
             L-->>C: HOLD target (trip)
         else nominal
             L-->>C: commanded target
@@ -411,7 +413,7 @@ central artifact and its shape was not obvious either.
 1. **It is the only one whose safety claim is arithmetic rather than statistical.** Under A and B
    the answer to "what if the network is wrong?" is a measurement. Under C it is arithmetic: the Δ
    is hard-clamped and the backbone is compliant, so a 100 %-wrong output cannot enlarge its own
-   authority — the *commanded* restoring force stays under ≈18.9 N whatever the network emits.
+   authority — the *commanded* restoring force stays under 12.5 N whatever the network emits.
    That bounds the command, not the measured contact reaction (§1.4). The property survived every
    negative result in the project (§6) and is the standing contribution.
 2. **It matches the problem statement.** The claim is about *teleoperation* — that a human plus a
@@ -485,7 +487,7 @@ fiddling — each was calibrated against the human-only baseline before any poli
 
 | Knob | Stresses | Range used |
 |---|---|---|
-| **Clearance** (bore Ø − peg Ø) | position accuracy | 8 mm peg into ~10 mm bore |
+| **Clearance** (bore Ø − peg Ø) | position accuracy | 8 mm peg into a 10–30 mm bore (sampled per wall) |
 | **Chamfer** (rim funnel width) | orientation accuracy | 5–9 mm |
 
 Difficulty is calibrated so the **unassisted** operator has real headroom — an easy task would
@@ -516,7 +518,7 @@ not per-step i.i.d. Gaussian, which would reduce the expert to a trivial noise-n
 |---|---|---|
 | **Insertion success** | bool | The headline metric. Scored on *sustained* seating, not first contact. |
 | **Time-to-insert** | s | Efficiency; distinguishes "succeeded" from "succeeded before the budget ran out". |
-| **Peak contact force** | N | Safety proxy — a **measurement**. What the architecture guarantees is the assist's *authority* (≤18.9 N commanded), not this number (§1.4). |
+| **Peak contact force** | N | Safety proxy — a **measurement**. What the architecture guarantees is the assist's *authority* (≤12.5 N commanded), not this number (§1.4). |
 | **Trajectory smoothness** | integrated jerk | Whether the assist buys success at the cost of a jittery arm. |
 
 A fifth KPI, **contact events before success**, was defined and is still recorded per trial. It
@@ -524,10 +526,13 @@ is **not reported**: it reads exactly 1 on every trial of every arm, `human_only
 this operating point it separates nothing. It stays in the recorded schema in case a future
 operating point makes it informative.
 
-Two of the four have a reading caveat, stated where they are reported (§5.3): time-to-insert is
-defined only on seated trials, so a marginal mean is taken over each arm's own successes and is
-not comparable across arms — the paired figure is. And the paired figures are the ones the
-dashboard quotes.
+Two of the four carry a reading caveat, both stated where they are reported ([KPI board](./results/kpi-board.md#56-the-full-kpi-board)).
+**Time-to-insert** is defined only on seated trials, so a marginal mean is taken over each arm's
+own successes and is not comparable across arms — the paired figure is. **Peak contact force**
+and **jerk** are recorded on every trial, so their marginal means mix seated and aborted runs,
+two populations whose difference is larger than any treatment effect measured here; both are
+therefore also reported restricted to the walls both arms seated. The paired figures are the
+ones the results quote.
 
 A caveat the harness carries explicitly: data generation and evaluation share the *seating
 geometry* (`common/seating.py`) but not the *decision rule* — data-gen scores success on the first
@@ -567,7 +572,7 @@ four production recipes retrained across training seeds, each evaluated on the s
 held-out seeds — the answer is a **null**: no recipe lifts closed-loop insertion success
 above the human-only baseline beyond training-seed noise (means of −4.4, +2.0, −8.3 and +1.3 pp
 against a floor of 20–31 pp). The project's standing positive results are the **bounded assist
-authority** (§1.4 — the residual's clamp and the ≤18.9 N commanded-force bound, both structural),
+authority** (§1.4 — the residual's clamp and the ≤12.5 N commanded-force bound, both structural),
 the **measured reduction in contact force and force-aborts under DAgger**, and the **mechanism
 findings** explaining why per-step imitation cannot lift closed-loop seating on this task.
 
@@ -585,12 +590,12 @@ Stated as they were encountered, with what actually happened.
 | # | Challenge | Mitigation | Outcome |
 |---|---|---|---|
 | C1 | **A wrong policy damages the part** | Structural safety: clamp before the controller + passive compliance (§1.4) | **Held.** The bound on the assist's authority is architectural and survived every negative result; it does not bound measured contact force (§1.4). |
-| C2 | **Unseeded training makes results irreproducible** | Seed every source of randomness; report distributions | **Realized, then fixed.** Seeding was added with a train-twice-identical-weights test; every closed-loop claim is now a distribution over seeds (§5.3). |
-| C3 | **Vision BC is data-hungry** — more demonstrations than F/T-only | Pretrained CNN init, fine-tuned end-to-end; frozen-encoder fallback | **Realized.** An 8 GB laptop cannot fine-tune at episode length; frozen encoder at batch 2 fits, and rendering at ~10 fps capped the M7 ablation corpus (`dataset_vision`) at 300 episodes and the official vision corpus at 500. Recorded as an operating-point constraint, not hidden. |
+| C2 | **Unseeded training makes results irreproducible** | Seed every source of randomness; report distributions | Training is seeded end-to-end, with a train-twice-identical-weights regression test; every closed-loop claim is a distribution over training seeds (§5.3). |
+| C3 | **Vision BC is data-hungry** — more demonstrations than F/T-only | Pretrained CNN init, fine-tuned end-to-end; frozen-encoder fallback | **Realized.** An 8 GB laptop cannot fine-tune at episode length; frozen encoder at batch 2 fits, and rendering at ~10 fps capped the M7 ablation corpus (`dataset_vision`) at 300 episodes and the official vision corpus at 500. Recorded as an operating-point constraint. |
 | C4 | **The expert is a ceiling** — BC cannot exceed its teacher | Analytical expert with privileged info; expert recalibration sweeps | **Realized and bounded.** The better-expert lever was tested and refuted. |
 | C5 | **Covariate shift** — BC drifts off the expert's state distribution | DAgger: on-policy rollouts relabelled by the expert | Implemented (`scripts/dagger.py`); rounds run as part of the official KPI run. |
 | C6 | **Corpus/code drift** — a config fingerprint that hashes config but not code | Code era recorded as a caveat on the operating-point ledger; the claim in the data schema qualified | Documented; affected corpora identified and quarantined. |
-| C7 | **Sim-only results don't transfer** | Explicit anti-scope: this is a simulation study, and says so | Accepted, stated, not papered over. |
+| C7 | **Sim-only results don't transfer** | Explicit anti-scope: this is a simulation study, and says so | Accepted and stated as an explicit anti-scope. |
 | C8 | **Solo project, fixed deadline** | Phased scope with Phase 1 (F/T-only) as the guaranteed floor and Phase 2 (vision) as upside | Held — M1–M8 landed on schedule. |
 
 BC and DAgger were both taken to their limits, perception was measured to be decoupled from
@@ -609,8 +614,11 @@ The system is fully implemented and runnable.
 uv run kvn episode --input scripted --policy noassist   # baseline, with viewer
 uv run kvn episode --input scripted --policy tf \
     --checkpoint docs/results/checkpoints/ft/bc/seed_0/checkpoint.pt
+# Live: two webcams → robot. Needs a display (no --headless) and a one-time stereo
+# calibration; see README "Stereo (vision) setup".
 uv run kvn episode --input vision --policy tf \
-    --checkpoint docs/results/checkpoints/ft/bc/seed_0/checkpoint.pt  # live: two webcams → robot
+    --stereo-calib <path>/stereo_calib.json \
+    --checkpoint docs/results/checkpoints/ft/bc/seed_0/checkpoint.pt
 ```
 
 Every command and flag: [`docs/guides/cli.md`](./guides/cli.md). Train / deploy / evaluate as
@@ -641,7 +649,7 @@ against what was measured. Two of them were not met.
 | # | Success criterion, as originally written | Verdict |
 |---|---|---|
 | 1 | *"Working integrated demo: webcam-driven teleop produces visible insertion attempts in MuJoCo, with assistance mode toggleable at runtime."* | ✅ **Met** |
-| 2 | *"Phase 1 (F/T-only residual) outperforms human-only on success rate; peak force bounded by construction."* | ❌ **Not met** on success rate · ⚠️ **partly met** on the force clause — the *commanded* force is bounded (≤18.9 N) and the residual is clamped, but *measured* contact force is not; see §1.4 |
+| 2 | *"Phase 1 (F/T-only residual) outperforms human-only on success rate; peak force bounded by construction."* | ❌ **Not met** on success rate · ⚠️ **partly met** on the force clause — the *commanded* force is bounded (≤12.5 N) and the residual is clamped, but *measured* contact force is not; see §1.4 |
 | 3 | *"Phase 2 (vision-conditioned residual) outperforms human-only on success rate **and** peak force, statistically meaningful; and beats Phase 1 (the vision ablation)."* | ❌ **Not met** |
 | 4 | *"Architecture cleanly separates input layer / backbone controller / assistance layer; Strategy pattern at each seam; SOLID compliance defensible during the design review."* | ✅ **Met** |
 | 5 | *"All booklet-required deliverables submitted on time and to professional quality, including self-evaluation writeup."* | 🎬 **In progress** — this document, the README and the code are complete; the demo media (§7) and the self-evaluation are being finished ahead of the 2026-08-31 deadline |
@@ -655,7 +663,7 @@ result existed.
 
 The part of criterion 2 that *was* met is the part that never depended on a sampled rate: the
 residual's **authority** is bounded **by construction** (§1.4) rather than by measurement. The
-per-step clamp and the backbone's stiffness cap the *commanded* restoring force at ≈18.9 N even
+per-step clamp and the backbone's stiffness cap the *commanded* restoring force at 12.5 N even
 for a maximally wrong network output. The criterion's own wording — "peak force bounded by
 construction" — reads as a claim about the *measured* contact force, and that does not hold: the
 wrist sensor reads the contact reaction, which reaches 77.86 N on force-aborted trials. Hence

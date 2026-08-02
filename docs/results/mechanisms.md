@@ -48,39 +48,54 @@ Each is a mechanism, not just a missing win.
 
 ## 7. What still stands
 
-Two classes of result do **not** rest on a sampled success rate, so LAB-114 leaves them intact.
-These are the project's standing positives.
+One class of result does **not** rest on a sampled measurement — the architectural bound. The
+rest of this section applies the noise-floor test to every KPI, not just the success rate,
+because a claim about a continuous metric is subject to exactly the same standard.
 
-- **The force argument, stated precisely.** Three things are true by construction, and one
-  commonly-assumed fourth is **not**:
+- **The bound on the assist's authority, stated precisely.** Three things are true by
+  construction, and a commonly-assumed fourth is **not**:
 
   1. **The residual is clamped** — ±3 cm / ±10° / ±5 N per step, applied *before* the controller
      sees the augmented command (`domain/delta.py`). A maximally wrong network cannot enlarge its
      own authority.
-  2. **The commanded restoring force is bounded at ≈18.9 N.** The impedance backbone's
-     translational stiffness is `[400, 400, 500]` N/m and the per-step command clamp is 0.025 m
-     (`control/backbone.py`), so `‖K·Δx‖ ≤ 18.9 N` is the most force the controller can ever
-     *ask* for.
+  2. **The commanded restoring force is bounded at 12.5 N.** The backbone clamps the **Euclidean
+     norm** of the position delta to 0.025 m (`control/backbone.py`), so with translational
+     stiffness `[400, 400, 500]` N/m the most the controller can ever *ask* for is
+     `λ_max·‖Δx‖ = 500 × 0.025 = 12.5 N`. (Taking each axis at the full clamp independently gives
+     18.9 N, but that describes a `Δx` of norm 0.043 m, which the clamp makes unreachable — a
+     valid bound, 51% loose.) The bound holds in `ACTIVE` and `HOLD`; `PARK` returns the home
+     pose directly and bypasses the clamp.
   3. **No trial continues past 30 N** — the eval observer aborts it (`eval/observer.py`).
   4. **Measured contact force is *not* bounded.** The wrist F/T sensor reads the contact
      *reaction*, which includes impact transients the quasi-static `K·Δx` argument says nothing
-     about. **1712 of 4200 official trials exceed 30 N, reaching 77.86 N** — every one of them a
-     `force_abort`, the overshoot occurring within the tick before the watchdog fires. 33% of
-     *successful* trials also exceed 18.9 N. See [within-seed.md](within-seed.md).
+     about, and the commanded wrench also carries a damping term `−D·ẋ` that no command clamp
+     bounds. **1712 of 4200 official trials exceed 30 N, reaching 77.86 N** — every one of them a
+     `force_abort`, the overshoot occurring within the tick before the watchdog fires. 58% of
+     *successful* trials exceed the 12.5 N commanded bound. See [within-seed.md](within-seed.md).
 
-  What the measurements *do* support is a comparison rather than a bound, and two independent
-  metrics agree on it: **DAgger lowers both the mean peak force and the force-abort rate; plain
-  BC at batch 16 raises both.**
+- **The measured effects, against each metric's own floor.** Retraining one recipe with a
+  different training seed moves *every* KPI, not just success. The floor per recipe per metric is
+  in [`phase-1/noise-floor-per-kpi.md`](phase-1/noise-floor-per-kpi.md). Counting the sign of all
+  21 checkpoints' paired Δ:
 
-  | Arm | mean peak force vs baseline | force-abort rate (baseline 41.0%) |
+  | KPI | checkpoints above baseline | reading |
   |---|---|---|
-  | FT DAgger | **−1.04 N** | **36.4%** (−4.6 pp) |
-  | Vision DAgger | **−0.48 N** | **38.3%** (−2.7 pp) |
-  | FT plain (batch 2) | +0.30 N | 39.0% (−2.0 pp) |
-  | Vision plain | +0.71 N | 44.3% (+3.3 pp) |
-  | FT plain | +1.83 N | 45.2% (+4.2 pp) |
+  | Success rate | **9 / 21** | no effect — a coin flip |
+  | Peak contact force | **11 / 21** | **no effect — a coin flip** |
+  | Time to insert | **20 / 21** | a real cost (slower) |
+  | Trajectory jerk | **20 / 21** | a real cost (rougher) |
 
-  Two measures that could have disagreed do not: the direction is consistent in sign across both.
+  **The force reduction under DAgger is not established.** FT DAgger's −1.04 N mean sits inside
+  its own family's 2.41 N seed spread and well inside plain BC's (5.10 N at batch 16, 7.59 N at
+  batch 2); no per-seed Wilcoxon clears p=0.05. The two DAgger arms disagree at seed level — FT
+  DAgger is negative on 4 of 5 seeds, Vision DAgger *positive* on 2 of 3. Mean force and
+  force-abort rate are not independent corroboration either: both are computed from the same
+  trials, and the abort rate is a threshold count of the same quantity.
+
+  What *is* established is the direction of the two costs. Twenty of twenty-one checkpoints are
+  slower and rougher than the operator alone — a near-unanimous sign across every recipe,
+  modality and batch size, which is a stronger form of evidence than any mean clearing a floor.
+  Their magnitudes remain seed-dependent (jerk's floor reaches 186 on FT DAgger).
 - **The mechanism findings**, each theory or a byte-identical/exact probe:
   - **Identifiability ceiling** (LAB-77) — the operator command proxies the hole; a no-vision
     residual cannot lift success outside the chamfer band. A structurally-flat flat-wall delta
@@ -95,10 +110,11 @@ These are the project's standing positives.
   - **The bounded-expert/DAgger argument** (LAB-105/106) — on-policy relabeling can only teach
     what the expert can perform, and it cannot un-jam a force-aborted peg.
 
-An honest engineering summary: **Phase 1 delivers an assist whose authority is bounded by
-construction and which measurably reduces contact force and force-aborts, plus a mechanized
-account of why per-step imitation cannot lift closed-loop seating success on this task. The
-success-rate *lift* is, on the seeded measurement, not established.**
+The engineering summary: **Phase 1 delivers an assist whose authority is bounded by
+construction, and a mechanized account of why per-step imitation cannot lift closed-loop
+seating on this task. On the seeded measurement it establishes no benefit — neither a
+success-rate lift nor a contact-force reduction — and two costs, a slower and rougher
+trajectory, whose direction is near-unanimous across all 21 checkpoints.**
 
 ---
 

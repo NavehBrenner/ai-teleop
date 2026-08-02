@@ -35,7 +35,7 @@ On top of the coarse trajectory, add structured perturbation, **not** white nois
 
 - **Slow drift**: a low-frequency random process (e.g. an Ornstein–Uhlenbeck process, or a band-limited / smoothed random walk) on position and orientation, so the command wanders coherently over hundreds of ms rather than jittering each step.
 - **Optional tremor**: a small higher-frequency component *if* we want to stress smoothness, kept well below the per-step magnitude that would make denoising the whole game.
-- **Update rate**: the command target refreshes at a realistic **~5–10 Hz** (the scope's figure) and is held/interpolated between refreshes to ~100 Hz, mimicking a human issuing discrete coarse intents while the controller runs fast. This rate mismatch is itself a realistic source of lag the assist must absorb.
+- **Update rate**: the command target refreshes at a realistic **~5–10 Hz** (the scope's figure) and is held/interpolated between refreshes to 500 Hz, mimicking a human issuing discrete coarse intents while the controller runs fast. This rate mismatch is itself a realistic source of lag the assist must absorb.
 
 So the full command is:
 

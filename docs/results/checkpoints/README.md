@@ -44,9 +44,9 @@ training config, `history.json`, and the training curve as `history.png`.
 
 ## Two things to know before quoting one
 
-**A single checkpoint is not a measurement.** Retraining any of these recipes with a different
-training seed moves closed-loop success by 20–31 pp — the reason each family ships as a *set* of
-seeds rather than a best-of. Whichever one you load, it is one draw from a distribution, and the
+**A single checkpoint is not a measurement.** Retraining a plain-BC recipe with a different
+training seed moves closed-loop success by 20–31 pp (the DAgger families are tighter — 2 pp and
+16 pp) — the reason each family ships as a *set* of seeds rather than a best-of. Whichever one you load, it is one draw from a distribution, and the
 distribution is what [`../noise-floor.md`](../noise-floor.md) reports.
 
 **Every DAgger round is retained; the reported round is the last one.** Round-to-round Δ swings

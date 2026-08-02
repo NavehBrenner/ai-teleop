@@ -38,8 +38,8 @@ question and gives a different answer.
 
 ![six panels, one per arm, each a histogram of per-trial peak contact force stacked by outcome, with the commanded-force bound and the watchdog threshold marked](phase-1/trial_peak_contact_force_distribution.png)
 
-***Figure 6 — peak contact force per trial, by arm and outcome.** Green line: the ≈18.9 N
-commanded-force bound (stiffness × command clamp). Black dashed: the 30 N watchdog abort.
+***Figure 6 — peak contact force per trial, by arm and outcome.** Green line: the 12.5 N
+commanded-force bound (λ_max × the per-step clamp on ‖Δx‖). Black dashed: the 30 N watchdog abort.
 **What to conclude:** the distribution is bimodal and the mean falls between its two modes.*
 
 **The mean describes no trial that ran.** Peak force is **bimodal** — a seated cluster below
@@ -53,7 +53,7 @@ force-aborts begin there, because exceeding it *is* what makes a trial a `force_
 recorded peak on those trials runs to **77.86 N** — the force spikes within the tick before the
 watchdog fires.
 
-**The ≈18.9 N commanded-force bound is not a bound on the measurement.** 33% of *successful*
+**The 12.5 N commanded-force bound is not a bound on the measurement.** 58% of *successful*
 trials sit above it. The quasi-static `K·Δx` argument bounds what the controller can *ask for*;
 the F/T sensor reads the contact reaction, which carries impact transients and the full distal
 load. Both statements are true and they are about different quantities — [what stands](mechanisms.md#7-what-still-stands) now separates them.
@@ -234,6 +234,6 @@ block.*
 
 **On the force framing.** Nothing on this page bounds the measured contact force. The bimodality
 is produced by the 30 N watchdog *cut* and the force-abort mode reaches 77.86 N; what is bounded
-is the *commanded* restoring force (≤18.9 N) and the residual's own clamp — see
+is the *commanded* restoring force (≤12.5 N) and the residual's own clamp — see
 [what stands](mechanisms.md#7-what-still-stands).
 

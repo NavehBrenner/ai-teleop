@@ -15,9 +15,9 @@ Companion documents:
 - [`docs/design/`](../design/) — the *why* behind each subsystem (problem structure,
   teleop input, expert corrections, policy model, evaluation protocol).
 - [`docs/reference/data-schema.md`](../reference/data-schema.md) — the on-disk corpus contract.
-- [`docs/results/kpi-dashboard.md`](../results/kpi-dashboard.md) — measured outcomes.
-  **The Phase-1 headline number is under revision** (a 2026-07-22 reproduction attempt
-  did not reproduce it); this tour deliberately makes no performance claims.
+- [`docs/results/kpi-dashboard.md`](../results/kpi-dashboard.md) — measured outcomes. The
+  closed-loop result is a **null**: no recipe lifts insertion success beyond training-seed
+  noise ([conclusions](../conclusions.md)). This tour makes no performance claims.
 
 ---
 

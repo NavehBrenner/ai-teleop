@@ -199,7 +199,7 @@ when every episode in the batch has them; both stay `None` for the F/T-only
 (Phase-1) path, which is unaffected.
 
 Rendering is the throughput bottleneck (offscreen render ≈ 500× a physics
-step — `project-wiki/entities/mujoco.md`); `generate_dataset` logs an
+step — the private workspace wiki, `entities/mujoco.md`); `generate_dataset` logs an
 aggregate `rendered N frames in Xs (Y frames/s)` line when `--record all` is
 used, so the full-corpus render cost is predictable.
 

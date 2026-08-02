@@ -138,17 +138,25 @@ uv run python scripts/dev/official_kpi/plot_trial_forces.py
 uv run python scripts/dev/official_kpi/plot_within_seed.py   # → phase-1/within_seed_*.png
 ```
 
-All three read the eval CSVs through `ai_teleop.eval.report` (`load_trials` → `group_by_config` →
-`summarize_config` / `compare_paired`) and re-derive no statistic of their own;
-`scripts/dev/official_kpi/kpi_data.py` is the shared loader. Both entry points take
-`--runs-root` / `--policy-runs-root` if the eval sets live elsewhere.
+Every one of these reads the eval CSVs through `ai_teleop.eval.report` (`load_trials` →
+`group_by_config` → `summarize_config` / `compare_paired`) and re-derives no statistic of its
+own; `scripts/dev/official_kpi/kpi_data.py` is the shared loader. Each takes `--runs-root` (and
+`kpi_tables.py` / `plot_kpis.py` also `--policy-runs-root`) if the eval sets live elsewhere.
+`aggregate.py` takes no arguments.
 
-The official-run eval sets (`runs/eval_official_*`, `runs/backfill_dag_vis_s0_r*`) and
-per-round DAgger `trials.csv` (`outputs/policy/runs/dag_*_s*/dagger_round*/`) are **local
-artifacts, gitignored** like the rest of `runs/`/`outputs/` — the committed record is the tables,
-`phase-1/official_kpi_tables.md` and the four figures, plus the read-only scripts (regenerable
-only while the eval dirs still exist locally). The chunk
-scripts that produced them are `scripts/dev/official_kpi/*.sh` (self-resumable, self-timing).
+**The raw per-trial data is committed.** All 25 official eval sets — the 21 `eval_official_*`
+runs behind every number on these pages, plus the 4 `backfill_dag_vis_s0_r*` rounds — are in
+[`phase-1/official-evals/`](phase-1/official-evals/), one CSV per run, 4200 trials in ~500 KB.
+Point any script at them with `--runs-root`, or re-aggregate one directly:
+
+```bash
+uv run python scripts/report_results.py --trials docs/results/phase-1/official-evals/eval_official_ft_s0.csv
+```
+
+so every published figure is checkable from a clean clone rather than only on the machine that
+produced it. The chunk scripts that ran the evals are `scripts/dev/official_kpi/*.sh`
+(self-resumable, self-timing); per-round DAgger `trials.csv` under
+`outputs/policy/runs/dag_*_s*/dagger_round*/` remain local artifacts.
 
 Training configs are each run's committed `outputs/policy/runs/<name>/metadata.json`. Post-G1
 runs carry a `checkpoint_sha256`; the two pre-G1 checkpoints behind published numbers are
@@ -161,6 +169,7 @@ committed under [`docs/results/checkpoints/`](checkpoints/) (retention policy: t
 | The 2026-07-07 M6 **checkpoint** is gone | H-8 (`outputs/` gitignored) | 70.0% cannot be re-evaluated. |
 | That run's **corpus** was overwritten in place | H-B / G-4 | `dataset_9`'s trajectories are unrecoverable. |
 | `dataset_0`/`dataset_1` fingerprints predate `generated_walls` | C-1a | Pre-LAB-91 corpora do not regenerate byte-identically. |
+| The 2026-07-07 M6 **eval sets** (`band_scale0.4`, `flatwall_scale1.0`) were never committed | — | Their rows in the ledger cannot be re-derived; `scripts/dev/lab114_seed_spread.py` needs them and will not run without them. The official-run numbers, which the results rest on, are unaffected — those CSVs are committed. |
 
 The reconstruction that built §3–§4 is a read-only sweep over `outputs/policy/runs/`,
 `runs/eval*/`, and `data/dataset_*/` — see the LAB-114 evidence scripts

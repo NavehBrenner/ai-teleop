@@ -9,7 +9,7 @@ milestone is started.
 - Authoritative design decisions live in [`../design-document.md`](../design-document.md).
 - This file is the *plan*; the scope doc is the *definition*. If they conflict, the scope
   doc wins and this file should be reconciled.
-- Per the root `CLAUDE.md` convention: at the end of each milestone, record durable,
+- Per the workspace convention: at the end of each milestone, record durable,
   transferable findings (tool quirks, techniques) in `project-wiki/` — but milestone
   *status* itself stays here and in git history, not in the wiki.
 

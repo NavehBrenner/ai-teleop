@@ -15,7 +15,8 @@ For *what the experiments found*, see the
 > that checkpoint as the correction layer in a live episode.
 
 > **Read every success rate at the noise floor (LAB-114).** A single checkpoint is one draw
-> from an **18 pp**-wide distribution over training seeds. These recipes produce and run
+> from a **20–31 pp**-wide distribution over training seeds (18 pp on the older, smaller
+> `dataset_10` corpus). These recipes produce and run
 > *individual* checkpoints; a rate from one of them is not a result about the recipe. See the
 > [KPI dashboard](../results/kpi-dashboard.md) top box and
 > [§3](#3-recipe-c--evaluate-a-policy-paired-ablation).
@@ -42,7 +43,7 @@ uv run kvn gen --episodes 200 --out data/my_corpus
 # add --record all (wrist frames) if you will train a vision policy — see Recipe A.
 ```
 
-`kvn gen --help` lists the operating-point knobs (error scale, step budget, hole geometry). The
+`kvn gen --help` lists the operating-point knobs (step budget, command clamp, joint damping, expert brake/gate). Difficulty (`--error-scale`) is an *evaluation* knob — see `kvn evaluate --help`. The
 committed corpora and their lineage are in the [the experiment ledger](../results/experiment-ledger.md#21-corpus-lineage-datadataset_metadatajson).
 
 ---
