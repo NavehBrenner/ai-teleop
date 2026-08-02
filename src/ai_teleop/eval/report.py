@@ -21,9 +21,11 @@ Pure aggregation + rendering — no sim, no controller, no re-run. Every number 
 function of the stored records, so the tables/plots regenerate from ``trials.csv``
 with one command (``scripts/report_results.py``), which is the LAB-38 acceptance.
 
-The peak-force KPI is reported as any other column, but note it is **bounded by
-construction** (the residual is hard-clamped and the impedance backbone caps contact
-force mechanically) — the table states a guarantee, not a hopeful statistic.
+The peak-force KPI is reported as any other column, and it is a **measurement**, not a
+guarantee. What is bounded by construction is the assist's *authority* — the residual is
+hard-clamped and the backbone can command at most ``‖K·Δx‖`` ≈ 18.9 N of restoring force.
+The wrist sensor reads the contact *reaction*, which includes impact transients and is not
+bounded: peaks reach 77.86 N on force-aborted trials. See ``docs/results/mechanisms.md``.
 """
 
 from __future__ import annotations

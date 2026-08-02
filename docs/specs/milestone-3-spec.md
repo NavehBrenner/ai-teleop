@@ -10,7 +10,7 @@ episode on its own: scripted input → seam → `Controller` → `SimEnv`.
 This milestone is deliberately about *structure*, not behaviour. The arm does not
 yet insert anything reliably — the scripted human is dumb and the only Δ source we
 ship is the zero-Δ `NoAssist`. What M3 buys is the **dependency-inversion seam**
-(an architectural pillar from `project-scope.md`): by the time we hand off to M4,
+(an architectural pillar from `docs/design-document.md`): by the time we hand off to M4,
 dropping in the analytical expert — and later M5's learned residual — must touch
 *nothing* upstream (the input) or downstream (the controller). M3 proves that
 property with a dummy Δ source before any real one exists.
@@ -132,7 +132,7 @@ command       = apply_delta(base_command, delta)   # → Controller.compute
 
 ### Two clamps, two purposes
 
-`project-scope.md` *Residual policy interface* promises the Δ source is
+`docs/design-document.md` *Residual policy interface* promises the Δ source is
 **safe-by-construction**. We honour that with a per-step Δ clamp *inside the seam*,
 distinct from the M2 controller's command clamp:
 
@@ -294,7 +294,7 @@ both sufficient. The seam composes *around* the controller, not inside it.
 - **Where the seam composes.** Decision: in the runner (`run_episode`), not inside
   `Controller`. The controller stays a pure command-tracker; the seam is a layer
   above it. This keeps the controller↔harness decoupling intact (see
-  `project-scope.md` *Runtime state*). Confirm nothing about `Controller` needs to
+  `docs/design-document.md` *Runtime state*). Confirm nothing about `Controller` needs to
   know a Δ source exists.
 - **Quaternion composition order in `apply_delta`.** Δorientation is a *body-frame*
   vs *world-frame* nudge — pick world-frame (left-multiply) for consistency with

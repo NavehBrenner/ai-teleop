@@ -26,7 +26,7 @@ shuffling order. Evaluate every resulting checkpoint on the **same** 100 paired 
 seeds against `human_only`. Any spread in the outcome is attributable to training randomness and
 nothing else.
 
-**On the official corpus** (`dataset_official_ft` / `_vision`, 1000 episodes, es0.4, 100 paired
+**On the official corpus** (`dataset_official_ft` 1000 episodes / `dataset_official_vision` 500, es0.4, 100 paired
 eval seeds — the same data every production recipe was trained on):
 
 | Recipe | train seed | treatment success | paired Δ | p |
@@ -49,7 +49,7 @@ and scoring. The checkpoint is the only variable.
 **Seed 1 is the point.** On its own it reads as a strongly significant regression, p=0.0009,
 produced by nothing but a different random initialization. Read seed 1 alone and you would
 report a broken recipe; read seed 2 alone and you would report an +8 pp win. Neither is true.
-The same trap fires positive elsewhere — vision-DAgger seed 1 ([the official multi-seed run](noise-floor.md#55-the-official-multi-seed-run--the-definitive-measurement)) reads **+12 pp at p=0.036**
+The same trap fires positive elsewhere — vision-DAgger seed 1 (§5.5) reads **+12 pp at p=0.036**
 while its two sibling seeds both read −4.
 
 **Corroborated on independent data.** The floor was first measured (LAB-114, 2026-07-22) on
@@ -78,9 +78,9 @@ loss is not.
 
 ## 5.5 The official multi-seed run — the definitive measurement
 
-[the noise floor](noise-floor.md) established the measurement resolution; this section is the measurement the project stands
-on. Per the D-6 mandate: a fresh **~1000-episode** official corpus (F/T
-and vision, separate), each of the four production recipes **retrained over multiple seeds** and
+§5 above established the measurement resolution; this section is the measurement the project
+stands on. Per the D-6 mandate: fresh official corpora (**1000 episodes** F/T, **500** vision,
+generated separately), each of the four production recipes **retrained over multiple seeds** and
 reported as a **distribution**, evaluated on 100 paired held-out seeds at the es0.4 operating
 point. Seed families are disjoint by construction, so every Δ below is genuine held-out **test**
 (corpus master-seed 100; DAgger rollouts 300/301/302; eval walls seed 0). Re-aggregate with
@@ -103,10 +103,10 @@ except FT DAgger's, and FT DAgger's mean (+2.0 pp) sits far inside the 27–31 p
 *same* plain recipe covers when only its training seed changes. No recipe is distinguishable
 from the baseline at this measurement's resolution. The one thing that does change is the
 *width*: 27 pp and 31 pp for the plain arms, 2 pp for FT DAgger. Regenerate with
-`uv run python scripts/dev/official_kpi/plot_kpis.py` ([provenance](kpi-dashboard.md#8-provenance--how-to-regenerate)).*
+`uv run python scripts/dev/official_kpi/plot_kpis.py` ([provenance](kpi-dashboard.md#7-provenance--how-to-regenerate)).*
 
 **No recipe clears the floor.** The FT-plain row *is* the floor — it is the same
-one-recipe-many-seeds measurement as [the noise floor](noise-floor.md), and its 27 pp spread swallows every mean in the table.
+one-recipe-many-seeds measurement as §5, and its 27 pp spread swallows every mean in the table.
 The honest reading of all four rows is one sentence: **on the seeded measurement, none of
 {F/T, vision} × {plain BC, DAgger} lifts closed-loop seating above the human-only baseline
 beyond training-seed noise.**
@@ -140,8 +140,7 @@ Two second-order structure notes:
   axis).
 
 **This is the arc's closing measurement.** It does not overturn [what stands](mechanisms.md#7-what-still-stands) — the standing positives never
-rested on a success rate — and it converts the documented negative from "one unreproducible
-checkpoint" into a rigorous, multi-seed, fresh-corpus null. See
+rested on a success rate. It is a multi-seed null on a fresh corpus. See
 [`further-exploration.md`](further-exploration.md) for what (if anything) is worth further
 compute.
 

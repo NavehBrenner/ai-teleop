@@ -76,7 +76,7 @@ By the end of M4 we can:
   non-privileged* observer are **M6** (LAB-36). M4's terminal-condition
   detection is a *privileged* convenience inside the data-gen driver (it reads
   true poses), used only to label episodes and stop the loop — it is **not** the
-  eval harness and the controller stays mode-less (`project-scope.md` *Runtime
+  eval harness and the controller stays mode-less (`docs/design-document.md` *Runtime
   state*).
 - **Real input devices** (MediaPipe vision, keyboard) → **M8**.
 - **Drag / themed environments, vision domain randomization** → M7 / stretch.

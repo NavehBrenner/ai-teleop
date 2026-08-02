@@ -28,7 +28,7 @@ one the seed-level population split uses. ``time_to_insert_s`` exists only where
 seated, so it has one population and an ``n`` well under 100, printed in every panel.
 
 **What these figures are not.** Fixing the seed removes the noise floor from the *picture*, not
-from the *result*: a checkpoint that wins here is one draw from a recipe whose seeds span 20–27 pp
+from the *result*: a checkpoint that wins here is one draw from a recipe whose seeds span 20–31 pp
 of success rate (``docs/results/noise-floor.md``). Every panel is a lottery ticket; the row of
 panels is the lottery. The captions and the reading are in ``docs/results/within-seed.md`` §5.6.3.
 
@@ -451,7 +451,7 @@ def plot_absolute_distributions(
             f"Each panel is one checkpoint against the operator over the same held-out walls. "
             f"{population_note}",
             "A panel that looks like a win is one draw from a recipe whose training seeds span "
-            "the 20–27 pp noise floor.",
+            "the 20–31 pp noise floor.",
         ],
     )
     figure.tight_layout(rect=(0, 0.035, 1, top))

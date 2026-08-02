@@ -56,7 +56,7 @@ _HOME_KEYFRAME = "home"
 # z is the gripper-outward axis (the insertion axis for our peg, see
 # project-wiki/entities/franka-panda.md "Hand frame conventions"). K_z >
 # K_lateral encodes the "stiff along insertion, soft laterally" design
-# contract from project-scope.md *Compliance / contact behavior*. K_z is
+# contract from docs/design-document.md §2.3 *Compliance profile*. K_z is
 # capped so that a 5 cm "intrusion" command into a flat wall produces a
 # contact force well below the 30 N watchdog (K_z · 0.05 = 25 N).
 _DEFAULT_STIFFNESS_TCP = np.array([400.0, 400.0, 500.0, 3.0, 3.0, 3.0])

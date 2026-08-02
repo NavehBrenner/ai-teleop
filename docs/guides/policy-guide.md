@@ -18,7 +18,7 @@ For *what the experiments found*, see the
 > from an **18 pp**-wide distribution over training seeds. These recipes produce and run
 > *individual* checkpoints; a rate from one of them is not a result about the recipe. See the
 > [KPI dashboard](../results/kpi-dashboard.md) top box and
-> [§4](#4-recipe-c--evaluate-a-policy-paired-ablation).
+> [§3](#3-recipe-c--evaluate-a-policy-paired-ablation).
 
 ---
 
@@ -38,7 +38,7 @@ Training reads a behavioral-cloning corpus (an M4 dataset dir holding `metadata.
 
 ```bash
 # N episodes of the scripted operator + analytical expert → data/my_corpus/
-uv run kvn gen --episodes 200 --out-dir data/my_corpus
+uv run kvn gen --episodes 200 --out data/my_corpus
 # add --record all (wrist frames) if you will train a vision policy — see Recipe A.
 ```
 
@@ -73,7 +73,7 @@ device-invariance.
 
 | Flag | Effect | When |
 |---|---|---|
-| `--action-rate-weight 100` | smoothness penalty — cuts the ~5× jerk regression (LAB-104) | any deployable F/T policy; no success cost (dashboard §6) |
+| `--action-rate-weight 100` | smoothness penalty — cuts the ~5× jerk regression (LAB-104) | any deployable F/T policy; no success cost ([mechanisms §6](../results/mechanisms.md#6-negative-results)) |
 | `--vision` | add the image-CNN stream (needs a corpus recorded with `--record all`) | Phase-2 vision policy |
 | `--freeze-image-encoder` | pretrained backbone as a fixed extractor (train only the projection) | vision on a small GPU / fast |
 | `--checkpoint-image-encoder` + `--image-encode-chunk 32` `--amp` | VRAM cuts that let an unfrozen backbone fine-tune on 8 GB (Stage C) | vision fine-tune |
@@ -83,7 +83,7 @@ device-invariance.
 > **Do not tune a policy by offline validation loss across recipes.** On this task per-step BC
 > fidelity is *anti*-correlated with closed-loop success — the `--command-ee-delta` /
 > `--weight-position 10` fixes drove offline error to a record low and collapsed closed-loop to
-> 10% (dashboard §6). Only a closed-loop ablation (Recipe C) is a valid signal. Within a single
+> 10% ([mechanisms §6](../results/mechanisms.md#6-negative-results)). Only a closed-loop ablation (Recipe C) is a valid signal. Within a single
 > recipe's seeds, val loss *is* directionally predictive (ρ = −0.82), so best-val checkpoint
 > selection *of one recipe* is fine.
 
@@ -139,7 +139,7 @@ uv run python scripts/report_results.py --trials runs/eval-3way/trials.csv \
     --also-compare human_only:ftonly --also-compare ftonly:vision
 ```
 
-**Operating-point knobs** — the numbers are only comparable within one setting (dashboard §2):
+**Operating-point knobs** — the numbers are only comparable within one setting ([experiment ledger §2](../results/experiment-ledger.md#2-operating-point-ledger)):
 
 | Knob | Meaning |
 |---|---|
@@ -149,7 +149,7 @@ uv run python scripts/report_results.py --trials runs/eval-3way/trials.csv \
 | `--device cpu` | force CPU inference (vision needs GPU for real-time) |
 
 > **One checkpoint is one draw.** A single ablation gives that checkpoint's rate ± the eval
-> interval; the *recipe's* honest number is a distribution over ≥5 training seeds (dashboard §5).
+> interval; the *recipe's* honest number is a distribution over ≥5 training seeds ([noise floor §5](../results/noise-floor.md#5-the-noise-floor--how-it-was-measured)).
 > Report a mean and range, not a point.
 
 ---
@@ -185,7 +185,7 @@ table is the *operational* view.
 | `ftonly_ar30` | `9023527` | action-rate ×30 | jerk sweep point |
 | `ftonly_ar100` | `9023527` | action-rate ×100 | **the deployable F/T policy** (smooth, no success cost) |
 | `ftonly_wpos10_wd` | `8d533ce` | pos-loss ×10 + weight-decay | LAB-106 offline-fix (1/2) |
-| `ftonly_gate_wpos10_wd` | `8d533ce` | ↑ + `command_ee_delta` feature | **negative artifact** — collapsed closed-loop to 10% (dashboard §6) |
+| `ftonly_gate_wpos10_wd` | `8d533ce` | ↑ + `command_ee_delta` feature | **negative artifact** — collapsed closed-loop to 10% ([mechanisms §6](../results/mechanisms.md#6-negative-results)) |
 
 **M7 — vision** (all `dataset_vision`, seed 0)
 
@@ -194,13 +194,13 @@ table is the *operational* view.
 | `probe_b2` | `dcea204` | 10-episode batch-2 fits-on-8GB smoke | probe only |
 | `vision_frozen_lab82` | `dcea204` | frozen encoder, no action-rate | best offline val (0.00107), closed-loop non-improver — the offline-val trap |
 | `vision_frozen_ar100` | `9023527` | frozen encoder + action-rate ×100 | frozen-vision candidate |
-| `vision_stageC` | `365f770` | **unfrozen** encoder (Stage C) | the vision ablation arm — ties F/T (NULL, dashboard §6) |
+| `vision_stageC` | `365f770` | **unfrozen** encoder (Stage C) | the vision ablation arm — ties F/T (NULL, [mechanisms §6](../results/mechanisms.md#6-negative-results)) |
 
 **M7 — DAgger** (`dagger_ft_agg`, grows per round, seed 0, commit `8d533ce`)
 
 | Run | Aggregated corpus | Status |
 |---|---|---|
-| `dagger_round0` / `1` / `2` | 340 / 380 / 420 ep | **negative** — 40% → 30% → 15%; the bounded expert can't demonstrate recovery (dashboard §6) |
+| `dagger_round0` / `1` / `2` | 340 / 380 / 420 ep | **negative** — 40% → 30% → 15%; the bounded expert can't demonstrate recovery ([mechanisms §6](../results/mechanisms.md#6-negative-results)) |
 
 **Phase-1 reproduction + the seed-variance study** (`dataset_10` unless noted, LAB-101/114)
 
@@ -209,7 +209,7 @@ table is the *operational* view.
 | `lab101_ft_ar0_ds10` | 0 · `4137060` | F/T recipe, GPU repro (ar0) → −4 pp | **committed** under `docs/results/checkpoints/legacy/` |
 | `lab101_ft_ar100_ds10` | 0 · `e899914` | ↑ + action-rate ×100 → −9 pp | **committed** (same reason) |
 | `lab114_seed{0..4}` | 0–4 · `07629ed` | the recipe's spread on `dataset_10` (18 pp) | **committed** under `docs/results/checkpoints/legacy/` |
-| `lab114_ds9_seed{0..3}` | 0–3 · `9b9e2d1`+ | H-B corpus arm — **byte-identical to `lab114_seed{0..3}`** | proves `dataset_9`==`dataset_10` on disk (dashboard §2.1) |
+| `lab114_ds9_seed{0..3}` | 0–3 · `9b9e2d1`+ | H-B corpus arm — **byte-identical to `lab114_seed{0..3}`** | proves `dataset_9`==`dataset_10` on disk ([experiment ledger §2.1](../results/experiment-ledger.md#21-corpus-lineage-datadataset_metadatajson)) |
 | `lab114_cpu_seed0` | 0 · `0fd28d0` | H-C device arm (CPU) | proves device is a rounding-level perturbation |
 
 Everything above is committed under
@@ -243,5 +243,4 @@ the whole reason the two published `lab101_*` checkpoints are committed rather t
 
 `scripts/dagger.py` (on-policy DAgger relabel) and `scripts/report_results.py` (KPI aggregation)
 are run as raw `python scripts/…` above — they are **not** in `APP_COMMANDS`, so `kvn dagger` /
-`kvn report` do not exist yet. Exposing them (and refreshing the stale `docs/guides/cli.md`, which lists
-neither `train` nor `evaluate`) is a **stage-3C** stale-doc fix, tracked there — not changed here.
+`kvn report` do not exist. Every other command is in [`cli.md`](cli.md).

@@ -6,7 +6,7 @@
 > sensor. The monocular rationale is kept below only to explain *why* stereo was worth it;
 > there is no longer a single-camera code path or fallback.
 
-Companion docs: [problem-structure.md](problem-structure.md) · [evaluation-protocol.md](evaluation-protocol.md). The authoritative high-level scope is [`../../project-scope.md`](../../project-scope.md); milestone build-order lives in [`../milestones.md`](../specs/milestones.md) (M8). This file pins down *how the human's hand becomes an EE command*, and locks the next step: a second camera for metric, stereo-triangulated hand pose.
+Companion docs: [problem-structure.md](problem-structure.md) · [evaluation-protocol.md](evaluation-protocol.md). The authoritative high-level scope is [`../design-document.md`](../design-document.md); milestone build-order lives in [`../milestones.md`](../specs/milestones.md) (M8). This file pins down *how the human's hand becomes an EE command*, and locks the next step: a second camera for metric, stereo-triangulated hand pose.
 
 The teleop input is **demo-enablement, not a core result** — the KPIs come from the scripted noisy-human, not a live operator (see [evaluation-protocol.md](evaluation-protocol.md)). So this path is allowed to be approximate; the bar is "a person can comfortably drive the arm and complete assisted insertions," not metric fidelity. The stereo upgrade below is what turns "drivable" into "feels like the robot mirrors my hand."
 
@@ -14,7 +14,7 @@ The teleop input is **demo-enablement, not a core result** — the KPIs come fro
 
 Two layers behind the `InputStrategy` seam, and the upgrade touches only the lower one:
 
-- **Sensor** — `input/hand_tracker.py`. Webcam frame(s) → MediaPipe Hands 21 landmarks → a small typed `HandReading` (position, orientation estimate, open/close grip proxy, `present` flag). Pure sensing: no robot, no `Command`, no calibration. Per [`../../project-scope.md`](../../project-scope.md), MediaPipe is "treated as a sensor library," not a contribution.
+- **Sensor** — `input/hand_tracker.py`. Webcam frame(s) → MediaPipe Hands 21 landmarks → a small typed `HandReading` (position, orientation estimate, open/close grip proxy, `present` flag). Pure sensing: no robot, no `Command`, no calibration. Per [`../design-document.md`](../design-document.md), MediaPipe is "treated as a sensor library," not a contribution.
 - **Strategy** — `input/vision_input.py`. `HandReading` stream → base EE `Command`: relative clutched mapping, per-axis scale + axis remap/flip (`WorkspaceCalibration`), one-euro jitter filter, grip mapping, optional orientation. This is where camera-space becomes robot-space.
 
 The seam means the input source is swappable at runtime (`--input {scripted,vision}`) with zero up/downstream change. The stereo upgrade keeps the `HandReading` contract and the strategy intact — it only changes *how well* the reading's position and orientation are estimated.

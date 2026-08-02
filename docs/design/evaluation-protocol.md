@@ -1,14 +1,14 @@
 # Evaluation Protocol — KPIs and Validation Design
 
-Companion docs: [problem-structure.md](problem-structure.md) · [human-generation.md](human-generation.md) · [expert-corrections.md](expert-corrections.md) · [policy-model.md](policy-model.md). The authoritative high-level scope is [`../../project-scope.md`](../../project-scope.md); this file pins down *how success is measured and defended*.
+Companion docs: [problem-structure.md](problem-structure.md) · [human-generation.md](human-generation.md) · [expert-corrections.md](expert-corrections.md) · [policy-model.md](policy-model.md). The authoritative high-level scope is [`../design-document.md`](../design-document.md); this file pins down *how success is measured and defended*.
 
-This document fixes the evaluation methodology: the configurations compared, the KPIs, and — most importantly — the experimental design that makes the headline claim statistically and methodologically defensible. The deck's "Evaluation plan" slide is the summary; this is the rationale behind it.
+This document fixes the evaluation methodology: the configurations compared, the KPIs, and — most importantly — the experimental design that makes the headline claim statistically and methodologically defensible. This is the rationale behind the evaluation plan presented at the mid-semester design review.
 
 ## The headline claim
 
 The project exists to prove **one** comparison: **insertion success rate with the residual policy engaged vs. with it off**, on the same task. Everything else (time, force, smoothness) is supporting evidence.
 
-We state the target as an **absolute** bar — assisted reaches ≈100% success — rather than a purely relative "more than without." Rationale: the unassisted baseline is not guaranteed to be low (a careful operator might already reach ~95% on an easy task), so a relative claim could be a tiny, unconvincing delta. An absolute near-100% under a task where the baseline is meaningfully below ceiling is the stronger, cleaner statement.
+We stated the target as an **absolute** bar — assisted reaches ≈100% success — rather than a purely relative "more than without." Rationale: the unassisted baseline is not guaranteed to be low (a careful operator might already reach ~95% on an easy task), so a relative claim could be a tiny, unconvincing delta. An absolute near-100% under a task where the baseline is meaningfully below ceiling is the stronger, cleaner statement.
 
 ### Difficulty calibration is what makes the claim meaningful
 
@@ -61,18 +61,27 @@ The live study carries two confounds that the design must neutralize:
 
 Tension to acknowledge openly: the **paired-counterbalanced** design maximizes power but allows learning; the **blinded single-trial** design removes bias but needs more seeds. The scripted paired-seed experiment sidesteps both problems entirely, which is exactly why it is primary.
 
-## Success criteria (from the deck)
+> **Outcome note (2026-08).** This page records the protocol as *designed*, before any result
+> existed, and is kept unrevised as the planning record. Two of its premises did not survive the
+> measurement: the absolute ≈100%-success target was never approached, and the peak-force clause
+> below is only true of the *commanded* force. What was actually measured, and against which
+> criteria, is in [`results/`](../results/kpi-dashboard.md) and
+> [`conclusions.md`](../conclusions.md).
+
+## Success criteria (as committed at the planning phase)
 
 - Working webcam → robot demo, assistance toggleable at runtime.
 - Phase 1 beats human-only on success; peak force bounded by construction.
 - Phase 2 beats human-only on success **and** peak force, statistically; and beats Phase 1 (the vision ablation).
 
-## Why the safety claim is a guarantee, not a statistic
+## What the safety argument covers, and what it does not
 
-The peak-force KPI is bounded by design, not by hoping the policy behaves: the residual is **hard-clamped** (±3 cm / ±10° / ±5 N per step) *before* the controller sees it, and the impedance backbone bounds peak force mechanically. Even a 100%-wrong network output cannot exceed the envelope — see [policy-model.md](policy-model.md) and the safety layering in the deck.
+The assist's **authority** is bounded by design, not by hoping the policy behaves: the residual is **hard-clamped** (±3 cm / ±10° / ±5 N per step) *before* the controller sees it, and the backbone's stiffness against the per-step command clamp caps the *commanded* restoring force at ≈18.9 N. A 100%-wrong network output changes neither number — see [policy-model.md](policy-model.md).
+
+The peak-force **KPI is a measurement**, and it is not bounded by that argument: the wrist sensor reads the contact reaction, including impact transients, which reaches 77.86 N on force-aborted trials. What holds on the measurement is only that no trial continues past 30 N, because exceeding it is what makes a trial a `force_abort`. See [`results/mechanisms.md`](../results/mechanisms.md#7-what-still-stands).
 
 ---
 
 ### Provenance note
 
-Records the evaluation/validation methodology decided in the 2026-06 design-review preparation, refining [`../../project-scope.md`](../../project-scope.md) (KPIs and eval randomization) and the deck's Evaluation slide. Key decisions captured: the **absolute-success** framing and its dependence on **difficulty calibration for headroom**; the two orthogonal difficulty knobs (**clearance → position accuracy, chamfer → orientation accuracy**); the split between the **scripted paired-seed primary experiment (internal validity)** and the **live blinded human study (external validity)**; and the counterbalancing/blinding mitigations for learning effect and experimenter bias. **2026-06-09 revision**: the heuristic/spiral-search assistance mode was cut, collapsing the comparison from three-way to **two-way (assist off vs on)**; the impedance backbone + Δ-clamp it relied on are retained as the always-on substrate. Project-internal rationale; no `raw/` source backs this page.
+Records the evaluation/validation methodology decided in the 2026-06 design-review preparation, refining [`../design-document.md`](../design-document.md) (KPIs and eval randomization) and the mid-semester design review's evaluation plan. Key decisions captured: the **absolute-success** framing and its dependence on **difficulty calibration for headroom**; the two orthogonal difficulty knobs (**clearance → position accuracy, chamfer → orientation accuracy**); the split between the **scripted paired-seed primary experiment (internal validity)** and the **live blinded human study (external validity)**; and the counterbalancing/blinding mitigations for learning effect and experimenter bias. **2026-06-09 revision**: the heuristic/spiral-search assistance mode was cut, collapsing the comparison from three-way to **two-way (assist off vs on)**; the impedance backbone + Δ-clamp it relied on are retained as the always-on substrate. Project-internal rationale; no `raw/` source backs this page.

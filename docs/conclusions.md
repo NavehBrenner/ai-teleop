@@ -116,9 +116,11 @@ a distribution running from under 4 s to nearly 18 s.
 
 This KPI is only interpretable as a **survivorship-conditioned** number: it exists only on
 trials that succeeded, so it compares the trials each arm happened to win. The same effect
-runs the other way on the other KPIs — restricting to seated trials moves the operator's own
-peak force from 23.97 N down to 15.46 N and its jerk *up* from 45.60 to 64.90, because the
-low-jerk trials are the ones that aborted early.
+runs the other way on the other KPIs — restricting to the walls both arms seated moves the
+operator's own peak force from 23.97 N down to **14.77–15.55 N** and its jerk *up* from 45.60
+to **57.69–64.90**, because the low-jerk trials are the ones that aborted early. (Both are
+ranges, not constants: the seated subset depends on which walls the policy also seated, so
+each recipe's comparison carries its own baseline.)
 
 ### 3.5 What a near-zero Δ actually conceals
 
@@ -138,16 +140,23 @@ even odds.
 The negative result is not one failure. It is a sequence of levers, each tried, each measured,
 each with an identified mechanism — and the mechanisms are the transferable part.
 
-**The learning target is not the problem.** A standardized linear ridge predicts the expert's
-position correction on held-out data at R² ≈ 0.92–0.97 laterally, 2.36 mm overall, beating the
-zero-correction baseline of 4.75 mm. The target is highly learnable.
+**The learning target is not the problem.** A standardized linear ridge on the same F/T
+observables the policy sees predicts the expert's gated correction on held-out data to
+**2.36 mm**, against a zero-correction baseline of 4.91 mm (held-out R² 0.87 mean over the
+three axes). A linear model beats the zero baseline by a factor of two. The target is
+learnable from what the policy is given.
 
-**The trained objective is what fails.** The same quantity, learned by the GRU, scores ~7.6 mm
-— worse than predicting zero. The error decomposition locates it: the expert is structurally
-**exactly zero** across the ~60% of steps in free space, and the network emits a ~5.6 mm
-correction floor there instead. The objective averages a regression loss over a population
-dominated by steps whose correct answer is "do nothing", and the network under-fits the gate
-rather than the correction.
+**The trained objective is what fails.** The same quantity, learned by the GRU, scores
+**7.63 mm** — worse than predicting zero (4.75 mm on that evaluation). The error
+decomposition locates it precisely: the expert is structurally **exactly zero** beyond
+15 cm from the hole, which is **123797 of 209143 held-out steps (59%)**, and the network
+emits a **5.64 mm** correction floor across them. Its near- and close-field errors do beat
+the zero baseline (8.78 vs 9.42 mm; 12.02 vs 13.56 mm). The whole deficit is the free-space
+floor: the objective averages a regression loss over a population dominated by steps whose
+correct answer is "do nothing", and the network under-fits the gate rather than the
+correction.
+
+*(Both figures are reproduced in [`results/phase-1/probes/`](results/phase-1/probes/).)*
 
 **Better imitation makes a worse controller.** Adding a `(command − ee_position)` feedback
 feature drove offline error below the zero baseline for the first time (7.6 → 3.5 mm) and

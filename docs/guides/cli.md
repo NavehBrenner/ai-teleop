@@ -119,16 +119,15 @@ uv run kvn smoke --no-viewer    # headless (CI)
 | `--stereo-calib PATH` | — | **Required** for `--input vision`: a stereohand `stereo_calib.json` (one-time ChArUco calibration). Camera sources are `--cameras`. |
 | `--cameras LEFT RIGHT` | `0 2` | Left and right camera sources for `--input vision`: device indices (e.g. `0`) or stream URLs (e.g. `http://<host>:8080/0`). Use URLs on WSL2 — stream both cameras from Windows with the stereohand bridge. |
 | `--no-cam-window` | off | Hide the live stereo camera + 3D-skeleton window (`--input vision`; shown by default). |
-| `--gain G` | `1.0` | Vision input gain (`--input vision`): higher = the arm follows hand motion more aggressively (scales the mapped position). |
 | `--seed N` | `0` | Seed for the scripted human's noise (the scene seed is `--wall-seed`). |
 | `--max-steps N` | recorded length on replay, else script default | Episode step budget (one step = one 2 ms sim tick). Defaults to the recorded length when `--input` is an episode path (so a replay reproduces it to the step). **`0` = no limit** — run until you close the viewer or Ctrl-C (free-play). |
 | `--wall-seed N` | — | Run on a freshly generated procedural wall from this seed. Omit for the static task scene. |
-| `--wrist-cam` | off | Open the viewer locked to the Panda's wrist camera (robot's-eye POV) instead of the free camera; viewer keys still switch cameras live. |
+| `--cam {main,wrist}` | `main` | Which camera the interactive viewer opens with: `main` (free camera) or `wrist` (locked to the Panda's wrist camera, robot's-eye POV). Viewer keys still switch cameras live. |
 | `--distractors N` | — | Distractor-hole count when `--wall-seed` generates a wall. |
 | `--record {commands,images,all}` | off | Record the episode: `commands` → trajectory `episode.npz`; `images` → wrist-camera JPEG frames (224×224, q90) in `imgs/` (the vision stream the M7 policy is fed); `all` → both. Stops on a successful insertion. |
 | `--record-out DIR` | auto-numbered under `data/recorded/` | Output dir for `--record` (`episode.npz` and/or `imgs/`). |
 | `--render-every N` | `1` | With `--record images`/`all`, save a frame every N recorded steps. |
-| `--max-dpos M` | `0.025` (`0.08` for vision) | Controller command clamp in m/step. Larger = the arm springs toward the target faster (responsive mirror); smaller = the slew-limited careful-insertion feel. `--input vision` also lowers joint damping for responsive tracking. |
+| `--max-dpos M` | `0.025` (`0.3` for `--input vision`) | Controller command clamp in m/step. Larger = the arm springs toward the target faster (responsive mirror); smaller = the slew-limited careful-insertion feel. `--input vision` also lowers joint damping for responsive tracking. |
 
 ```bash
 uv run kvn episode                                  # interactive viewer

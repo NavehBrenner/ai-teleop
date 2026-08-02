@@ -6,7 +6,7 @@ stream (`hand_tracker.py`) into a base :class:`Command` behind the existing
 runner with no upstream/downstream change.
 
 Four pieces, all the deferred "still open" calibration work from
-`project-scope.md`:
+`docs/design-document.md` §4.4:
 
 - **Relative mapping + clutch.** Hand motion is mapped *incrementally*: while
   engaged, ``EE = anchor_EE + scale ⊙ remap(hand − anchor_hand)``. Lifting the

@@ -1,6 +1,6 @@
 # Human-Like Command Generation — The Scripted Noisy Human
 
-Companion docs: [problem-structure.md](problem-structure.md) (notation, the four streams) · [expert-corrections.md](expert-corrections.md) · [policy-model.md](policy-model.md). Refines [`../../project-scope.md`](../../project-scope.md) Component 5.
+Companion docs: [problem-structure.md](problem-structure.md) (notation, the four streams) · [expert-corrections.md](expert-corrections.md) · [policy-model.md](policy-model.md). Refines [`../design-document.md`](../design-document.md) Component 5.
 
 This document specifies the **scripted noisy human**: the programmatic actor that produces the operator command stream `c_t` during data generation and benchmarking. It is *not* a model of human cognition — it is a controllable, seedable source of *realistically-wrong* coarse commands, so that (a) the expert has something to correct and (b) every configuration in the KPI study can be re-run under identical operator behavior.
 
@@ -79,4 +79,4 @@ The noisy human is tuned to be *hard for the unassisted baseline but fixable by 
 
 ### Provenance note
 
-Records the structured-noise design agreed in the 2026-05/06 scoping discussions, refining [`../../project-scope.md`](../../project-scope.md) Component 5 (which left "Gaussian vs structured noise, drift dynamics" open). The decisive call captured here: **structured low-frequency biased noise**, explicitly rejecting per-step i.i.d. noise to avoid the trivial "negate-the-noise" expert. Project-internal rationale; no `raw/` source backs it directly.
+Records the structured-noise design agreed in the 2026-05/06 scoping discussions, refining [`../design-document.md`](../design-document.md) Component 5 (which left "Gaussian vs structured noise, drift dynamics" open). The decisive call captured here: **structured low-frequency biased noise**, explicitly rejecting per-step i.i.d. noise to avoid the trivial "negate-the-noise" expert. Project-internal rationale; no `raw/` source backs it directly.

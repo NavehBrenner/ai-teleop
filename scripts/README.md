@@ -7,21 +7,26 @@ file directly with `uv run python scripts/<name>.py` still works.
 
 One-time project setup (not a `kvn` command — it bootstraps `kvn` itself):
 
-- `setup.sh`                   — create the venv, install the package, enable hooks, install the `kvn` launcher on PATH.
+- `setup.sh` / `setup.ps1`     — create the venv, install the package, enable hooks, install the
+  `kvn` launcher on PATH. Use the PowerShell one on Windows-native.
 
-Current scripts and their `kvn` command:
+Scripts with a `kvn` command:
 
-- `view_generated_wall.py`     (`kvn sim`)     — generate / view a procedural wall.
-- `smoke_test_sim.py`          (`kvn smoke`)   — M1: load scene, dump sensors + wrist-cam PNG.
-- `run_episode.py`             (`kvn episode`) — M3: one end-to-end no-assist episode.
-- `dev_harness_controller.py`  (`kvn harness`) — M2: backbone-controller dev harness.
-- `generate_dataset.py`        (`kvn gen`)     — M4: unattended BC data generation.
+- `view_generated_wall.py`     (`kvn sim`)      — generate / view a procedural wall.
+- `smoke_test_sim.py`          (`kvn smoke`)    — load scene, dump sensors + wrist-cam PNG.
+- `run_episode.py`             (`kvn episode`)  — one end-to-end episode, any input × any assist.
+- `dev_harness_controller.py`  (`kvn harness`)  — backbone-controller dev harness.
+- `generate_dataset.py`        (`kvn gen`)      — unattended behavioral-cloning data generation.
+- `train_policy.py`            (`kvn train`)    — BC training → a deployable checkpoint.
+- `evaluate.py`                (`kvn evaluate`) — paired ablation + difficulty sweep → trials.csv.
 
-Planned (later milestones):
+Scripts run directly (not registered in `APP_COMMANDS`):
 
-- `train_policy.py`     — post-M4: BC training on logged data.
-- `run_eval.py`         — post-M4: ablation orchestration + KPI computation.
-- `run_demo.py`         — final: live webcam-driven shared-autonomy demo.
+- `dagger.py`                  — on-policy DAgger relabelling rounds.
+- `report_results.py`          — KPI tables + paired statistics from a `trials.csv`.
+
+`dev/` holds one-off investigation scripts kept for provenance; `dev/official_kpi/` regenerates
+every published results table and figure.
 
 When you add a runnable script here, register it in `APP_COMMANDS` in
 `../src/ai_teleop/cli.py` so it gets a `kvn` command.

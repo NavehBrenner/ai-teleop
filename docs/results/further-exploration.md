@@ -20,11 +20,11 @@ Each of these was a real experiment with committed artifacts, not a plan that wa
 | **Action-rate penalty** | Squared first-difference of the predicted Δ in the BC loss, to remove the residual's jerk cost | **Worked — on the wrong axis.** Jerk drops to human level (vision+DAgger 48.0 vs human 45.6) at no success cost. Smoothness is solved; success is untouched |
 | **A better analytical expert** | Five knobs swept on the expert that generates the training labels — the ceiling the clone imitates toward | **Refuted.** All five inert; the expert ceiling sits at ~73%, and the binding constraint proved to be operator-side pre-contact force-abort, not expert quality |
 | **Scaling to 100 paired eval seeds** | More statistical power on the headline comparison | **Done — it *is* the measurement.** More eval seeds tighten the interval around a null; they do not move it |
-| **Frozen vs fine-tuned image encoder** | Stage-C unfreeze of the CNN, to test whether frozen features were the bottleneck | **Inert.** A linear probe showed frozen features decode depth-to-hole (R² = 0.88) but *not* lateral offset (R² ≈ 0); unfreezing did not fix closed-loop success |
+| **Frozen vs fine-tuned image encoder** | Stage-C unfreeze of the CNN, to test whether frozen features were the bottleneck | **Inert.** On the 6167 near-hole frames (d < 0.15 m) a linear probe decodes depth from the frozen features (z R² = 0.88) but not lateral offset (x R² = −0.36, y R² = +0.06); unfreezing did not fix closed-loop success ([probe output](phase-1/probes/lab105-perception-probe.md)) |
 
-**Every lever inside imitation learning has been measured, not merely left untried.** That is
-what makes this a result rather than a stopping point: the space was covered, and [negative results](mechanisms.md#6-negative-results)–[what stands](mechanisms.md#7-what-still-stands) of the
-dashboard explain *why* per-step imitation cannot lift closed-loop seating on this task — an
+Every lever inside imitation learning was measured. [Negative results](mechanisms.md#6-negative-results)
+and [what stands](mechanisms.md#7-what-still-stands) explain *why* per-step imitation cannot lift
+closed-loop seating on this task — an
 identifiability ceiling, a far-field gating floor, and an anti-correlation between offline BC
 fidelity and closed-loop success.
 

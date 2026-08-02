@@ -23,7 +23,7 @@ LINK = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
 
 def user_docs() -> list[Path]:
     """Every user-facing markdown doc (README + docs/, minus review scaffolding)."""
-    docs = [Path("README.md"), Path("project-scope.md")]
+    docs = [Path("README.md"), Path("docs/design-document.md")]
     docs += [p for p in sorted(DOC_ROOT.rglob("*.md")) if REVIEW not in p.parents]
     return [p for p in docs if p.exists()]
 

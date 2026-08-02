@@ -90,13 +90,16 @@ seated subset; the dashed line is `human_only` *for that population*, which move
 conclude:** the population, not the treatment, is the larger effect on both metrics — and it moves
 them in opposite directions.*
 
-**Peak force nearly halves on the success group: 15.46 N against 23.97 N for `human_only`.** The
+**Peak force nearly halves on the success group: 14.77–15.55 N against 23.97 N for `human_only`**
+(a range, not a constant — the seated subset differs per recipe, so each row carries its own
+baseline). The
 high all-trials figure is mostly the failures, which include force-cap trips. 30 N is where the watchdog *aborts*, not a force the
 system cannot reach — see [within-seed.md](within-seed.md). **DAgger's advantage survives the split** — FT DAgger −1.04 N over all trials and −0.59 N
 seated-only, Vision DAgger −0.48 N and −1.05 N — so it is a property of how the controller seats,
 not of how often it fails.
 
-**Jerk moves the other way: `human_only` rises from 45.60 to 64.90 on the seated subset.** A
+**Jerk moves the other way: `human_only` rises from 45.60 to 57.69–64.90 on the seated subset**
+(per-recipe, since the subset differs). A
 successful insertion involves more corrective motion near the hole; a failed run often aborts
 early having accumulated less. So the smoothness cost is *understated* by the all-trials view.
 Two recipes change character under the split: **Vision DAgger goes from +2.43 to −0.21**, i.e.
@@ -106,7 +109,7 @@ indistinguishable from the human when both seat, while **FT plain (batch 2) impr
 The general point is worth stating once: for any KPI recorded on all trials, *which trials are in
 the average* is a design decision, and here it is worth more than any treatment effect in the
 table. Both populations are reported in
-[`phase-1/official_kpi_tables.md`](phase-1/official_kpi_tables.md) [the noise floor](noise-floor.md).
+[`phase-1/official_kpi_tables.md`](phase-1/official_kpi_tables.md).
 
 **Contact events — recorded, not reported.** Exactly **1.00** on every trial of every arm,
 `human_only` included. The metric counts hysteresis-debounced rising edges past the contact floor,

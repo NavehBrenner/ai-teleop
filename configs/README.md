@@ -1,7 +1,8 @@
 # configs/
 
-Run-time configuration files (YAML).
+**Empty by design.** The project configures runs through typed dataclasses in code
+(`policy/config.py`, `sim/scenegen/config.py`, …) plus CLI flags, not through config files —
+so a run's settings travel with its `metadata.json` rather than with a separate YAML that can
+drift from it.
 
-One file per "experiment shape" — e.g., `phase1_baseline.yaml`, `phase2_vision.yaml`,
-`smoke_test.yaml`. To be populated as needed; first config added in M1 if needed
-for the smoke test.
+This directory is kept as the place a run-time config file would go if one is ever needed.

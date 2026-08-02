@@ -2,7 +2,7 @@
 
 A **passive observer** that watches the runtime ``Observation`` stream, decides
 when trials start/end, classifies success/failure, and computes the KPIs defined
-in ``project-scope.md`` / ``docs/design/evaluation-protocol.md``. It has no
+in ``docs/design-document.md`` §2.3 / ``docs/design/evaluation-protocol.md``. It has no
 dependency on the controller in either direction (Dependency Inversion): trial,
 success, and KPI concepts live only here, so the controller stays mode-less.
 

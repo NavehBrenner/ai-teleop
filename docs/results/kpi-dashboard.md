@@ -30,7 +30,7 @@ order:
 
 **The answer to both closed-loop questions is no.** On the seeded multi-seed measurement the
 four production recipes measure **−4.4, +2.0, −8.3 and +1.3 pp** against a training-seed noise
-floor of **20–27 pp**. What the arc contributes instead is a bound on the assist's authority, a
+floor of **20–31 pp**. What the arc contributes instead is a bound on the assist's authority, a
 measured reduction in contact force and force-aborts under DAgger, and a mechanism-level account
 of *why* per-step imitation cannot lift seating on this task.
 
@@ -111,7 +111,7 @@ could still move the number. Contact-recovery control is the strongest of them.
 
 ---
 
-## 8. Provenance & how to regenerate
+## 7. Provenance & how to regenerate
 
 Every table above is a pure function of committed artifacts. Re-aggregate any eval set:
 
@@ -122,10 +122,10 @@ uv run python scripts/report_results.py --trials runs/eval_lab101_band100_ar0/tr
 # The committed Phase-1 records (30-seed slice, flat-wall, seed-variance, H-C) live here:
 ls docs/results/phase-1/*.csv docs/results/phase-1/lab114/
 
-# The §5.5 official multi-seed success distributions (all recipes, over training seeds):
+# The official multi-seed success distributions (noise-floor.md §5.5), all recipes over seeds:
 uv run python scripts/dev/official_kpi/aggregate.py       # reads runs/eval_official_*
 
-# The §5.6 full-KPI board — every recipe × every metric, as markdown on stdout:
+# The full KPI board (kpi-board.md §5.6) — every recipe x every metric, as markdown on stdout:
 uv run python scripts/dev/official_kpi/kpi_tables.py      # → docs/results/phase-1/official_kpi_tables.md
 
 # Figures 1–5 — the same statistics as plain matplotlib box charts:
@@ -143,7 +143,7 @@ All three read the eval CSVs through `ai_teleop.eval.report` (`load_trials` → 
 `scripts/dev/official_kpi/kpi_data.py` is the shared loader. Both entry points take
 `--runs-root` / `--policy-runs-root` if the eval sets live elsewhere.
 
-The §5.5/§5.6 official-run eval sets (`runs/eval_official_*`, `runs/backfill_dag_vis_s0_r*`) and
+The official-run eval sets (`runs/eval_official_*`, `runs/backfill_dag_vis_s0_r*`) and
 per-round DAgger `trials.csv` (`outputs/policy/runs/dag_*_s*/dagger_round*/`) are **local
 artifacts, gitignored** like the rest of `runs/`/`outputs/` — the committed record is the tables,
 `phase-1/official_kpi_tables.md` and the four figures, plus the read-only scripts (regenerable
@@ -152,7 +152,7 @@ scripts that produced them are `scripts/dev/official_kpi/*.sh` (self-resumable, 
 
 Training configs are each run's committed `outputs/policy/runs/<name>/metadata.json`. Post-G1
 runs carry a `checkpoint_sha256`; the two pre-G1 checkpoints behind published numbers are
-committed under `docs/results/phase-1/checkpoints/` (retention policy: that dir's README).
+committed under [`docs/results/checkpoints/`](checkpoints/) (retention policy: that dir's README).
 
 **Three provenance gaps this ledger inherits, stated so no reader trusts a number past them:**
 

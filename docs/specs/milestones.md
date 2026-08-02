@@ -6,7 +6,7 @@ what's deferred, acceptance, dependencies, rough effort). Detailed per-milestone
 (`milestone-N-spec.md`) are created from these definitions one at a time, as each
 milestone is started.
 
-- Authoritative design decisions live in [`../project-scope.md`](../../project-scope.md).
+- Authoritative design decisions live in [`../design-document.md`](../design-document.md).
 - This file is the *plan*; the scope doc is the *definition*. If they conflict, the scope
   doc wins and this file should be reconciled.
 - Per the root `CLAUDE.md` convention: at the end of each milestone, record durable,
@@ -266,7 +266,7 @@ project requirements, system architecture with **architecture diagram + sequence
 **≥2 design alternatives** with trade-offs and rationale, simulation scenarios, KPI
 definitions, challenges/risks, a preliminary prototype/demo, evaluation criteria, timeline.
 
-**Source material**: most of this already exists in [`../project-scope.md`](../../project-scope.md);
+**Source material**: most of this already exists in [`../design-document.md`](../design-document.md);
 D1 is largely repackaging it into review form + adding diagrams + a live demo.
 **Milestone readiness target**: M1–M4 done (working expert-driven prototype to demo); M5–M6
 in progress is a bonus. **Rough effort**: 8–12 h (mostly writing + diagrams).
@@ -294,7 +294,7 @@ record.
 | late May | M2 |
 | early June | M3 |
 | mid June | M4 (Foundation complete) |
-| ~June 8 | *Topic approval* — covered by `project-scope.md` |
+| ~June 8 | *Topic approval* — covered by `docs/design-document.md` |
 | late June | M5 |
 | early July | M6 (**Phase 1 complete — publishable**) |
 | ~mid July | **D1 Design Review** (demo the expert-driven prototype + early policy) |

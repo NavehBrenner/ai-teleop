@@ -7,7 +7,7 @@ want them to depend on `sim/`.
 All pose arrays use the convention (px, py, pz, qw, qx, qy, qz) — position
 in metres, unit quaternion as [w, x, y, z] (the same layout MuJoCo uses for
 free-joint qpos and body xquat). All quantities are expressed in the world
-frame at the robot base, z up — see project-scope.md `World frame at the
+frame at the robot base, z up — see docs/design-document.md §2.3 `World frame at the
 robot base, z up.`
 """
 

@@ -90,7 +90,7 @@ dev = [
 kvn = "ai_teleop.cli:main"
 
 [project.urls]
-"Project scope" = "./project-scope.md"
+"Design document" = "./docs/design-document.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]

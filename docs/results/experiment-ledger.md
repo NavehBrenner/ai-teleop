@@ -13,8 +13,7 @@ closed-loop number means nothing without its operating point.
 ## 2. Operating-point ledger
 
 Every closed-loop number is only interpretable against *which corpus trained the policy* and
-*which difficulty the eval ran at*. These two tables are the key; the ledgers in [the ledgers](experiment-ledger.md) point
-back to them.
+*which difficulty the eval ran at*. These two tables are the key; the ledgers in §3 and §4 point back to them.
 
 ### 2.1 Corpus lineage (`data/dataset_*/metadata.json`)
 
@@ -114,7 +113,7 @@ closed-loop success across these interventions** — the central M7 mechanism (L
 
 Reconstructed from the per-trial CSVs via `compare_paired`. Δ is paired (McNemar exact p);
 `b/c` is discordant wins/losses. **Verdict uses the noise floor ([the noise floor](noise-floor.md)):** `NOISE` = |Δ| within the
-20–27 pp training-seed spread + the eval interval at that n.
+20–31 pp training-seed spread + the eval interval at that n.
 
 | Eval set | Op. point | Arm | Success | Paired Δ (n, p) | Verdict |
 |---|---|---|---|---|---|
@@ -135,7 +134,7 @@ Reconstructed from the per-trial CSVs via `compare_paired`. Δ is paired (McNema
 | **`eval_official_dag_vis_s*`** | es0.4, 100s, official | vision ×3 seeds | 46–62% vs 50.0% | **mean +1.3 pp** [−4,+12] | **NOISE** ([the official multi-seed run](noise-floor.md#55-the-official-multi-seed-run--the-definitive-measurement)) |
 
 The Stage-C DAgger rounds (`eval` per round, 20s es0.4) read **40% → 30% → 15%** across rounds
-0–2 — the round-to-round steps are inside the noise floor, but the round-0-to-round-3 drop and
+0–2 — the round-to-round steps are inside the noise floor, but the round-0-to-round-2 drop and
 the parallel rollout-success decline (0.325 → 0.25) are the real signal ([negative results](mechanisms.md#6-negative-results)).
 
 ---

@@ -23,7 +23,7 @@ following per-step clamps before the command reaches the impedance law:
 
 These bounds protect the controller from a misbehaving upstream (be it a
 scripted human, a stale value, or eventually a learned residual). See
-`kevin/project-scope.md` *Residual policy interface* for the rationale —
+`docs/design-document.md` §2.3 *Residual policy interface* for the rationale —
 the same clamps later protect M5's behavioral-cloning residual.
 
 ## Δgrip-force semantics
