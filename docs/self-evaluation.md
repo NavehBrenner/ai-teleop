@@ -43,14 +43,14 @@ of one input vector.
 
 **Authority bounded by construction rather than by measurement.** Every residual correction is
 hard-clamped to ±3 cm / ±10° / ±5 N per step before the controller sees it, and the impedance
-backbone can therefore *command* no more than ‖K·Δx‖ = 18.9 N of restoring force
-(K = [400, 400, 500] N/m × the 0.025 m per-step clamp). A maximally wrong network output changes
-neither number. This is a bound on the policy's **authority**, and it holds without reference to
-any measurement.
+backbone can therefore *command* no more than 12.5 N of restoring force. The clamp applies to the
+Euclidean *norm* of the position delta, so ‖Δx‖ ≤ 0.025 m and the bound is λ_max·‖Δx‖ =
+500 N/m × 0.025 m. A maximally wrong network output changes neither number. This is a bound on the
+policy's **authority**, and it holds without reference to any measurement.
 
 It is **not** a bound on the measured contact force, and the results say so: the F/T sensor reads
-the contact reaction — impact transients and the full distal load — which reaches 77.86 N, and 33%
-of *successful* trials sit above 18.9 N. What holds on the measurement is a weaker, separate
+the contact reaction — impact transients and the full distal load — which reaches 77.86 N, and 58%
+of *successful* trials sit above 12.5 N. What holds on the measurement is a weaker, separate
 statement: no trial continues past 30 N, because exceeding it is what makes a trial a
 `force_abort` ([results](results/mechanisms.md#7-what-still-stands)).
 🖊️ *Worth saying whether you designed the authority bound in on purpose from the start, or
@@ -149,7 +149,7 @@ verdicts are not.
 | Reliability, Error Handling, Robustness | 15% | three-layer safety envelope; trip-and-lock watchdog; the residual's authority is clamped by construction, so an adversarial policy output cannot raise the commanded force | 🖊️ |
 | Project Structure & Design | 15% | dependency DAG with `common/` as leaf; design alternatives compared and justified; per-subsystem rationale documents | 🖊️ |
 | Documentation & Developer Experience | 10% | design document, README, architecture tour, policy guide, CLI reference, KPI dashboard; clean-clone setup script; every checkpoint committed and runnable | 🖊️ |
-| Meeting KPIs and Performance Goals | 20% | success-rate criteria **not met**; the force criterion met as an authority bound, not as a bound on measured contact; the measurement itself is rigorous and multi-seeded | 🖊️ |
+| Meeting KPIs and Performance Goals | 20% | success-rate criteria **not met**, and no contact-force reduction is established either — 11 of 21 checkpoints sit above baseline, a coin flip; the force criterion is met only as an *authority* bound, not as a bound on measured contact; the two effects that are established are costs (slower, rougher). The measurement itself is rigorous and multi-seeded | 🖊️ |
 
 🖊️ *The 20% row is the hard one and the reader will look at it first. My suggestion — take it or
 leave it — is to be straightforwardly honest that the performance goal was not met, and to argue
