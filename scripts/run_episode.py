@@ -54,7 +54,7 @@ from ai_teleop.data.generate import (  # noqa: E402
 )
 from ai_teleop.data.step_callbacks import EpisodeLogger, TerminationProbe  # noqa: E402
 from ai_teleop.data.trajectory import TerminalReason, load_episode  # noqa: E402
-from ai_teleop.domain import NoAssist  # noqa: E402
+from ai_teleop.domain import Delta, NoAssist  # noqa: E402
 from ai_teleop.domain.interfaces import AssistProvider, InputStrategy  # noqa: E402
 from ai_teleop.input import (  # noqa: E402
     DEFAULT_SPEED_LOGNORMAL_SIGMA,
@@ -134,7 +134,40 @@ def _resolve_record_path(out: str | None) -> Path:
     return _DEFAULT_RECORD_RUNS / f"episode_{index:05d}" / "episode.npz"
 
 
-def _build_assist(policy: str, checkpoint: str | None) -> AssistProvider:
+class _ScaledAssist:
+    """Wrap an AssistProvider and scale its Δ on the way out.
+
+    Exists for **blinded A/B trials** (`scripts/dev/blind_trial.py`). Comparing
+    `--policy tf` against `--policy noassist` differs in more than the correction: the
+    checkpoint load, the torch import and the per-step forward pass all disappear on the
+    control arm, and a human operator can hear the difference in startup time. Scale 0
+    keeps every one of those and discards only the Δ that reaches the command, so the two
+    arms are indistinguishable from outside the process.
+
+    Also the honest way to run a partial-authority ablation, which is why it takes a float
+    rather than a boolean.
+    """
+
+    def __init__(self, inner: AssistProvider, scale: float) -> None:
+        self._inner = inner
+        self._scale = scale
+
+    def get_delta(self, observation: Observation, command: Command) -> Delta:
+        delta = self._inner.get_delta(observation, command)
+        return Delta(
+            delta.delta_position * self._scale,
+            delta.delta_orientation * self._scale,
+            delta.delta_grip_force * self._scale,
+        )
+
+
+def _build_assist(policy: str, checkpoint: str | None, scale: float = 1.0) -> AssistProvider:
+    """:func:`_resolve_assist`, with ``scale`` applied (1.0 skips the wrapper)."""
+    assist = _resolve_assist(policy, checkpoint)
+    return assist if scale == 1.0 else _ScaledAssist(assist, scale)
+
+
+def _resolve_assist(policy: str, checkpoint: str | None) -> AssistProvider:
     """Resolve --policy to the AssistProvider (the correction layer) under test.
 
     Same scene + operator command stream, different assist — so one recorded episode
@@ -290,6 +323,11 @@ def build_config(args: argparse.Namespace) -> EpisodeConfig:
     if args.record_out is not None and args.record is None:
         log.error("--record-out needs --record (nothing is written without a record mode).")
         raise SystemExit(2)
+    if args.record_hand is not None and (args.input != "vision" or args.no_cam_window):
+        # The recording is literally the window's own composite frame, so there is nothing
+        # to write without --input vision and the window on.
+        log.error("--record-hand needs --input vision with the camera window on.")
+        raise SystemExit(2)
 
     render_mode = "headless" if args.headless else "viewer"
     return EpisodeConfig(args, render_mode, replay_columns, replay_meta)
@@ -404,6 +442,7 @@ def build_input(
             show_window=not args.no_cam_window,
             max_fps=args.max_fps if args.max_fps is not None else "cam",
             max_skew_s=args.stereo_max_skew,
+            record_path=args.record_hand,
         )
         try:
             neutral = calibrate_neutral(tracker, on_tick=env.sync_viewer)
@@ -415,6 +454,7 @@ def build_input(
         input_strategy: InputStrategy = VisionInput(
             tracker,
             calibration=WorkspaceCalibration(),
+            gain=args.gain,
             track_orientation=args.orientation,  # opt-in 6-DoF mirroring (off by default)
             initial_anchor=neutral,
             dropout_grace_s=args.dropout_grace,
@@ -670,6 +710,26 @@ def add_input_args(parser: argparse.ArgumentParser) -> None:
         help="Hide the live stereo camera/3D-skeleton window (--input vision; shown by default).",
     )
     group.add_argument(
+        "--gain",
+        type=float,
+        default=1.0,
+        help="Hand-to-EE motion gain (--input vision): metres of end-effector travel per "
+        "metre of hand travel, on top of the 1.5x workspace calibration. Higher follows "
+        "the hand more aggressively and tiles the workspace with fewer clutches; lower is "
+        "steadier for fine insertion. Rig-dependent — tune it in free play (--max-steps 0) "
+        "before recording anything. Default 1.0.",
+    )
+    group.add_argument(
+        "--record-hand",
+        default=None,
+        metavar="PATH",
+        help="Record the stereo camera/3D-skeleton window to a video (--input vision; "
+        "e.g. runs/take_1/hand.mp4). This is the operator half of the demo footage — the "
+        "robot half is rendered offline from the episode with "
+        "scripts/dev/render_trajectory.py, which keeps MuJoCo rendering out of the live "
+        "loop. Needs the window on (not --no-cam-window); the parent directory must exist.",
+    )
+    group.add_argument(
         "--max-fps",
         type=int,
         default=None,
@@ -726,6 +786,16 @@ def add_policy_args(parser: argparse.ArgumentParser) -> None:
         default=None,
         help="Trained residual checkpoint .pt for --policy tf, F/T-only or vision "
         "(e.g. outputs/policy/runs/<run>/checkpoint.pt).",
+    )
+    group.add_argument(
+        "--assist-scale",
+        type=float,
+        default=1.0,
+        help="Multiply the correction Δ before it reaches the command (default 1.0). "
+        "0 runs the policy in full — checkpoint load, forward pass, wrist capture — and "
+        "discards its output, which is what makes the two arms of a blinded A/B trial "
+        "(scripts/dev/blind_trial.py) indistinguishable from outside the process. It is "
+        "NOT the same as --policy noassist, which skips all of that work.",
     )
     group.add_argument(
         "--wrist-render-every",
@@ -795,7 +865,7 @@ def main() -> int:
 
     target_position = observation.hole_poses[target_hole_index][:3].copy()
     home_quaternion = controller.home_pose[3:]
-    assist = _build_assist(args.policy, args.checkpoint)
+    assist = _build_assist(args.policy, args.checkpoint, args.assist_scale)
     # A vision checkpoint needs a live wrist frame on each Observation; turn on the
     # env's rate-limited capture for it (duck-typed, same as `eval.ablation.run_trial`).
     # An F/T-only checkpoint leaves `use_vision` False → the env renders nothing.
@@ -864,6 +934,7 @@ def main() -> int:
             metadata={
                 "source": args.input,
                 "policy": args.policy,
+                "assist_scale": args.assist_scale,
                 "seed": args.seed,
                 "target_hole_index": target_hole_index,
                 "generated_wall": args.wall_seed is not None,
