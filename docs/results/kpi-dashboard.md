@@ -89,6 +89,14 @@ number means nothing without its operating point.
 Every lever tried and what it measured, then the candidates the mechanism findings predict
 could still move the number. Contact-recovery control is the strongest of them.
 
+## 7. [Human-operator trial](human-trial-protocol.md) — the protocol, fixed in advance
+
+Every number above was measured against `ScriptedNoisyHuman`, a *model* of an operator. This
+is the protocol for the one measurement where a real one closes the loop: blinded,
+block-randomized, and pre-registered — including the statement that at 30 trials per arm it
+can only resolve differences of ~33 pp, so it is a proxy-validity check rather than a re-run
+of the effect measurement. **Pre-registered, not yet run.**
+
 ---
 
 > ## The one hard constraint, stated once

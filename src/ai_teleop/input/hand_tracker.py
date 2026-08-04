@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Any, Literal
 
 import mujoco
 import numpy as np
@@ -236,12 +236,19 @@ class StereoHandSource:
         show_window: bool = False,
         max_fps: int | Literal["cam"] = "cam",
         max_skew_s: float = 0.02,
+        record_path: str | None = None,
     ) -> None:
         from stereohand import RenderConfig, StereoCalibration, StereoHandTracker
 
         calibration = StereoCalibration.load(calibration_path)
         self._show_window = show_window
         self._last_pump = 0.0  # wall-clock of the last cv2 window pump (see read())
+        # Operator-side demo footage: the composite frame render_step() already draws
+        # (both camera feeds + the 3-D skeleton), written straight to a video file. The
+        # robot side is *not* captured here — render it offline from the recorded episode
+        # (scripts/dev/render_trajectory.py), which costs the live loop nothing.
+        self._record_path = record_path
+        self._writer: Any = None
         # Sensor-health counters (logged on close). The control loop polls read() far faster
         # than the cameras produce frames, so what matters for teleop feel is the *effective*
         # rate: how often a genuinely new landmark arrives, and how often the hand drops out.
@@ -291,8 +298,10 @@ class StereoHandSource:
                 self._last_pump = now
                 # stereohand's split renderer draws in render_step() but flushes the imshow
                 # buffer to screen only in poll(); without the poll() the window stays blank.
-                self._tracker.render_step()
+                frame = self._tracker.render_step()
                 self._tracker.poll()
+                if self._record_path is not None and frame is not None:
+                    self._write_frame(frame)
         reading = self._tracker.read()
         if self._reads == 0:
             self._first_read = time.monotonic()
@@ -308,6 +317,36 @@ class StereoHandSource:
             self._fresh += 1
             self._prev_landmarks = reading.landmarks
         return reading_from_landmarks(reading.landmarks)
+
+    def _write_frame(self, frame: np.ndarray) -> None:
+        """Append one composite frame to the recording, opening the writer on the first.
+
+        The writer is opened lazily because its frame size has to match, and the composite's
+        size isn't known until stereohand has drawn one. Encoding happens on the control
+        thread but only at the pump rate (30 Hz), on a frame that was composited anyway —
+        capture, MediaPipe and triangulation all run on stereohand's background thread and
+        are untouched. If a recorded session ever shows a worse fresh-fps than an unrecorded
+        one, hand the write to a queue + writer thread; it was not worth it up front.
+        """
+        import cv2
+
+        if self._writer is None:
+            path = self._record_path
+            assert path is not None  # only called while recording is on
+            height, width = frame.shape[:2]
+            fps = 1.0 / _WINDOW_PUMP_INTERVAL_S
+            for tag in ("mp4v", "avc1", "MJPG"):
+                writer = cv2.VideoWriter(path, cv2.VideoWriter.fourcc(*tag), fps, (width, height))
+                if writer.isOpened():
+                    self._writer = writer
+                    log.info("recording hand view → %s (codec %s)", self._record_path, tag)
+                    break
+                writer.release()
+            else:
+                log.error("could not open a video writer for %s — not recording", self._record_path)
+                self._record_path = None
+                return
+        self._writer.write(frame)
 
     def set_renderer_origin(self, origin: np.ndarray) -> None:
         """Center the preview's 3-D skeleton view on ``origin`` (metric left-camera frame).
@@ -334,6 +373,10 @@ class StereoHandSource:
                 effective_fps,
                 100.0 * self._absent / self._reads,
             )
+        if self._writer is not None:
+            self._writer.release()
+            self._writer = None
+            log.info("hand view saved → %s", self._record_path)
         self._tracker.close()
         log.info("stereo hand tracker stopped")
 
