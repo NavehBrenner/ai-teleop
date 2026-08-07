@@ -78,6 +78,8 @@ policy that almost inserts from one that flails. This measures the closest the p
 came to the hole, on all 4,200 official trials, recovered from the stored traces without
 re-running an episode.
 
+[![closest approach to the hole per recipe, box charts over training seeds against the human baseline](phase-1/near_miss_spread.png)](near-miss.md)
+
 The short version: **no — and that is the point.** No recipe moves closest approach by more
 than 0.8 mm on a 14.7 mm baseline, closing off the "better than the success rate says"
 explanation for the flat headline. The per-outcome table looks like a large win and is mostly

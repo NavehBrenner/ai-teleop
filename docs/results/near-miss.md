@@ -78,6 +78,13 @@ rule above was fixed.
 
 ## 1. The headline: nothing moves
 
+![closest approach to the hole per recipe, box charts over training seeds against the human baseline](phase-1/near_miss_spread.png)
+
+Read the picture first: every recipe's box either straddles the `human_only` line or sits
+barely below it, on an axis that spans 12–18 mm. The two plain-BC recipes are the *widest*
+boxes on the chart — a spread produced by nothing but the training seed. The two DAgger boxes
+are the tight ones, and both sit under the line.
+
 Paired Δ against `human_only`, in millimetres. Negative = the assist got the peg closer.
 The human baseline is a closest approach of **14.73 mm**.
 
