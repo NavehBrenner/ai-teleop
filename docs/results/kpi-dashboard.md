@@ -82,8 +82,9 @@ re-running an episode.
 
 The short version: **no — and that is the point.** No recipe moves closest approach by more
 than 0.8 mm on a 14.7 mm baseline, closing off the "better than the success rate says"
-explanation for the flat headline. The per-outcome table looks like a large win and is mostly
-Simpson's paradox; the page shows the arithmetic.
+explanation for the flat headline. Restricted to the walls the assist never flipped, nothing
+clears its noise floor at all. The per-outcome table looks like a large win and is Simpson's
+paradox; the page shows the arithmetic four ways.
 
 ## 5. [Mechanisms](mechanisms.md) — why it does not work, and what stands
 

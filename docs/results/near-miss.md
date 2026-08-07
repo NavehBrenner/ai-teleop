@@ -70,6 +70,12 @@ shows a favourable Δ would rebuild [the LAB-114 trap](noise-floor.md) with more
 4. Outcome strata are reported as results, not filtered as nuisances.
 5. Failure-conditional comparisons are diagnostics only.
 
+§4 (outcome-stable pairs) was **added after seeing §1–§3** and is not part of the
+pre-registration. It is reported because it is strictly more conservative than the registered
+headline and moves the conclusion *against* the assist — it removes the one recipe that cleared.
+A post-hoc analysis that tightens a null is a different animal from one that rescues a result,
+but the ordering is on the record either way.
+
 **Disclosed peek:** during design, a draft variant of this metric was run on
 `eval_official_ft_s0` — one F/T run, the control arm. Nothing else was inspected before the
 rule above was fixed.
@@ -104,7 +110,9 @@ The one that clears — FT DAgger, −0.69 mm against a 0.64 mm floor — clears
 clears partly *because its floor is unusually narrow*. That is consistent with the independent
 LAB-114 finding that DAgger **tightens the seed distribution without moving its centre**: a
 narrow floor is easier to clear, so "clears" here is a much weaker claim than the same word
-would carry for a recipe with a 3 mm floor.
+would carry for a recipe with a 3 mm floor. **[§4](#4-only-the-walls-the-assist-never-flipped)
+removes even this one** — on walls the assist never flipped, FT DAgger falls to −0.40 against a
+0.72 mm floor and stops clearing.
 
 What is worth noting is a sign pattern the floor test does not capture. Per training seed
 ([`official_kpi_tables.md`](phase-1/official_kpi_tables.md)):
@@ -179,22 +187,74 @@ successes/timeouts/aborts?"
 | Vision plain | 14.73 | 15.50 | **13.14** |
 | Vision DAgger | 14.73 | 13.95 | **13.42** |
 
-Held at a fixed outcome mix, four of five recipes are **1.3–1.8 mm closer** than the human —
-a real, consistent signal that the raw comparison cancels out. The residual does aim slightly
-better within a comparable trial; it simultaneously shifts trials into the outcome class where
-the peg ends up farthest away, and the two effects roughly annihilate.
+Held at a fixed outcome mix, four of five recipes look **1.3–1.8 mm closer** than the human,
+which reads as real aim that the raw comparison cancels out.
 
-This is a **diagnostic, not a rescue of the headline.** Standardizing away the outcome mix
-standardizes away a real behavioural difference: whether a trial force-aborts or times out is
-something the assist genuinely changes, not a nuisance covariate to be adjusted out. A policy
-that aims 1.5 mm better and converts seated trials into timeouts is not a better policy.
+**It mostly is not there** — §4 takes the mix out properly and finds at most 0.7 mm. The reason
+this table overstates is worth keeping: standardization reweights the *stratum means*, but those
+means are themselves contaminated. The assist's timeout trials and the human's timeout trials
+are **different walls**, so re-weighting them by a common mix still compares two different
+populations. Fixing the weights does not fix the membership.
+
+Kept here because it is the natural next thing to try after §2 and it is wrong in an
+instructive way.
+
+## 4. Only the walls the assist never flipped
+
+The clean way to remove the migration is not to reweight it but to **drop it**: keep only the
+walls where *both* arms ended the same way, and compare those.
+
+| recipe | stable pairs | → gained | → lost | stable Δ (range) | floor | verdict |
+|---|---:|---:|---:|---:|---:|---|
+| FT plain | 362/500 | 55 | 77 | +0.63 [−0.12, +2.36] | 2.48 | within floor |
+| FT plain (batch 2) | 334/500 | 70 | 87 | +0.11 [−0.95, +2.79] | 3.74 | within floor |
+| FT DAgger | 356/500 | 71 | 61 | −0.40 [−0.82, −0.11] | 0.72 | within floor |
+| Vision plain | 202/300 | 32 | 57 | −0.03 [−0.85, +1.38] | 2.23 | within floor |
+| Vision DAgger | 213/300 | 44 | 40 | −0.72 [−1.53, −0.23] | 1.30 | within floor |
+
+**Nothing clears its noise floor — including FT DAgger**, the single recipe that cleared in §1.
+Its Δ falls from −0.69 to −0.40 against a 0.72 mm floor, so the one apparent positive in the
+headline was itself part migration. And Vision plain's standardized "−1.6 mm of aim" from §3
+collapses to **−0.03 mm** here: essentially all of it was composition.
+
+This is the strictest of the four views and the one to quote.
+
+### Why this is a legitimate restriction and §2 was not
+
+Selecting on *one* arm's outcome is a collider — the failures that survive under the assist are
+the harder ones, so the comparison flips sign for a policy that improved. Selecting on the
+**joint** outcome of both arms is a different object: it defines a *principal stratum*, the set
+of walls whose result the assist never flipped. A stratum defined by both potential outcomes is
+a fixed property of the wall, not something the treatment moved, so comparing inside it is a
+valid causal contrast.
+
+Principal stratification is normally close to unusable, because you never observe both potential
+outcomes for the same unit. **Here you do.** The simulation is deterministic and the design is
+paired on the eval seed, so both arms of every wall are observed and stratum membership is read
+straight off the data instead of modelled. That is a luxury a real randomized trial does not get,
+and it is worth spending.
+
+### What it costs
+
+The stratum excludes exactly the walls where the assist did the most — every conversion, both
+directions, 27–33 % of trials. So this answers *"on the walls it did not flip, did it aim
+better?"*, not *"is it a better policy"*. The migration counts are printed beside it so the
+excluded set is never invisible, and they carry their own finding: **plain BC loses more walls
+than it gains** (55/77 and 70/87 F/T, 32/57 vision), while **DAgger is roughly balanced** (71/61
+and 44/40) — the reliability effect, visible again on a metric that did not exist when it was
+first measured.
 
 ## Verdict
 
 **The near-miss hypothesis is not supported.** The residual does not get the peg meaningfully
 closer to the hole. On the pre-registered unconditional measure no recipe moves the closest
 approach by more than 0.8 mm on a 14.7 mm baseline, and four of five are inside their own
-training-seed noise.
+training-seed noise. Restricted to the walls the assist never flipped — the strictest and
+cleanest view — **no recipe clears its floor at all**, at most 0.72 mm of movement.
+
+The four views agree, and they get tighter in the right direction: raw ≈ 0; by-outcome looks
+like a large win and is Simpson's paradox; standardized looks like ~1.5 mm and is still
+comparing different walls; outcome-stable is ~0 to −0.7 and clears nothing.
 
 This is a *stronger* negative than the success-rate null on its own, and it is the reason the
 metric was worth adding. A binary KPI cannot distinguish "the policy nearly works" from "the
@@ -206,10 +266,12 @@ Two things survive as real, both small:
 
 - **DAgger is consistently negative across every training seed** (5/5 F/T, 3/3 vision), where
   plain BC straddles zero, and −1.3 to −1.5 mm measured head-to-head against its plain
-  counterpart. Consistent with DAgger tightening the seed distribution
+  counterpart. It survives the outcome-stable restriction in sign (−0.40, −0.72) without
+  clearing its floor. Consistent with DAgger tightening the seed distribution
   ([noise floor](noise-floor.md)) rather than moving the mean.
-- **At a fixed outcome mix the residual is ~1.5 mm closer**, which is genuine aim and is spent
-  entirely on shifting trials into worse outcome classes.
+- **Plain BC loses more walls than it gains and DAgger does not** — 55/77 and 70/87 (F/T),
+  32/57 (vision) against DAgger's balanced 71/61 and 44/40. The reliability effect, recovered
+  independently on a metric that did not exist when it was first measured.
 
 Neither changes the [mechanisms](mechanisms.md) picture: the expert ceiling, the identifiability
 limit, and the force-authority bound all stand unchanged. This adds one closed door.
