@@ -152,6 +152,19 @@ class _ScaledAssist:
         self._inner = inner
         self._scale = scale
 
+    @property
+    def use_vision(self) -> bool:
+        """Forward the inner policy's modality so wrapping does not change it.
+
+        `main` reads this (duck-typed) to decide whether to turn on the env's wrist
+        capture. Without the forward, a *vision* checkpoint on the scale-0 arm never gets
+        frames and raises on its first step, while the scale-1 arm runs — so the control
+        arm of a blinded vision trial cannot run at all. Even short of the crash, skipping
+        the per-tick render on one arm is a timing difference the operator can feel, which
+        is precisely what scale 0 exists to avoid.
+        """
+        return bool(getattr(self._inner, "use_vision", False))
+
     def get_delta(self, observation: Observation, command: Command) -> Delta:
         delta = self._inner.get_delta(observation, command)
         return Delta(
