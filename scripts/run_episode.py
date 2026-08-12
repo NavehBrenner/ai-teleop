@@ -33,6 +33,16 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, NoReturn
 
+# Pin the maths libraries to one thread *before* numpy/torch load — both read these at
+# import time, so this cannot be done later from a function. This loop is 500 Hz over tiny
+# operands (7-DoF Jacobians, a batch-1 GRU); multi-threaded BLAS spends its time in
+# thread barriers rather than arithmetic, and every phase gets slower. Measured on the dev
+# box, vision residual, 2000 steps: 0.65x -> 1.15x real-time, with the controller phase
+# alone going 0.482 -> 0.150 ms/step. Set KVN_KEEP_BLAS_THREADS=1 to opt out.
+if not os.environ.get("KVN_KEEP_BLAS_THREADS"):
+    for _threading_variable in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+        os.environ.setdefault(_threading_variable, "1")
+
 import numpy as np
 
 from ai_teleop.data.schema import EpisodeColumns, EpisodeMetadata
@@ -174,13 +184,17 @@ class _ScaledAssist:
         )
 
 
-def _build_assist(policy: str, checkpoint: str | None, scale: float = 1.0) -> AssistProvider:
+def _build_assist(
+    policy: str, checkpoint: str | None, scale: float = 1.0, *, gpu_vision: bool = True
+) -> AssistProvider:
     """:func:`_resolve_assist`, with ``scale`` applied (1.0 skips the wrapper)."""
-    assist = _resolve_assist(policy, checkpoint)
+    assist = _resolve_assist(policy, checkpoint, gpu_vision=gpu_vision)
     return assist if scale == 1.0 else _ScaledAssist(assist, scale)
 
 
-def _resolve_assist(policy: str, checkpoint: str | None) -> AssistProvider:
+def _resolve_assist(
+    policy: str, checkpoint: str | None, *, gpu_vision: bool = True
+) -> AssistProvider:
     """Resolve --policy to the AssistProvider (the correction layer) under test.
 
     Same scene + operator command stream, different assist — so one recorded episode
@@ -209,12 +223,18 @@ def _resolve_assist(policy: str, checkpoint: str | None) -> AssistProvider:
     if not checkpoint:
         raise SystemExit("--policy tf requires --checkpoint PATH (a trained residual .pt).")
     from ai_teleop.policy import LearnedResidual  # lazy: pulls in torch
+    from ai_teleop.policy.residual_policy import best_image_encoder_device
 
     # F/T-only and vision checkpoints load through the same path: the serialized
     # PolicyConfig carries `use_vision`, so the checkpoint selects its own modality
     # and the caller only has to feed it wrist frames (`main` turns on the env's wrist
     # capture for it). There is no separate --policy vision; the checkpoint is the switch.
-    return LearnedResidual.from_checkpoint(checkpoint)
+    # The GRU stays on the CPU (faster than CUDA at batch 1); only the CNN moves, and only
+    # for a vision checkpoint — from_checkpoint ignores the request without one.
+    return LearnedResidual.from_checkpoint(
+        checkpoint,
+        image_encoder_device=best_image_encoder_device() if gpu_vision else None,
+    )
 
 
 def _rebuild_for_replay(meta: EpisodeMetadata, render_mode):
@@ -810,6 +830,14 @@ def add_policy_args(parser: argparse.ArgumentParser) -> None:
         "NOT the same as --policy noassist, which skips all of that work.",
     )
     group.add_argument(
+        "--no-gpu-vision",
+        action="store_true",
+        help="Keep a vision checkpoint's CNN on the CPU. By default it runs as a CUDA graph "
+        "when a GPU is present, which is what keeps the vision residual inside the 2 ms "
+        "control budget (~15 ms/frame on CPU vs ~0.5 ms). Use this to reproduce CPU-only "
+        "numbers, or if graph capture misbehaves on your driver.",
+    )
+    group.add_argument(
         "--wrist-render-every",
         type=int,
         default=DEFAULT_WRIST_RENDER_EVERY,
@@ -877,7 +905,9 @@ def main() -> int:
 
     target_position = observation.hole_poses[target_hole_index][:3].copy()
     home_quaternion = controller.home_pose[3:]
-    assist = _build_assist(args.policy, args.checkpoint, args.assist_scale)
+    assist = _build_assist(
+        args.policy, args.checkpoint, args.assist_scale, gpu_vision=not args.no_gpu_vision
+    )
     # A vision checkpoint needs a live wrist frame on each Observation; turn on the
     # env's rate-limited capture for it (duck-typed, same as `eval.ablation.run_trial`).
     # An F/T-only checkpoint leaves `use_vision` False → the env renders nothing.

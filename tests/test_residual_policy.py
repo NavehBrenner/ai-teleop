@@ -298,3 +298,156 @@ def test_learned_residual_runs_in_run_episode_unchanged():
         assert np.linalg.norm(delta.delta_orientation) <= np.deg2rad(10.0) + 1e-9
         # apply_delta must accept it without error (the seam combine step).
         apply_delta(human.get_command(observation), delta)
+
+
+# ---------------------------------------------------------------------------
+# Vision embedding cache (deployment tick budget)
+# ---------------------------------------------------------------------------
+
+
+def _vision_provider(*, seed: int = 0) -> LearnedResidual:
+    torch.manual_seed(seed)
+    model = ResidualPolicy(PolicyConfig(hidden_size=16, num_layers=1, use_vision=True)).eval()
+    return LearnedResidual(model, _identity_stats())
+
+
+def _vision_observation(frame: np.ndarray, *, sim_time: float = 0.0) -> Observation:
+    observation = _observation(sim_time=sim_time)
+    object.__setattr__(observation, "wrist_image", frame)
+    return observation
+
+
+def test_embedding_cache_does_not_change_the_policy_output():
+    """The cache must be a pure speedup — same deltas, to the bit.
+
+    Drives two identical policies over the same held-frame sequence. One gets the very
+    same array object each tick (cache hits); the other gets a fresh copy with identical
+    contents (cache misses, i.e. the old re-encode-every-tick path). Any divergence means
+    the cache changed behaviour rather than just cost.
+    """
+    frame = (np.arange(224 * 224 * 3, dtype=np.uint8) % 256).reshape(224, 224, 3)
+    cached, recomputed = _vision_provider(), _vision_provider()
+
+    for tick in range(6):
+        sim_time = tick * 0.002
+        held = cached.get_delta(_vision_observation(frame, sim_time=sim_time), _command())
+        fresh = recomputed.get_delta(
+            _vision_observation(frame.copy(), sim_time=sim_time), _command()
+        )
+        assert np.array_equal(held.delta_position, fresh.delta_position), f"tick {tick}"
+        assert np.array_equal(held.delta_orientation, fresh.delta_orientation), f"tick {tick}"
+        assert held.delta_grip_force == fresh.delta_grip_force, f"tick {tick}"
+
+
+def test_embedding_is_reused_only_while_the_frame_object_is_held():
+    """The whole speedup rests on identity: same object reuses, new object re-encodes."""
+    provider = _vision_provider()
+    encoder = provider._model.image_encoder
+    assert encoder is not None
+    encoder_calls = 0
+
+    def count(module, args, output):
+        nonlocal encoder_calls
+        encoder_calls += 1
+
+    encoder.register_forward_hook(count)
+
+    held = np.zeros((224, 224, 3), dtype=np.uint8)
+    for tick in range(20):  # one render interval of held frames
+        provider.get_delta(_vision_observation(held, sim_time=tick * 0.002), _command())
+    assert encoder_calls == 1, "held frame must be encoded once, not once per tick"
+
+    provider.get_delta(_vision_observation(held.copy(), sim_time=0.040), _command())
+    assert encoder_calls == 2, "a newly rendered frame must be encoded"
+
+
+def test_reset_drops_the_cached_embedding():
+    """A new episode must not inherit the previous one's embedding via a reused address."""
+    provider = _vision_provider()
+    frame = np.zeros((224, 224, 3), dtype=np.uint8)
+    provider.get_delta(_vision_observation(frame, sim_time=0.0), _command())
+    assert provider._cached_embedding is not None
+    provider.reset()
+    assert provider._cached_embedding is None
+    assert provider._cached_frame is None
+
+
+# ---------------------------------------------------------------------------
+# Vision fast path — accelerating only the CNN (CUDA graph)
+# ---------------------------------------------------------------------------
+
+
+def _vision_provider_on(device: str | None, *, seed: int = 0) -> LearnedResidual:
+    torch.manual_seed(seed)
+    model = ResidualPolicy(PolicyConfig(hidden_size=16, num_layers=1, use_vision=True)).eval()
+    return LearnedResidual(model, _identity_stats(), image_encoder_device=device)
+
+
+def test_default_keeps_the_encoder_with_the_rest_of_the_policy():
+    """Opting out must be the no-op it looks like: one device, plain encoder, no capture."""
+    provider = _vision_provider_on(None)
+    assert provider._image_device == provider._device
+    assert provider._encode_image is provider._model.image_encoder
+
+
+def test_an_ft_only_policy_ignores_the_image_encoder_device():
+    """No CNN, nothing to place — asking for one must not build or break anything."""
+    provider = LearnedResidual(
+        ResidualPolicy(PolicyConfig(hidden_size=16, num_layers=1)).eval(),
+        _identity_stats(),
+        image_encoder_device="cuda",
+    )
+    assert provider._encode_image is None
+    assert provider.use_vision is False
+    assert isinstance(provider.get_delta(_observation(), _command()), Delta)
+
+
+def test_an_unusable_encoder_device_falls_back_instead_of_raising():
+    """A missing GPU is a performance problem, not a reason to lose the run."""
+    provider = _vision_provider_on("cuda:99")
+    assert provider._image_device == provider._device
+    frame = np.zeros((224, 224, 3), dtype=np.uint8)
+    assert isinstance(provider.get_delta(_vision_observation(frame), _command()), Delta)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="needs a CUDA device")
+def test_cuda_graph_encoder_matches_the_cpu_encoder():
+    """The fast path must change only where the CNN runs, not what the policy does.
+
+    Tolerance rather than bit-equality: cuDNN picks different convolution algorithms than
+    the CPU kernels, so the two agree to float32 accumulation noise. This bound is tight
+    enough to catch the regression that matters — leaving TF32 on (PyTorch's default for
+    convolutions) lands ~7e-5 out on the Δ, comfortably failing here.
+
+    Errors compound across ticks because the GRU carries the difference forward, so this
+    walks several ticks rather than checking one.
+    """
+    from ai_teleop.policy.residual_policy import _GraphedImageEncoder
+
+    on_cpu, on_gpu = _vision_provider_on(None), _vision_provider_on("cuda")
+    assert isinstance(on_gpu._encode_image, _GraphedImageEncoder)
+
+    rng = np.random.default_rng(0)
+    for tick in range(4):
+        frame = rng.integers(0, 255, (224, 224, 3), dtype=np.uint8)
+        sim_time = tick * 0.002
+        expected = on_cpu.get_delta(_vision_observation(frame, sim_time=sim_time), _command())
+        actual = on_gpu.get_delta(_vision_observation(frame, sim_time=sim_time), _command())
+        assert np.allclose(expected.delta_position, actual.delta_position, atol=1e-6)
+        assert np.allclose(expected.delta_orientation, actual.delta_orientation, atol=1e-6)
+        assert actual.delta_position.dtype == np.float64
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="needs a CUDA device")
+def test_graphed_embedding_survives_the_next_replay():
+    """A graph replays into fixed memory, so the cached embedding must be a copy of it.
+
+    Without the clone, the embedding held across a render interval would be silently
+    rewritten by the next frame's replay — the cache would return the *newest* frame's
+    features while believing it held the old one's.
+    """
+    provider = _vision_provider_on("cuda")
+    first = provider._image_embedding(_vision_observation(np.zeros((224, 224, 3), np.uint8)))
+    before = first.clone()
+    provider._image_embedding(_vision_observation(np.full((224, 224, 3), 200, np.uint8)))
+    assert torch.equal(first, before), "the first embedding was aliased to the graph's buffer"

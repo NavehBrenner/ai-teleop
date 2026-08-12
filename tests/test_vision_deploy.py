@@ -96,19 +96,36 @@ def test_vision_provider_consumes_wrist_image():
 
 
 def test_vision_provider_passes_image_into_model_step():
-    """The wrist frame actually reaches ``model.step`` (not silently dropped)."""
+    """The wrist frame actually reaches ``model.step`` (not silently dropped).
+
+    It arrives *encoded*: the provider caches the CNN output while the env holds a frame,
+    so what crosses the seam is an ``image_embedding``, not the raw tensor. The frame is
+    still what determines it — asserted below by feeding two different frames and
+    requiring two different embeddings, which a dropped frame could not produce.
+    """
     provider = _vision_provider()
-    seen: dict[str, torch.Tensor | None] = {}
+    seen: list[torch.Tensor | None] = []
     original_step = provider._model.step
 
-    def _spy(command, force_torque, proprioception, image=None, hidden=None):  # noqa: ANN001
-        seen["image"] = image
-        return original_step(command, force_torque, proprioception, image=image, hidden=hidden)
+    def _spy(command, force_torque, proprioception, image=None, hidden=None, image_embedding=None):  # noqa: ANN001
+        seen.append(image_embedding)
+        return original_step(
+            command,
+            force_torque,
+            proprioception,
+            image=image,
+            hidden=hidden,
+            image_embedding=image_embedding,
+        )
 
     provider._model.step = _spy  # type: ignore[method-assign]
     provider.get_delta(_observation(wrist_image=_frame()), _command())
-    assert seen["image"] is not None
-    assert seen["image"].shape == (1, 3, 224, 224)
+    provider.get_delta(_observation(wrist_image=_frame() // 2 + 7), _command())
+
+    assert seen[0] is not None and seen[1] is not None
+    embed_dim = provider._model.config.image_embed_dim
+    assert seen[0].shape == (1, embed_dim)
+    assert not torch.equal(seen[0], seen[1]), "embedding must track the frame, not be inert"
 
 
 def test_vision_provider_without_frame_raises():
