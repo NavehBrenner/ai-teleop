@@ -18,7 +18,11 @@ How the blind holds:
   it only discards the Δ. Startup time and per-step cost are identical, so the arm cannot
   be inferred from how the session behaves.
 - The child's stdout/stderr go to a per-trial `console.log`, so no line naming the policy
-  reaches the terminal.
+  reaches the terminal. The one exception is the startup centering state ("centering in
+  3s — hold still" … "centering complete"), re-rendered by the parent as a live spinner so
+  the operator knows when to hold the palm still and when they may start moving. That is a
+  *whitelist* of one known-safe family (`_OPERATOR_STATUS`), not a filter over unsafe
+  lines — centering finishes before the sim is stepped, so it cannot differ between arms.
 - Assignment is **block-randomized**: within each block of 4 trials, exactly 2 on and 2
   off. Guarantees balance and spreads both arms evenly across the operator's fatigue and
   learning curve, which plain coin-flipping does not.
@@ -41,10 +45,15 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import random
+import re
 import subprocess
 import sys
+import threading
+import time
 from pathlib import Path
+from types import TracebackType
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -67,6 +76,87 @@ DEFAULT_CHECKPOINT = Path("docs/results/checkpoints/ft/dagger/seed_0/round_2/che
 BLOCK = 4  # trials per randomization block; must be even so each block splits evenly
 GUESSES = {"y": "on", "n": "off", "u": "unsure"}
 
+# The ONLY child output that reaches the operator's terminal: the startup centering states
+# from `vision_input.calibrate_neutral` ("centering in 3s — hold still", "centering reset —
+# ...", "centering complete — neutral set"). The operator has to know when to hold the palm
+# still and when they may start moving, and that cue is otherwise buried in the redirected
+# log along with every line naming the policy.
+#
+# This is a **whitelist**, which is why it is safe where the module docstring rejects a
+# filter. A blacklist has to anticipate every line that could leak the arm; a whitelist
+# shows one known-safe family and drops everything else, so a new log line in the child is
+# hidden by default rather than exposed by default. Nothing matching this pattern differs
+# between the arms — centering runs before the sim is stepped, and the assist has not been
+# consulted yet.
+_OPERATOR_STATUS = re.compile(r"(centering[^\r\n]*)")
+
+_SPINNER_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"  # matches run_episode's centering line
+
+
+class _StatusLine:
+    """One self-overwriting spinner line, driven by the child's centering log.
+
+    The child's own spinner only draws when its console is a TTY (see
+    `vision_input.calibrate_neutral`), and here that console is a pipe — so the child falls
+    back to per-second log lines and the parent animates them instead. Redrawing from this
+    side is what keeps the spinner moving *between* the child's 1 Hz countdown ticks;
+    without it the line would sit frozen for a second at a time and read as a hang.
+
+    Silently inert when the parent's own stdout is not a TTY, so a piped session still
+    produces clean output.
+    """
+
+    def __init__(self, stream=None) -> None:
+        self._stream = stream if stream is not None else sys.stdout
+        self._live = self._stream.isatty()
+        self._text: str | None = None
+        self._done = False
+        self._lock = threading.Lock()
+        self._stop = threading.Event()
+        self._thread: threading.Thread | None = None
+
+    def __enter__(self) -> _StatusLine:
+        if self._live:
+            self._thread = threading.Thread(target=self._animate, daemon=True)
+            self._thread.start()
+        return self
+
+    def __exit__(
+        self,
+        exception_type: type[BaseException] | None,
+        exception: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=1.0)
+        with self._lock:
+            if self._live and self._text is not None and not self._done:
+                self._stream.write("\r\x1b[K")  # clear a half-drawn line
+                self._stream.flush()
+
+    def update(self, text: str) -> None:
+        """Show `text`. 'centering complete' finishes the line and stops the animation."""
+        with self._lock:
+            self._text = text
+            if "complete" in text:
+                self._done = True
+                if self._live:
+                    # Tick, newline, then the one cue the operator actually acts on. The
+                    # arm is live from here: everything before this point required holding
+                    # the palm still, everything after is teleoperation.
+                    self._stream.write(f"\r✓ {text}\x1b[K\n  → you can move now\n")
+                    self._stream.flush()
+
+    def _animate(self) -> None:
+        while not self._stop.is_set():
+            with self._lock:
+                if self._text is not None and not self._done:
+                    frame = _SPINNER_FRAMES[int(time.monotonic() * 10) % len(_SPINNER_FRAMES)]
+                    self._stream.write(f"\r{frame} {self._text}\x1b[K")
+                    self._stream.flush()
+            self._stop.wait(0.1)
+
 
 def schedule(n_trials: int, seed: int) -> list[bool]:
     """Block-randomized assist assignment: exactly half of every block of `BLOCK` is on.
@@ -85,13 +175,46 @@ def schedule(n_trials: int, seed: int) -> list[bool]:
     return assignments
 
 
+def run_child(command: list[str], console_path: Path) -> int:
+    """Run `command`, log every line to `console_path`, surface only centering states.
+
+    The seam the blind now rests on, extracted so it can be tested without a robot: every
+    line the child writes is captured to the log and **nothing** reaches the terminal except
+    what `_OPERATOR_STATUS` admits.
+    """
+    # The child's own stdout encoding follows its locale, which on Windows is cp1252 — and
+    # the status lines it writes are full of em dashes and arrows. Pin it to UTF-8 so the
+    # child cannot die encoding its own log, and so this end decodes what it actually sent.
+    child_environment = {**os.environ, "PYTHONIOENCODING": "utf-8"}
+
+    with console_path.open("w", encoding="utf-8") as console:
+        process = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            bufsize=1,  # line-buffered: the countdown must reach the operator as it happens
+            env=child_environment,
+        )
+        assert process.stdout is not None
+        with _StatusLine() as status:
+            for line in process.stdout:
+                console.write(line)
+                found = _OPERATOR_STATUS.search(line)
+                if found:
+                    status.update(found.group(1))
+        return process.wait()
+
+
 def run_trial(
     index: int, assist_on: bool, wall_seed: int, out_dir: Path, args: argparse.Namespace
 ) -> str:
     """Run one episode as a child process; return its terminal reason.
 
-    The child's output is redirected wholesale rather than filtered — a filter has to
-    anticipate every line that could name the policy, a redirect does not.
+    The child's output is still redirected wholesale — every line goes to the trial's
+    `console.log` and none reaches the terminal on its own. See :func:`run_child`.
     """
     trial_dir = out_dir / f"trial_{index:03d}"
     trial_dir.mkdir(parents=True, exist_ok=True)
@@ -113,20 +236,37 @@ def run_trial(
         str(args.checkpoint),
         "--assist-scale",
         "1" if assist_on else "0",
+        # Goes to the trial's console.log, never to the operator's terminal (the whitelist
+        # passes only centering lines). Both arms run the policy in full — scale 0 discards
+        # the Δ but still pays for it — so the timings are identical either way and reveal
+        # nothing about the assignment. Worth having: the per-episode real-time factor is
+        # the only record of whether the loop actually kept pace under the full live load
+        # (cameras + tracker + viewer), which no offline measurement covers.
+        "--profile",
         "--record",
         "commands",
         "--record-out",
         str(trial_dir),
         "--record-hand",
         str(trial_dir / "hand.mp4"),
+        "--cam",
+        # Optional on the caller: `vision_play.py` drives run_trial with its own namespace
+        # and does not offer the flag, so an absent one means the protocol's default view.
+        getattr(args, "cam", "main"),
     ]
     if args.gain is not None:
         command += ["--gain", str(args.gain)]
     if args.max_dpos is not None:
         command += ["--max-dpos", str(args.max_dpos)]
+    # Same optional-on-the-caller pattern as --cam: absent means the protocol's default
+    # (preview on). The cv2 pump lives inside StereoHandSource.read(), so it is charged to
+    # the control loop's `input` phase -- dropping it is what buys a vision checkpoint its
+    # real-time budget back. Note it also silences `--record-hand`: the operator-side video
+    # is written from the frame the preview composites, so no window means no footage.
+    if getattr(args, "no_cam_window", False):
+        command += ["--no-cam-window"]
 
-    with (trial_dir / "console.log").open("w") as console:
-        subprocess.run(command, stdout=console, stderr=subprocess.STDOUT, check=False)
+    run_child(command, trial_dir / "console.log")
 
     episode = trial_dir / "episode.npz"
     if not episode.exists():
@@ -176,6 +316,15 @@ def main() -> None:
         help="unrecorded warm-up trials run first and discarded, declared in advance so "
         "dropping them is not a choice made after seeing them (default 10)",
     )
+    parser.add_argument(
+        "--cam",
+        choices=["main", "wrist"],
+        default="main",
+        help="Viewer camera for every trial: 'main' free camera (default, what the "
+        "protocol's fixed parameters assume) or 'wrist' for the robot's-eye POV. The "
+        "operator's view changes the task's difficulty, so it is held constant across a "
+        "session and recorded in assignments.json rather than changed trial to trial.",
+    )
     parser.add_argument("--out", type=Path, default=Path("runs/blind_trial"))
     parser.add_argument("--schedule-seed", type=int, default=20260804)
     parser.add_argument("--gain", type=float, default=None)
@@ -203,6 +352,7 @@ def main() -> None:
                 "checkpoint": str(arguments.checkpoint),
                 "schedule_seed": arguments.schedule_seed,
                 "practice": arguments.practice,
+                "cam": arguments.cam,
                 "assignments": assignments,
             },
             indent=2,

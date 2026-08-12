@@ -60,6 +60,7 @@ the only human-in-the-loop evidence in the project, and it produces **unselected
 | Practice trials | 10, unrecorded, discarded | Declared here so discarding them is not a choice made after seeing them |
 | Wall seeds | Trial *i* uses wall seed *i*; practice uses 9000 + *i* | Fresh wall every trial, no overlap between practice and record |
 | Assignment | Block-randomized, `BLOCK = 4`, seed `20260804` | Exactly half of every block of 4 is assisted |
+| Viewer camera | `--cam main` (free camera) | The operator's viewpoint changes the task's difficulty, so it is fixed for the whole session rather than varied per trial. `--cam wrist` (robot's-eye POV) is a different task and would need its own session to compare against |
 | Operator | Naveh Brenner, blinded | |
 
 ## 4. Design
@@ -80,6 +81,13 @@ frames; it discards only the Δ that reaches the command. Startup time and per-s
 identical, so the arm cannot be inferred from how the session behaves — which
 `--policy noassist` would leak immediately. Each trial's console output is redirected to a
 per-trial log, so no line naming the policy reaches the terminal.
+
+**One cue survives the redirect.** The startup centering states are re-rendered on the
+operator's terminal as a live spinner, so they know when to hold the open palm still and
+when the arm is live. It is a whitelist of that one message family, and centering completes
+*before the sim is stepped* — the assist has not been consulted yet, so the cue is identical
+in both arms by construction. Everything else, including any traceback, stays in the trial's
+`console.log`.
 
 **Blinding is measured, not assumed.** The operator records a guess after every trial (on /
 off / unsure). If the guesses land at chance, the write-up says the blind held; if they do
