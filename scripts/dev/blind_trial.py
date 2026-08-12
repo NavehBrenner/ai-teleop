@@ -36,7 +36,7 @@ the second run, so the arms are unpaired and wall difficulty is randomized inste
 Run from kevin/ (Windows-native — the cameras are not visible from WSL):
 
     uv run python scripts/dev/blind_trial.py --stereo-calib ..\\stereohand\\stereo_calib.json
-    uv run python scripts/dev/blind_trial.py --practice 10 --trials 60
+    uv run python scripts/dev/blind_trial.py --practice 8 --trials 32   # the defaults
     uv run python scripts/dev/blind_trial.py --unseal      # after every trial is done
 """
 
@@ -66,12 +66,19 @@ from ai_teleop.data import load_episode  # noqa: E402
 
 log = get_logger("blind-trial")
 
-# Pre-specified in the protocol, NOT selected on outcome. FT-DAgger is the family whose
-# success rate moves least across training seeds (2 pp, against 27-31 pp for plain BC), so
-# it is the arm least dependent on the seed lottery — a reason that stands without looking
-# at any human data. Picking the best-scoring checkpoint instead is the selection bias the
-# project already documented (docs/self-evaluation.md, "pre-register the reporting rule").
-DEFAULT_CHECKPOINT = Path("docs/results/checkpoints/ft/dagger/seed_0/round_2/checkpoint.pt")
+# Pre-specified in the protocol, NOT selected on outcome: lowest-numbered training seed,
+# final DAgger round. Picking the best-scoring checkpoint instead is the selection bias the
+# project already documented (docs/self-evaluation.md, "pre-register the reporting rule") --
+# here that would be vision/dagger/seed_1/round_4 (+12 pp at p=0.036), which the rule
+# excludes.
+#
+# The family is Vision-DAgger rather than F/T-DAgger, amended 2026-08-12 before any
+# recorded trial existed (protocol §0). An F/T-only residual acts on contact force, and
+# this rig has no haptic feedback -- its other effects are +0.14-0.27 s on a 7.83 s task
+# and +2.0 pp success, neither perceptible. The blinding check would have been measuring
+# the absence of a channel rather than the absence of an effect. The vision residual acts
+# on free-space approach, which the operator can see.
+DEFAULT_CHECKPOINT = Path("docs/results/checkpoints/vision/dagger/seed_0/round_4/checkpoint.pt")
 
 BLOCK = 4  # trials per randomization block; must be even so each block splits evenly
 GUESSES = {"y": "on", "n": "off", "u": "unsure"}
@@ -306,15 +313,22 @@ def unseal(out_dir: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--stereo-calib", required=False, default=None)
-    parser.add_argument("--cameras", nargs=2, default=["0", "1"])
+    parser.add_argument(
+        "--cameras",
+        nargs=2,
+        default=["1", "2"],
+        help="left/right camera indices. Defaults to the dev rig's pairing (1 2, the "
+        "built-in webcam being 0); verify with stereohand's scripts/view_cameras.py, as "
+        "Windows can renumber devices across reboots",
+    )
     parser.add_argument("--checkpoint", type=Path, default=DEFAULT_CHECKPOINT)
-    parser.add_argument("--trials", type=int, default=60, help="recorded trials (default 60)")
+    parser.add_argument("--trials", type=int, default=32, help="recorded trials (default 32)")
     parser.add_argument(
         "--practice",
         type=int,
-        default=10,
+        default=8,
         help="unrecorded warm-up trials run first and discarded, declared in advance so "
-        "dropping them is not a choice made after seeing them (default 10)",
+        "dropping them is not a choice made after seeing them (default 8)",
     )
     parser.add_argument(
         "--cam",

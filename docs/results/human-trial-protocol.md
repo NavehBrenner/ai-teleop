@@ -16,6 +16,64 @@ a headline. This is that lesson applied once, deliberately, on the record.
 
 ---
 
+## 0. Amendment — 2026-08-12, before any recorded trial
+
+`runs/blind_trial/` did not exist when this was written; no recorded trial had been run.
+Amending *before* data is what pre-registration permits — the rule it exists to enforce is
+that the design cannot be edited once results are visible. The superseded values are kept
+below so the change is auditable rather than silent.
+
+**What changed:** the checkpoint moves from the **F/T-DAgger** family to the
+**Vision-DAgger** family; recorded trials 60 → **32**; practice 10 → **8**.
+
+**Why.** The design's one live measurement other than the outcome is the blinding check —
+whether the operator can tell the arms apart. On an F/T-only residual that question is
+close to answered in advance, because the operator has no sensory channel to any of its
+effects:
+
+| Channel | F/T-DAgger's measured effect | Available to the operator? |
+|---|---|---|
+| Contact force | −1.04 N, against its own 2.41 N seed floor (null) | **No** — the rig has no haptic feedback; commands come from stereo hand tracking |
+| Time to insert | +0.14 to +0.27 s on a 7.83 s baseline | **No** — 2–3%, inside a per-trial distribution running 1.4–18 s |
+| Success rate | +2.0 pp | **No** — 0.6 trials out of 16 per arm |
+| Trajectory smoothness | rougher on 20 of 21 checkpoints | Marginal, and the only one |
+
+Spending a session confirming chance-level guessing against that table measures the
+absence of a channel, not the absence of an effect. The Vision-DAgger residual acts on
+free-space approach, which is visible in the viewer and is the modality the project is
+actually about — so the guess has something to be a guess *about*.
+
+**The deeper reason the original choice was wrong.** F/T-DAgger was selected for seed
+stability (2 pp spread), which is the correct guard for an *effect estimate*. §2 states
+that this design cannot produce one. The selection rule was therefore optimizing against a
+bias that could not occur here, and it paid for that with the only property the session can
+actually examine.
+
+**What did not change — the anti-selection rule.** The superseded checkpoint was seed 0,
+final DAgger round (F/T-DAgger has rounds 0–2, so `round_2` *was* its last). The
+replacement applies that identical rule to the new family: lowest-numbered training seed,
+final round → `vision/dagger/seed_0/round_4`. It is **not** the best-scoring vision
+checkpoint. `vision/dagger/seed_1/round_4` is (62% success, +12 pp at p = 0.036) and is
+excluded by the rule, as it must be — it is the exact outlier
+[§5.5](../conclusions.md) documents.
+
+**Two costs, disclosed rather than argued away:**
+
+- **Seed stability is lost.** Vision-DAgger's success rate spans 16 pp across its three
+  training seeds ([−4, +12]) against F/T-DAgger's 2 pp. This checkpoint is one draw from
+  that spread, and no result here generalizes to the recipe. That matters less than it
+  looks, because §2 already forbids reading this session as an effect estimate — but it
+  is a real reduction in what a positive result could mean.
+- **The rule lands on seed 0's best round.** Seed 0's paired Δ reads −1 → −28 → −12 → +8
+  across rounds, so "final round" selects +8. The rule was fixed before that sequence was
+  consulted and is inherited unchanged from the superseded checkpoint; it was not chosen
+  to land there. Stated here so the reader can judge that for themselves.
+
+**Trial count.** 32 recorded (8 full blocks of 4) and 8 practice, ≈ 20 minutes. §2's table
+was never a case *for* 60 — at 30 per arm it resolves ~33 pp against single-digit effects.
+Halving trials halves nothing that was load-bearing, and the session's real products
+(human-in-the-loop evidence, proxy validity, unselected footage) do not scale with n.
+
 ## 1. The question
 
 Every number in this project was measured against `ScriptedNoisyHuman` — a *model* of an
@@ -38,8 +96,9 @@ Assuming a 50% baseline (the scripted `human_only` rate), two-sided α = 0.05, 8
 
 | Recorded trials | Per arm | Smallest difference detectable |
 |---|---|---|
+| **32** | **16** | **~45 pp** |
 | 40 | 20 | ~40 pp |
-| **60** | **30** | **~33 pp** |
+| 60 (superseded, §0) | 30 | ~33 pp |
 | 80 | 40 | ~30 pp |
 
 The effects the scripted study measured are **single-digit pp**. This design cannot see
@@ -55,9 +114,9 @@ the only human-in-the-loop evidence in the project, and it produces **unselected
 
 | Parameter | Value | Why this one |
 |---|---|---|
-| Checkpoint | `docs/results/checkpoints/ft/dagger/seed_0/round_2/checkpoint.pt` | F/T-DAgger is the family whose success rate moves least across training seeds — 2 pp, against 27–31 pp for plain BC — so it depends least on the seed lottery. That reason stands without looking at any human data. **Not** the best-scoring checkpoint: selecting on outcome and then measuring is the bias this project already documented. |
-| Recorded trials | 60 (30 per arm) | §2 |
-| Practice trials | 10, unrecorded, discarded | Declared here so discarding them is not a choice made after seeing them |
+| Checkpoint | `docs/results/checkpoints/vision/dagger/seed_0/round_4/checkpoint.pt` | Lowest-numbered training seed, final DAgger round — a rule fixed without reference to any outcome, inherited unchanged from the superseded F/T checkpoint (§0). **Not** the best-scoring checkpoint: `vision/dagger/seed_1/round_4` is, and selecting on outcome and then measuring is the bias this project already documented. Vision rather than F/T because the F/T residual has no operator-perceptible channel, so the blinding check would have been answered in advance — see §0 for the full argument and its costs. |
+| Recorded trials | 32 (16 per arm) | §2. Eight full blocks of 4 |
+| Practice trials | 8, unrecorded, discarded | Declared here so discarding them is not a choice made after seeing them |
 | Wall seeds | Trial *i* uses wall seed *i*; practice uses 9000 + *i* | Fresh wall every trial, no overlap between practice and record |
 | Assignment | Block-randomized, `BLOCK = 4`, seed `20260804` | Exactly half of every block of 4 is assisted |
 | Viewer camera | `--cam main` (free camera) | The operator's viewpoint changes the task's difficulty, so it is fixed for the whole session rather than varied per trial. `--cam wrist` (robot's-eye POV) is a different task and would need its own session to compare against |
@@ -72,7 +131,7 @@ which costs power and buys validity.
 
 **Block randomization, not coin-flipping.** Within each block of 4 trials exactly 2 are
 assisted. This guarantees arm balance and, more importantly, spreads both arms evenly
-across the operator's fatigue and learning curve — a real confound over 60 trials, and one
+across the operator's fatigue and learning curve — a real confound over 32 trials, and one
 that plain randomization only controls in expectation.
 
 **Blinding.** Both arms run `--policy tf` with `--assist-scale 1` or `--assist-scale 0`.
@@ -96,7 +155,7 @@ does perturb the arm, so partial unblinding is a real possibility rather than a 
 
 ## 5. Abort conditions
 
-Checked against the 10 practice trials, before any recorded trial runs:
+Checked against the 8 practice trials, before any recorded trial runs:
 
 - **Floor** — near-0% practice success means the operator cannot seat the peg by hand at
   all, and the study measures the interface rather than the assist.
