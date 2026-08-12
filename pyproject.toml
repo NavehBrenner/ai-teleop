@@ -46,7 +46,7 @@ ml = [
 # Pinned to a tag, not a bare branch: D2's acceptance is "clean clone -> run", and an
 # unpinned git dep silently re-resolves to whatever the default branch holds that day.
 stereo-input = [
-    "stereohand @ git+https://github.com/NavehBrenner/stereohand.git@v0.1.0",
+    "stereohand @ git+https://github.com/NavehBrenner/stereohand.git@v0.2.0",
 ]
 # Visualisation / recording for dev scripts (MP4 + GIF episode captures).
 # Not imported by the sim runtime; only the scripts/dev recorders use it.

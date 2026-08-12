@@ -264,14 +264,25 @@ class StereoHandSource:
         # max_skew_s: the two cameras run on independent, uncoordinated capture threads
         # (stereohand's StereoCapture), so a pair is only fused if their capture timestamps
         # land within this tolerance of each other -- unrelated to whether MediaPipe detects
-        # a hand at all. Measured directly (kevin's scripts/dev/skew_rejection_probe.py) on
-        # one camera pair: the default 0.02s rejected 88% of pairs on timing alone (mean
-        # observed skew ~32 ms), while 0.05s accepted 93% -- this dominated the "low fps"
-        # sensor-health numbers (StereoHandSource.close()'s log line) far more than anything
-        # in kevin's own control loop. Hardware-dependent (a mismatched USB controller/camera
-        # pair skews more than a matched one), so it's a tunable knob here, not a changed
-        # global default -- if your own sensor-health line shows high drop-out despite good
-        # lighting/hand positioning, measure your skew with that probe before raising this.
+        # a hand at all. It is an *alignment-quality* knob: how simultaneous the two views
+        # must be for triangulating them to mean anything.
+        #
+        # It is NOT a drop-out remedy, and this comment used to say it was. The advice was
+        # "if sensor-health shows high drop-out, measure your skew and raise this", from a
+        # measurement of 88% of pairs rejected at 0.02s. The rejections were real; the
+        # conclusion was not. stereohand's tracker woke on a *different* predicate than the
+        # one read() enforced (`max(ts_left, ts_right)`, which advances when EITHER camera
+        # ticks, vs "both within skew"), so it kept stepping on pairs that were then
+        # rejected -- and a rejection published `_ABSENT`, i.e. "the hand is gone". That is
+        # what produced 78% drop-out and a clutch releasing twice a second on a hand sitting
+        # still in frame. Raising max_skew_s only widened the gate enough to hide the
+        # mismatch, while trading away cross-view alignment during fast hand motion.
+        #
+        # Fixed in stereohand v0.2.0 (LAB-122): one shared `pair_status()` predicate, and
+        # `_ABSENT` published only for a genuinely stalled camera (`max_age_s`). On >= 0.2.0
+        # a high drop-out is no longer evidence about skew at all -- look at per-view
+        # detection (lighting, shared field of view) instead. Leave this at the default
+        # unless triangulation *accuracy* is the complaint.
         self._tracker = StereoHandTracker.open(
             calibration,
             left=left,

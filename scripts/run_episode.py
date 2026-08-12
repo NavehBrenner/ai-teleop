@@ -758,13 +758,12 @@ def add_input_args(parser: argparse.ArgumentParser) -> None:
         default=0.02,
         metavar="SECONDS",
         help="Max capture-timestamp gap between the two cameras before a frame pair is "
-        "dropped (--input vision). The cameras run on independent, uncoordinated capture "
-        "threads, so a mismatched USB controller/camera pair can skew well past the default "
-        "and get most pairs rejected on timing alone, before MediaPipe ever runs -- measured "
-        "(scripts/dev/skew_rejection_probe.py) at 88%% rejected on one pair at the default "
-        "vs 7%% at 0.05. If StereoHandSource's sensor-health log line (on close) shows high "
-        "drop-out despite good lighting/positioning, measure your skew with that probe and "
-        "raise this to match. Default 0.02 (stereohand's own default).",
+        "dropped (--input vision). An ALIGNMENT-QUALITY knob: how simultaneous the two "
+        "views must be for triangulating them to mean anything. It is not a drop-out "
+        "remedy -- as of stereohand v0.2.0 a dropped pair no longer reports the hand as "
+        "absent, so widening this only trades away cross-view alignment during fast hand "
+        "motion. If sensor-health shows high drop-out, look at per-view detection "
+        "(lighting, shared field of view), not at this. Default 0.02 (stereohand's own).",
     )
 
 

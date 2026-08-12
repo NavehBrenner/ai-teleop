@@ -16,9 +16,20 @@ Three probes have now measured a stable ~5-8 fresh fps / ~75-85% drop-out figure
 of the MuJoCo viewer, poll rate, or the preview window - all *downstream* of capture. This
 probe instead measures **`StereoCapture` alone, with no MediaPipe/landmarker in the loop at
 all**: how often two independent 30 fps-ish cameras actually deliver a pair within the skew
-window, purely as a hardware/timing question. If skew rejection alone is already high, that
-directly implicates `max_skew_s` (an easy, one-line tuning knob) rather than detection
-quality, camera hardware, or anything in kevin's control loop.
+window, purely as a hardware/timing question. A high rejection rate here localises the loss
+to capture pairing rather than detection quality, camera hardware, or kevin's control loop.
+
+**It does not follow that `max_skew_s` is the fix, and this docstring used to say it did.**
+The rejections this probe counts were real, and raising the tolerance did make them go away
+-- but they were only *harmful* because of what the consumer did with them. stereohand's
+tracker woke on a different predicate than `read()` enforced and then published `_ABSENT`
+for each rejected pair, i.e. "the hand is gone", which is what turned a timing artifact into
+78% drop-out and a clutch releasing twice a second (LAB-122, fixed in stereohand v0.2.0).
+Widening the gate hid the mismatch and cost cross-view alignment.
+
+The general lesson, worth keeping: **a probe that measures one layer cannot tell you whether
+that layer's output is being interpreted correctly downstream.** Rejection rate is still a
+useful number for judging *alignment* quality; it is no longer evidence about drop-out.
 
     cd kevin && uv run python scripts/dev/skew_rejection_probe.py --cameras 2 1 --seconds 10
 """
