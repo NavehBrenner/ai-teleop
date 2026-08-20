@@ -134,6 +134,7 @@ class ResidualPolicy(nn.Module):
         proprioception: Tensor,
         image: Tensor | None = None,
         hidden: Tensor | None = None,
+        image_embedding: Tensor | None = None,
     ):
         """Advance one timestep — the **deployment** half of the model's contract.
 
@@ -143,16 +144,26 @@ class ResidualPolicy(nn.Module):
         the residual run inside the 500 Hz control loop — :meth:`forward` would re-score
         the whole history every tick.
 
+        Vision callers pass **either** ``image_embedding`` (already encoded) or ``image``
+        (a raw frame to encode here), mirroring :meth:`forward`'s two paths and for the same
+        reason: the wrist camera renders at ~25 Hz while this runs at 500 Hz, so re-encoding
+        the held frame on every tick is ~20x wasted CNN work. Passing a cached embedding is
+        what keeps the vision residual inside its tick budget — see
+        :meth:`LearnedResidual._image_embedding`.
+
         Numerically equivalent to a one-timestep :meth:`forward` on the same weights and
         state; that equivalence is what makes a checkpoint trained by the former valid
         under the latter (``test_step_matches_first_timestep_of_forward``).
         """
         streams = [command, force_torque, proprioception]
         if self.config.use_vision:
-            if image is None:
-                raise ValueError("use_vision=True requires an image")
-            assert self.image_encoder is not None
-            streams.append(self.image_encoder(image))  # (B, embed)
+            if image_embedding is not None:
+                streams.append(image_embedding)
+            elif image is not None:
+                assert self.image_encoder is not None
+                streams.append(self.image_encoder(image))  # (B, embed)
+            else:
+                raise ValueError("use_vision=True requires an image or image_embedding")
 
         x = _fuse(*streams).unsqueeze(1)  # (B, 1, gru_input_dim)
         output, h_n = self.core_gru(x, hidden)  # (B, 1, hidden_dim)

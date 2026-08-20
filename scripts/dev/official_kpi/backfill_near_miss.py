@@ -32,6 +32,7 @@ import math
 import os
 import sys
 from pathlib import Path
+from typing import SupportsFloat
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 
@@ -65,6 +66,11 @@ def _matches(stored: str, replayed: object) -> bool:
         return stored == replayed
     if replayed is None:
         return stored in ("", "None")
+    # Narrowed rather than cast: `replayed` is typed `object`, and anything without
+    # __float__ (numpy scalars have it, so this keeps every real case) would raise
+    # TypeError here rather than the ValueError the except clause anticipates.
+    if not isinstance(replayed, SupportsFloat):
+        return False
     try:
         return math.isclose(float(stored), float(replayed), rel_tol=GATE_TOLERANCE, abs_tol=1e-12)
     except ValueError:

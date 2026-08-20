@@ -33,6 +33,16 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, NoReturn
 
+# Pin the maths libraries to one thread *before* numpy/torch load — both read these at
+# import time, so this cannot be done later from a function. This loop is 500 Hz over tiny
+# operands (7-DoF Jacobians, a batch-1 GRU); multi-threaded BLAS spends its time in
+# thread barriers rather than arithmetic, and every phase gets slower. Measured on the dev
+# box, vision residual, 2000 steps: 0.65x -> 1.15x real-time, with the controller phase
+# alone going 0.482 -> 0.150 ms/step. Set KVN_KEEP_BLAS_THREADS=1 to opt out.
+if not os.environ.get("KVN_KEEP_BLAS_THREADS"):
+    for _threading_variable in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
+        os.environ.setdefault(_threading_variable, "1")
+
 import numpy as np
 
 from ai_teleop.data.schema import EpisodeColumns, EpisodeMetadata
@@ -152,6 +162,19 @@ class _ScaledAssist:
         self._inner = inner
         self._scale = scale
 
+    @property
+    def use_vision(self) -> bool:
+        """Forward the inner policy's modality so wrapping does not change it.
+
+        `main` reads this (duck-typed) to decide whether to turn on the env's wrist
+        capture. Without the forward, a *vision* checkpoint on the scale-0 arm never gets
+        frames and raises on its first step, while the scale-1 arm runs — so the control
+        arm of a blinded vision trial cannot run at all. Even short of the crash, skipping
+        the per-tick render on one arm is a timing difference the operator can feel, which
+        is precisely what scale 0 exists to avoid.
+        """
+        return bool(getattr(self._inner, "use_vision", False))
+
     def get_delta(self, observation: Observation, command: Command) -> Delta:
         delta = self._inner.get_delta(observation, command)
         return Delta(
@@ -161,13 +184,17 @@ class _ScaledAssist:
         )
 
 
-def _build_assist(policy: str, checkpoint: str | None, scale: float = 1.0) -> AssistProvider:
+def _build_assist(
+    policy: str, checkpoint: str | None, scale: float = 1.0, *, gpu_vision: bool = True
+) -> AssistProvider:
     """:func:`_resolve_assist`, with ``scale`` applied (1.0 skips the wrapper)."""
-    assist = _resolve_assist(policy, checkpoint)
+    assist = _resolve_assist(policy, checkpoint, gpu_vision=gpu_vision)
     return assist if scale == 1.0 else _ScaledAssist(assist, scale)
 
 
-def _resolve_assist(policy: str, checkpoint: str | None) -> AssistProvider:
+def _resolve_assist(
+    policy: str, checkpoint: str | None, *, gpu_vision: bool = True
+) -> AssistProvider:
     """Resolve --policy to the AssistProvider (the correction layer) under test.
 
     Same scene + operator command stream, different assist — so one recorded episode
@@ -196,12 +223,18 @@ def _resolve_assist(policy: str, checkpoint: str | None) -> AssistProvider:
     if not checkpoint:
         raise SystemExit("--policy tf requires --checkpoint PATH (a trained residual .pt).")
     from ai_teleop.policy import LearnedResidual  # lazy: pulls in torch
+    from ai_teleop.policy.residual_policy import best_image_encoder_device
 
     # F/T-only and vision checkpoints load through the same path: the serialized
     # PolicyConfig carries `use_vision`, so the checkpoint selects its own modality
     # and the caller only has to feed it wrist frames (`main` turns on the env's wrist
     # capture for it). There is no separate --policy vision; the checkpoint is the switch.
-    return LearnedResidual.from_checkpoint(checkpoint)
+    # The GRU stays on the CPU (faster than CUDA at batch 1); only the CNN moves, and only
+    # for a vision checkpoint — from_checkpoint ignores the request without one.
+    return LearnedResidual.from_checkpoint(
+        checkpoint,
+        image_encoder_device=best_image_encoder_device() if gpu_vision else None,
+    )
 
 
 def _rebuild_for_replay(meta: EpisodeMetadata, render_mode):
@@ -451,6 +484,11 @@ def build_input(
             tracker.close()
             _fast_exit(0)
         tracker.set_renderer_origin(neutral.hand_position)  # center the 3D view on neutral
+        # Centering is over; everything from here is the episode. Without this the sensor
+        # health reported on close covers the centering phase too, which can outlast a
+        # short episode and legitimately has the hand in and out of frame -- inflating
+        # drop-out enough to read as a sensor fault on a run that was clean.
+        tracker.mark_measurement_start()
         input_strategy: InputStrategy = VisionInput(
             tracker,
             calibration=WorkspaceCalibration(),
@@ -758,13 +796,12 @@ def add_input_args(parser: argparse.ArgumentParser) -> None:
         default=0.02,
         metavar="SECONDS",
         help="Max capture-timestamp gap between the two cameras before a frame pair is "
-        "dropped (--input vision). The cameras run on independent, uncoordinated capture "
-        "threads, so a mismatched USB controller/camera pair can skew well past the default "
-        "and get most pairs rejected on timing alone, before MediaPipe ever runs -- measured "
-        "(scripts/dev/skew_rejection_probe.py) at 88%% rejected on one pair at the default "
-        "vs 7%% at 0.05. If StereoHandSource's sensor-health log line (on close) shows high "
-        "drop-out despite good lighting/positioning, measure your skew with that probe and "
-        "raise this to match. Default 0.02 (stereohand's own default).",
+        "dropped (--input vision). An ALIGNMENT-QUALITY knob: how simultaneous the two "
+        "views must be for triangulating them to mean anything. It is not a drop-out "
+        "remedy -- as of stereohand v0.2.0 a dropped pair no longer reports the hand as "
+        "absent, so widening this only trades away cross-view alignment during fast hand "
+        "motion. If sensor-health shows high drop-out, look at per-view detection "
+        "(lighting, shared field of view), not at this. Default 0.02 (stereohand's own).",
     )
 
 
@@ -796,6 +833,14 @@ def add_policy_args(parser: argparse.ArgumentParser) -> None:
         "discards its output, which is what makes the two arms of a blinded A/B trial "
         "(scripts/dev/blind_trial.py) indistinguishable from outside the process. It is "
         "NOT the same as --policy noassist, which skips all of that work.",
+    )
+    group.add_argument(
+        "--no-gpu-vision",
+        action="store_true",
+        help="Keep a vision checkpoint's CNN on the CPU. By default it runs as a CUDA graph "
+        "when a GPU is present, which is what keeps the vision residual inside the 2 ms "
+        "control budget (~15 ms/frame on CPU vs ~0.5 ms). Use this to reproduce CPU-only "
+        "numbers, or if graph capture misbehaves on your driver.",
     )
     group.add_argument(
         "--wrist-render-every",
@@ -865,7 +910,9 @@ def main() -> int:
 
     target_position = observation.hole_poses[target_hole_index][:3].copy()
     home_quaternion = controller.home_pose[3:]
-    assist = _build_assist(args.policy, args.checkpoint, args.assist_scale)
+    assist = _build_assist(
+        args.policy, args.checkpoint, args.assist_scale, gpu_vision=not args.no_gpu_vision
+    )
     # A vision checkpoint needs a live wrist frame on each Observation; turn on the
     # env's rate-limited capture for it (duck-typed, same as `eval.ablation.run_trial`).
     # An F/T-only checkpoint leaves `use_vision` False → the env renders nothing.

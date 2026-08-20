@@ -257,6 +257,12 @@ class StereoHandSource:
         self._fresh = 0
         self._prev_landmarks: np.ndarray | None = None
         self._first_read = 0.0
+        # Counters as of `mark_measurement_start()`, so the headline figures describe the
+        # phase the caller cares about rather than everything since the tracker opened.
+        # Startup centering can run *longer than the episode* and the operator's hand is
+        # legitimately in and out of frame throughout it, which inflates drop-out and
+        # deflates fresh-fps enough to look like a sensor fault. None ⇒ never marked.
+        self._mark: tuple[float, int, int, int] | None = None
         # recenter=True only drives the renderer's open-palm countdown HUD, a handy visual
         # while the operator holds the startup-centering pose; kevin times the hold itself in
         # calibrate_neutral, and the renderer's origin offset is a no-op for us.
@@ -264,14 +270,25 @@ class StereoHandSource:
         # max_skew_s: the two cameras run on independent, uncoordinated capture threads
         # (stereohand's StereoCapture), so a pair is only fused if their capture timestamps
         # land within this tolerance of each other -- unrelated to whether MediaPipe detects
-        # a hand at all. Measured directly (kevin's scripts/dev/skew_rejection_probe.py) on
-        # one camera pair: the default 0.02s rejected 88% of pairs on timing alone (mean
-        # observed skew ~32 ms), while 0.05s accepted 93% -- this dominated the "low fps"
-        # sensor-health numbers (StereoHandSource.close()'s log line) far more than anything
-        # in kevin's own control loop. Hardware-dependent (a mismatched USB controller/camera
-        # pair skews more than a matched one), so it's a tunable knob here, not a changed
-        # global default -- if your own sensor-health line shows high drop-out despite good
-        # lighting/hand positioning, measure your skew with that probe before raising this.
+        # a hand at all. It is an *alignment-quality* knob: how simultaneous the two views
+        # must be for triangulating them to mean anything.
+        #
+        # It is NOT a drop-out remedy, and this comment used to say it was. The advice was
+        # "if sensor-health shows high drop-out, measure your skew and raise this", from a
+        # measurement of 88% of pairs rejected at 0.02s. The rejections were real; the
+        # conclusion was not. stereohand's tracker woke on a *different* predicate than the
+        # one read() enforced (`max(ts_left, ts_right)`, which advances when EITHER camera
+        # ticks, vs "both within skew"), so it kept stepping on pairs that were then
+        # rejected -- and a rejection published `_ABSENT`, i.e. "the hand is gone". That is
+        # what produced 78% drop-out and a clutch releasing twice a second on a hand sitting
+        # still in frame. Raising max_skew_s only widened the gate enough to hide the
+        # mismatch, while trading away cross-view alignment during fast hand motion.
+        #
+        # Fixed in stereohand v0.2.0 (LAB-122): one shared `pair_status()` predicate, and
+        # `_ABSENT` published only for a genuinely stalled camera (`max_age_s`). On >= 0.2.0
+        # a high drop-out is no longer evidence about skew at all -- look at per-view
+        # detection (lighting, shared field of view) instead. Leave this at the default
+        # unless triangulation *accuracy* is the complaint.
         self._tracker = StereoHandTracker.open(
             calibration,
             left=left,
@@ -361,18 +378,71 @@ class StereoHandSource:
                 float(origin[2]),
             ))
 
+    def _log_sensor_health(self) -> None:
+        """Report the marked window, and the setup phase before it as a separate line."""
+        now = time.monotonic()
+        if self._mark is None:
+            self._log_window(
+                "sensor health", self._first_read, now, self._reads, self._absent, self._fresh
+            )
+            return
+
+        mark_time, mark_reads, mark_absent, mark_fresh = self._mark
+        self._log_window(
+            "sensor health",
+            mark_time,
+            now,
+            self._reads - mark_reads,
+            self._absent - mark_absent,
+            self._fresh - mark_fresh,
+        )
+        # Reported, never folded in: a hand out of frame during centering is expected, so
+        # this number is not evidence about the sensor and must not be read as such.
+        if mark_reads > 0:
+            self._log_window(
+                "sensor health (startup centering, expected to be worse)",
+                self._first_read,
+                mark_time,
+                mark_reads,
+                mark_absent,
+                mark_fresh,
+            )
+
+    @staticmethod
+    def _log_window(
+        label: str, start: float, end: float, reads: int, absent: int, fresh: int
+    ) -> None:
+        if reads <= 0:
+            return
+        elapsed = end - start
+        effective_fps = fresh / elapsed if elapsed > 0 else 0.0
+        log.info(
+            "%s: %d reads over %.1fs — %.1f fresh fps (new landmarks), %.0f%% drop-out. "
+            "Teleop tracks the hand at the fresh-fps rate, not the loop rate.",
+            label,
+            reads,
+            elapsed,
+            effective_fps,
+            100.0 * absent / reads,
+        )
+
+    def mark_measurement_start(self) -> None:
+        """Start the window `close()` reports on — call once the real work begins.
+
+        Without this, sensor health covers everything since the first `read()`, which
+        includes startup centering. That phase can outlast a short episode and the
+        operator's hand is in and out of frame throughout it by design, so its absences
+        dominate the aggregate: a clean run reported 36% drop-out and 11.9 fresh fps
+        over a window that was three-quarters centering, while the episode inside it
+        released the clutch zero times. The counters are snapshotted rather than reset,
+        so the setup phase is still reported — just separately, where it cannot be
+        mistaken for a measurement of the episode.
+        """
+        self._mark = (time.monotonic(), self._reads, self._absent, self._fresh)
+
     def close(self) -> None:
         if self._reads > 0:
-            elapsed = time.monotonic() - self._first_read
-            effective_fps = self._fresh / elapsed if elapsed > 0 else 0.0
-            log.info(
-                "sensor health: %d reads over %.1fs — %.1f fresh fps (new landmarks), "
-                "%.0f%% drop-out. Teleop tracks the hand at the fresh-fps rate, not the loop rate.",
-                self._reads,
-                elapsed,
-                effective_fps,
-                100.0 * self._absent / self._reads,
-            )
+            self._log_sensor_health()
         if self._writer is not None:
             self._writer.release()
             self._writer = None

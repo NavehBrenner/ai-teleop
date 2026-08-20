@@ -147,7 +147,9 @@ def draw_panel(
     outcomes = [name for name in OUTCOME_COLORS if any(o == name for _, o in values)]
     axes.hist(
         [[value for value, outcome in values if outcome == name] for name in outcomes],
-        bins=edges,
+        # .tolist(): matplotlib reads a bin-edge sequence identically to an ndarray,
+        # and its stubs do not accept ndarray here.
+        bins=edges.tolist(),
         stacked=True,
         color=[OUTCOME_COLORS[name] for name in outcomes],
         label=[f"{name} (n={sum(1 for _, o in values if o == name)})" for name in outcomes],

@@ -56,6 +56,13 @@ def normalize_frame(frame: np.ndarray) -> Tensor:
     codepath is what guarantees the vision policy sees the same channel statistics
     at inference that it trained on — two copies would be a silent covariate-shift
     bug. ImageNet-normalized to match the pretrained backbone (see ``ImageEncoder``).
+
+    ponytail: this costs ~2.3 ms per call from a cold cache (measured at the deploy duty
+    cycle of one call per render interval), which is not nothing against a 2 ms control
+    tick. It is memory-traffic-bound, not op-bound — rewriting it as a single allocation
+    plus in-place arithmetic measured no faster and returned a non-contiguous tensor.
+    Fixing it properly means normalizing on the GPU (upload uint8, 4x less to copy), which
+    would fork this one shared definition in two; not worth it while the loop has headroom.
     """
     image = np.asarray(frame, dtype=np.float32) / 255.0
     tensor = torch.from_numpy(image).permute(2, 0, 1)  # (H, W, 3) -> (3, H, W)

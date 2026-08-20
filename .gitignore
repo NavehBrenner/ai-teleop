@@ -43,7 +43,9 @@ data/processed/
 # rules already keep the bulk out, but each dir's metadata.json is not covered and
 # would ride along on a careless `git add`. Named datasets (data/dataset_<n>/) keep
 # their committed metadata.json on purpose — see the note above.
-data/_*/
+# No trailing slash on `data/_*`: probes also drop a stray console log *beside* the
+# directory (data/_probe2_log.txt), which a directory-only rule left exposed.
+data/_*
 data/*_sweep/
 data/*_sweep[0-9]/
 data/*_probe/
@@ -52,6 +54,9 @@ data/dagger_*/
 runs/
 checkpoints/
 logs/
+# Console captures from ad-hoc probe runs. Nothing tracked is a .log, and a probe's
+# terminal output is never the artifact — the dataset's metadata.json is.
+*.log
 outputs/
 wandb/
 mlruns/

@@ -104,13 +104,24 @@ number means nothing without its operating point.
 Every lever tried and what it measured, then the candidates the mechanism findings predict
 could still move the number. Contact-recovery control is the strongest of them.
 
-## 8. [Human-operator trial](human-trial-protocol.md) — the protocol, fixed in advance
+## 8. [Human-operator trial](human-trial-result.md) — a real operator, and what it can and cannot say
 
 Every number above was measured against `ScriptedNoisyHuman`, a *model* of an operator. This
-is the protocol for the one measurement where a real one closes the loop: blinded,
-block-randomized, and pre-registered — including the statement that at 30 trials per arm it
-can only resolve differences of ~33 pp, so it is a proxy-validity check rather than a re-run
-of the effect measurement. **Pre-registered, not yet run.**
+is the one measurement where a real one closes the loop: blinded, block-randomized, and
+pre-registered ([protocol](human-trial-protocol.md), fixed before any data existed).
+
+**Run 2026-08-20; 32 trials, 0 excluded.** Assist ON 13/16 (81.2%) vs OFF 11/16 (68.8%) —
+**+12.5 pp, Newcombe 95% [−17.2, +39.7] pp**, no p-value by pre-registration. The interval
+spans zero and the design could only resolve ~45 pp at 16 trials per arm, so this establishes
+neither a benefit nor its absence; it was never able to. The **blind held** (55% correct,
+95% [34%, 74%], with 12 of 32 answered "unsure"), which is what makes the proxy-validity
+reading meaningful. Both established costs are directionally present — insertion ~1.5 s
+slower, trajectory ~9.5% rougher per second.
+
+Two caveats that belong with the number: the headline moves to +6.2 pp if one contested trial
+is scored the other way, and these rates use `run_episode`'s instantaneous seating criterion
+rather than the observer's sustained one, so they are **not** directly comparable to the 50%
+`human_only` baseline above.
 
 ---
 
