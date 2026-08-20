@@ -74,6 +74,38 @@ was never a case *for* 60 — at 30 per arm it resolves ~33 pp against single-di
 Halving trials halves nothing that was load-bearing, and the session's real products
 (human-in-the-loop evidence, proxy validity, unselected footage) do not scale with n.
 
+## 0.1 Amendment — 2026-08-20, still before any recorded trial
+
+`runs/blind_trial/` did not exist when this was written either. Same standing as §0: the
+rule pre-registration enforces is that the design cannot be edited once results are
+visible, and none are.
+
+**What changed:** the viewer camera moves from `--cam main` to **`--cam wrist`** (the
+robot's-eye POV). `blind_trial.py`'s default follows.
+
+**Why.** The requirement this row encodes is that the viewpoint be **fixed**, not that it
+be the free camera — §3 says a different viewpoint "would need its own session to compare
+against", and this is the only session, so either choice satisfies it as long as it is
+declared in advance and held for every trial. Given that, the operator's familiarity
+decides it: the rehearsal and the `--gain` / `--max-dpos` tuning were both done under the
+wrist view, and switching to the free camera would enter the session on a viewpoint
+nobody has practised.
+
+**What this does not trade away.** The footage is unaffected —
+`scripts/dev/render_trajectory.py` rebuilds a third-person view offline from the recorded
+trajectory, so what the operator watched live does not constrain what the demo shows.
+Real-time performance is unaffected too: the rehearsal ran **1.00× with 45.5% of the loop
+in `sleep`** under `--cam wrist`, i.e. with headroom to spare.
+
+**The cost, disclosed.** §0 chose the Vision-DAgger family because its residual acts on
+free-space approach, "which is visible in the viewer". The wrist camera shows that phase
+from the robot's own vantage rather than from outside, which is a *different* view of the
+same behaviour, not an absent one — but it is a narrower field of view, and it may make
+the task harder. The practice block's floor check is what catches that, and it runs before
+any recorded trial either way.
+
+**Superseded value:** `--cam main` (free camera), as §3's table read until 2026-08-20.
+
 ## 1. The question
 
 Every number in this project was measured against `ScriptedNoisyHuman` — a *model* of an
@@ -119,7 +151,7 @@ the only human-in-the-loop evidence in the project, and it produces **unselected
 | Practice trials | 8, unrecorded, discarded | Declared here so discarding them is not a choice made after seeing them |
 | Wall seeds | Trial *i* uses wall seed *i*; practice uses 9000 + *i* | Fresh wall every trial, no overlap between practice and record |
 | Assignment | Block-randomized, `BLOCK = 4`, seed `20260804` | Exactly half of every block of 4 is assisted |
-| Viewer camera | `--cam main` (free camera) | The operator's viewpoint changes the task's difficulty, so it is fixed for the whole session rather than varied per trial. `--cam wrist` (robot's-eye POV) is a different task and would need its own session to compare against |
+| Viewer camera | `--cam wrist` (robot's-eye POV) | The operator's viewpoint changes the task's difficulty, so it is fixed for the whole session rather than varied per trial. Either viewpoint satisfies that; the operator rehearsed and tuned under this one. Amended 2026-08-20 from `--cam main` before any recorded trial — see [§0.1](#01-amendment--2026-08-20-still-before-any-recorded-trial) |
 | Operator | Naveh Brenner, blinded | |
 
 ## 4. Design

@@ -333,11 +333,12 @@ def main() -> None:
     parser.add_argument(
         "--cam",
         choices=["main", "wrist"],
-        default="main",
-        help="Viewer camera for every trial: 'main' free camera (default, what the "
-        "protocol's fixed parameters assume) or 'wrist' for the robot's-eye POV. The "
-        "operator's view changes the task's difficulty, so it is held constant across a "
-        "session and recorded in assignments.json rather than changed trial to trial.",
+        default="wrist",
+        help="Viewer camera for every trial: 'wrist' the robot's-eye POV (default, what "
+        "the protocol's fixed parameters assume since the 2026-08-20 amendment) or "
+        "'main' for the free camera. The operator's view changes the task's difficulty, "
+        "so it is held constant across a session and recorded in assignments.json rather "
+        "than changed trial to trial.",
     )
     parser.add_argument("--out", type=Path, default=Path("runs/blind_trial"))
     parser.add_argument("--schedule-seed", type=int, default=20260804)
