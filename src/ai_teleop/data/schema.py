@@ -20,9 +20,22 @@ keep the older inheritance + ``total=False`` pattern.
 
 from __future__ import annotations
 
-from typing import NotRequired, TypedDict
+from typing import Literal, NotRequired, TypedDict
 
 import numpy as np
+
+#: ``master_seed`` value marking a corpus that was **recorded from a live operator**
+#: rather than generated. A recorded corpus has no generating seed, so it cannot be
+#: rebuilt: ``regenerate_from_metadata`` and the loader's ``download=True`` gap-filler
+#: both refuse it rather than silently simulating over irreplaceable episodes.
+#:
+#: A string sentinel rather than ``None`` on purpose. ``None`` reads as "unknown", and
+#: it type-checks as ``int | None`` against the ``int`` that ``GenerationConfig.seed``
+#: wants — which is how it slipped through before: ``from_metadata`` accepted it and the
+#: failure surfaced as a ``TypeError`` inside generation, after the writer was already
+#: pointed at the corpus directory. ``Literal["recorded"]`` states the intent and makes
+#: every consumer a *type* error until it narrows.
+RECORDED_MASTER_SEED: Literal["recorded"] = "recorded"
 
 
 class EpisodeColumns(TypedDict):
@@ -67,7 +80,7 @@ class DatasetConfig(TypedDict):
 
     max_steps: int
     max_dpos: float
-    expert_d_far: float
+    expert_d_far: float | None  # None ⇒ no expert ran (a recorded corpus)
     success_depth: float
     lateral_tolerance: float
     force_cap: float
@@ -175,6 +188,10 @@ class EpisodeSummary(_EpisodeSummaryBase, total=False):
 
     baseline_terminal_reason: str | None
     baseline_success: bool | None
+    # Which wall the episode ran against. A generated corpus derives this from
+    # ``scene_seed`` and omits it; a recorded one has no ``scene_seed`` to derive it
+    # from, and the wall identity is real information the manifest would otherwise lose.
+    wall_seed: int | None
 
 
 class _RateBlock(TypedDict):
@@ -188,11 +205,21 @@ class _ResBCDatasetMetadataBase(TypedDict):
     """Required keys of the dataset-level ``metadata.json``."""
 
     schema_version: str
-    master_seed: int
+    # ``RECORDED_MASTER_SEED`` ⇒ recorded from a live operator, not generated, and
+    # therefore not regenerable. See that constant for why it is a string, not None.
+    master_seed: int | Literal["recorded"]
     n_episodes: int
+    # When the corpus came into being: generation time for a generated corpus, the
+    # recording session for a recorded one.
     generated_at: str  # ISO-8601 UTC
-    fingerprint: str
+    # Hash of the ``GenerationConfig`` that produced the corpus — a generation concept.
+    # ``None`` for a recorded corpus: there is no config to hash, and inventing a
+    # content digest here would give one field two meanings.
+    fingerprint: str | None
     config: DatasetConfig
+    # The privileged-expert arm's aggregate. A recorded corpus has no expert arm, so
+    # it carries an empty block and puts the human's own outcomes in
+    # ``baseline_no_assist`` — the operator *is* the unassisted arm.
     expert: _RateBlock
     episodes: list[EpisodeSummary]
 

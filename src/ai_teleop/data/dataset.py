@@ -32,6 +32,7 @@ from ai_teleop.data.images import (
     load_frame_stream,
 )
 from ai_teleop.data.schema import (
+    RECORDED_MASTER_SEED,
     EpisodeColumns,
     EpisodeMetadata,
     EpisodeSummary,
@@ -265,6 +266,18 @@ class OfflineResidualBCDataset(Dataset):
                 )
                 raise FileNotFoundError(
                     f"Missing {len(missing_episodes)} episodes. Please make sure the dataset exists or set the download option to True."
+                )
+            # A recorded corpus cannot be rebuilt, and `download=True` is the *default* —
+            # so without this the ordinary "load the dataset" call would quietly start
+            # simulating scripted episodes into the directory holding the only copy of
+            # the real ones. `from_metadata` refuses too; this check exists so the error
+            # names the corpus instead of surfacing from inside the generator.
+            if self.metadata["master_seed"] == RECORDED_MASTER_SEED:
+                raise FileNotFoundError(
+                    f"{len(missing_episodes)} episodes missing from {self.dataset_dir}, "
+                    "which was recorded from a live operator rather than generated. "
+                    "Recorded episodes have no generating seed and cannot be rebuilt — "
+                    "restore them from a backup. Nothing was written."
                 )
             log.info("Missing %d episodes. Regenerating from metadata...", len(missing_episodes))
             regenerate_from_metadata(self.metadata_path)

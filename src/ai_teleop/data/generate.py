@@ -50,6 +50,7 @@ import numpy as np
 from ai_teleop.common.log import get_logger
 from ai_teleop.control import Controller
 from ai_teleop.data.schema import (
+    RECORDED_MASTER_SEED,
     DatasetConfig,
     EpisodeSpec,
     EpisodeSummary,
@@ -167,6 +168,16 @@ _LEGACY_DELTA_CLAMP = 0.02
 _UNFINGERPRINTED = frozenset({"success_depth", "lateral_tolerance", "force_cap"})
 
 
+class NotRegenerableError(RuntimeError):
+    """A corpus that was recorded, not generated, was asked to rebuild itself.
+
+    Generated corpora commit only ``metadata.json`` — the trajectories are rebuilt on
+    demand, so losing them costs nothing. A recorded corpus inverts that: the episode
+    files *are* the artifact and no seed reproduces them. Regeneration would write
+    scripted episodes into the directory holding the real ones, so it is refused.
+    """
+
+
 @dataclass(frozen=True)
 class GenerationConfig:
     """Every input that determines an episode's trajectory — the corpus config.
@@ -253,10 +264,30 @@ class GenerationConfig:
         Keys absent from older manifests resolve to the legacy value that was
         behavior-identical at the time they were written, so a legacy dataset
         regenerates byte-identically and keeps its committed fingerprint.
+
+        Raises ``NotRegenerableError`` for a recorded corpus. This is the single
+        choke point every regeneration path runs through *before* anything is
+        written — ``regenerate_from_metadata`` calls it ahead of
+        ``generate_dataset`` — so refusing here is what keeps a recorded corpus's
+        directory untouched rather than half-overwritten.
         """
+        master_seed = metadata["master_seed"]
+        if master_seed == RECORDED_MASTER_SEED:
+            raise NotRegenerableError(
+                "this corpus was recorded from a live operator, not generated "
+                f"(master_seed={master_seed!r}), so it has no generating seed to rebuild "
+                "from. Its episode files are the only copy — restore them from a backup "
+                "rather than regenerating."
+            )
         config = metadata["config"]
+        expert_d_far = config["expert_d_far"]
+        if expert_d_far is None:
+            raise NotRegenerableError(
+                "this corpus records no expert config (expert_d_far is null), so the "
+                "generation config cannot be rebuilt from it."
+            )
         return cls(
-            seed=metadata["master_seed"],
+            seed=master_seed,
             max_steps=config["max_steps"],
             max_dpos=config["max_dpos"],
             # Walls are reproduced from their seeds, not loaded from disk: the
@@ -264,7 +295,7 @@ class GenerationConfig:
             # walls or the static one. Anything but the static name means generated.
             generated_walls=config["scene"] != SCENE_PATH.name,
             joint_damping=config.get("joint_damping", _LEGACY_JOINT_DAMPING),
-            expert_d_far=config["expert_d_far"],
+            expert_d_far=expert_d_far,
             expert_brake_gain=config.get("expert_brake_gain", _LEGACY_EXPERT_BRAKE_GAIN),
             expert_brake_lead_floor=config.get(
                 "expert_brake_lead_floor", DEFAULT_EXPERT_BRAKE_LEAD_FLOOR
