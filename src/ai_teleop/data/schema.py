@@ -192,6 +192,15 @@ class EpisodeSummary(_EpisodeSummaryBase, total=False):
     # ``scene_seed`` and omits it; a recorded one has no ``scene_seed`` to derive it
     # from, and the wall identity is real information the manifest would otherwise lose.
     wall_seed: int | None
+    # Which arm of a two-armed recorded corpus the episode belongs to: the multiplier
+    # applied to the residual, 1.0 = assisted, 0.0 = unassisted. Same justification as
+    # ``wall_seed`` — real information with nowhere else to live. A single-armed corpus
+    # (generated, or ``data/recorded/``) omits it, and ``policy`` does *not* carry it:
+    # a blinded trial runs **both** arms at ``policy="tf"`` so that each loads the
+    # checkpoint and runs the forward pass, which is what keeps the arms
+    # indistinguishable to the operator. Reading ``policy`` alone would report every
+    # such episode as assisted.
+    assist_scale: float | None
 
 
 class _RateBlock(TypedDict):
@@ -233,3 +242,10 @@ class ResBCDatasetMetadata(_ResBCDatasetMetadataBase, total=False):
 
     baseline_no_assist: _RateBlock
     expert_lift: float
+    # The assisted arm of a two-armed recorded corpus (``assist_scale = 1.0``). Kept
+    # separate from ``expert`` on purpose: ``expert`` is the analytical, privileged-info
+    # expert, and this is the **trained residual policy** — reporting one under the
+    # other's name would overstate what produced the numbers. A corpus with both arms
+    # puts its unassisted half in ``baseline_no_assist`` and its assisted half here, so
+    # neither aggregate averages over episodes that did not share a condition.
+    assisted_residual: _RateBlock

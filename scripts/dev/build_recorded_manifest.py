@@ -27,7 +27,6 @@ import argparse
 import json
 import sys
 from collections import Counter
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -46,6 +45,15 @@ log = get_logger("recorded-manifest")
 
 DEFAULT_CORPUS = Path("data/recorded")
 SCHEMA_VERSION = "2.0"
+
+# When the session happened, stated rather than inferred. This was read from the episode
+# files' mtime until 2026-08-20, which made `--check` unpassable on every machine but the
+# one that recorded them: git does not preserve mtime, so a fresh clone re-derives the
+# checkout time and reports the committed manifest stale. Nothing *inside* an episode
+# records when it was recorded, so the honest options are a stated constant or no field at
+# all -- and `generated_at` is required by the schema. The value is the one the original
+# mtime derivation produced, so the committed manifest is unchanged.
+RECORDED_AT = "2026-07-03T07:15:50.242902+00:00"
 
 # Per-episode metadata keys that must agree across the whole corpus for a single
 # corpus-level `config` block to be truthful. `max_steps` is not among them: it is not
@@ -119,13 +127,12 @@ def build(corpus: Path) -> dict[str, Any]:
 
     counts = Counter(entry["terminal_reason"] for entry in episodes)
     successes = sum(entry["success"] for entry in episodes)
-    recorded_at = min(path.stat().st_mtime for path, _ in per_episode)
 
     return {
         "schema_version": SCHEMA_VERSION,
         "master_seed": RECORDED_MASTER_SEED,
         "n_episodes": len(episodes),
-        "generated_at": datetime.fromtimestamp(recorded_at, UTC).isoformat(),
+        "generated_at": RECORDED_AT,
         # No GenerationConfig produced this corpus, so there is nothing to hash.
         "fingerprint": None,
         "config": {

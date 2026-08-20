@@ -92,6 +92,18 @@ mlruns/
 # were re-included), so without this the 12,432 of them ride in on the exception.
 data/recorded/runs/*/imgs/
 
+# ...and the 32 blinded human-operator trials (LAB-125), for the same reason: a person
+# drove them, so no seed rebuilds them, and they are the input the demo footage renders
+# from. Same three-line shape as above -- git cannot re-include a file whose parent
+# directory is excluded. No re-exclude is needed here (unlike the wrist frames above):
+# scripts/dev/stage_blind_trial_corpus.py copies *only* episode.npz out of
+# runs/blind_trial/, leaving the per-trial console.log behind, so the destination
+# directories hold nothing else to sweep in. See data/blind_trial/metadata.json and
+# docs/results/human-trial-result.md.
+!data/blind_trial/runs/
+!data/blind_trial/runs/*/
+!data/blind_trial/runs/*/episode.npz
+
 # Media: ignore generated captures (outputs/, runs/) but ALLOW the committed
 # submission media. Without the exceptions below the comment was aspirational —
 # `assets/media/demo.mp4` was silently ignored by the *.mp4 rule.
