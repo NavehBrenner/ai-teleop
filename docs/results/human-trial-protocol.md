@@ -149,6 +149,10 @@ was measured with the preview on and at half real-time.
 
 **Superseded values:** preview window on with `--record-hand` per trial; practice 8.
 
+> **Result:** the session ran 2026-08-20. See
+> [`human-trial-result.md`](human-trial-result.md) — 32 trials, 0 excluded, assist ON
+> 13/16 vs OFF 11/16 (+12.5 pp, Newcombe 95% [−17.2, +39.7] pp), blind held at 55%.
+
 ## 1. The question
 
 Every number in this project was measured against `ScriptedNoisyHuman` — a *model* of an
