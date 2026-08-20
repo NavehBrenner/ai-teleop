@@ -106,6 +106,49 @@ any recorded trial either way.
 
 **Superseded value:** `--cam main` (free camera), as §3's table read until 2026-08-20.
 
+## 0.2 Amendment — 2026-08-20, still before any recorded trial
+
+`runs/blind_trial/` held a practice block and one incomplete trial when this was written;
+`trials.csv` had **zero rows**. Nothing recorded exists, so the §0 standing applies again.
+
+**What changed:** the operator's camera-preview window is **off** during trials
+(`blind_trial.py` no longer passes it, and no longer requests `--record-hand`), and
+practice trials go 8 → **4**.
+
+**Why the preview goes.** It was the single largest cost in the loop and it was not
+buying the measurement anything. Measured on the rehearsal and the practice block:
+
+| | ms/step |
+|---|---|
+| `input` with the preview (30 Hz cv2 pump, compositing both feeds + the 3-D skeleton, flushing to screen, writing the `hand.mp4` frame) | **1.454** |
+| `input` with no preview (same checkpoint, scripted operator) | 0.044 |
+
+That is the difference between **0.55× and ~0.90× real time**. The practice block ran at
+0.50–0.59×, i.e. the operator drove a half-speed sim — a different task from every other
+measurement in this project. Nothing else came close: the viewer camera is 0.27 ms/step,
+and the policy's own cost (`assist` ≈ 0.95, `observe` ≈ 0.77) is as designed, with the
+CUDA graph confirmed capturing on all eight practice trials.
+
+**What this costs, and how it is paid.** `hand.mp4` is written from the frame the preview
+composites, so no preview means no operator-side footage from the trials. That footage is
+a *demo* artifact, not a measurement: the property worth protecting is that the
+**robot-side** takes are unselected, and they still are. The hand-side video is taken
+afterwards in 2–3 separate free-play recordings. Any published cut must therefore never
+imply a hand take and a robot take are the same trial.
+
+**The real cost, disclosed.** The operator loses live visual confirmation that tracking is
+alive, including during centering, and the eight practice trials already run were run
+*with* the preview — so the acclimatisation they bought is to a slightly different task.
+That is the main reason practice is not dropped further than 4.
+
+**Why practice 8 → 4.** The block's two jobs are acclimatisation and the floor/ceiling
+check. The operator has now run eight trials on this rig today, so acclimatisation is
+largely banked; 4 is enough to re-establish feel under the changed conditions and to
+re-run the floor/ceiling check, which **must** be re-run because the earlier 5/8 (62.5%)
+was measured with the preview on and at half real-time.
+
+**Superseded values:** preview window on with `--record-hand` per trial; practice 8.
+
 ## 1. The question
 
 Every number in this project was measured against `ScriptedNoisyHuman` — a *model* of an
@@ -148,7 +191,7 @@ the only human-in-the-loop evidence in the project, and it produces **unselected
 |---|---|---|
 | Checkpoint | `docs/results/checkpoints/vision/dagger/seed_0/round_4/checkpoint.pt` | Lowest-numbered training seed, final DAgger round — a rule fixed without reference to any outcome, inherited unchanged from the superseded F/T checkpoint (§0). **Not** the best-scoring checkpoint: `vision/dagger/seed_1/round_4` is, and selecting on outcome and then measuring is the bias this project already documented. Vision rather than F/T because the F/T residual has no operator-perceptible channel, so the blinding check would have been answered in advance — see §0 for the full argument and its costs. |
 | Recorded trials | 32 (16 per arm) | §2. Eight full blocks of 4 |
-| Practice trials | 8, unrecorded, discarded | Declared here so discarding them is not a choice made after seeing them |
+| Practice trials | 4, unrecorded, discarded | Declared here so discarding them is not a choice made after seeing them. Amended 2026-08-20 from 8 — protocol §0.2 |
 | Wall seeds | Trial *i* uses wall seed *i*; practice uses 9000 + *i* | Fresh wall every trial, no overlap between practice and record |
 | Assignment | Block-randomized, `BLOCK = 4`, seed `20260804` | Exactly half of every block of 4 is assisted |
 | Viewer camera | `--cam wrist` (robot's-eye POV) | The operator's viewpoint changes the task's difficulty, so it is fixed for the whole session rather than varied per trial. Either viewpoint satisfies that; the operator rehearsed and tuned under this one. Amended 2026-08-20 from `--cam main` before any recorded trial — see [§0.1](#01-amendment--2026-08-20-still-before-any-recorded-trial) |

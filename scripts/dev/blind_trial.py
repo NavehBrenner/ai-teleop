@@ -7,7 +7,7 @@ hidden schedule, and the operator does not learn which until the session is unse
 
 **Read `docs/results/human-trial-protocol.md` before running.** It fixes the checkpoint,
 the trial count and the analysis in advance, and states what this design can and cannot
-resolve — at 30 trials per arm the smallest difference it can detect is ~33 pp, while the
+resolve — at 16 trials per arm the smallest difference it can detect is ~45 pp, while the
 scripted study's effects are single-digit pp. It is a proxy-validity check and a source of
 unselected footage, not a hypothesis test.
 
@@ -36,7 +36,7 @@ the second run, so the arms are unpaired and wall difficulty is randomized inste
 Run from kevin/ (Windows-native — the cameras are not visible from WSL):
 
     uv run python scripts/dev/blind_trial.py --stereo-calib ..\\stereohand\\stereo_calib.json
-    uv run python scripts/dev/blind_trial.py --practice 8 --trials 32   # the defaults
+    uv run python scripts/dev/blind_trial.py --practice 4 --trials 32   # the defaults
     uv run python scripts/dev/blind_trial.py --unseal      # after every trial is done
 """
 
@@ -254,8 +254,6 @@ def run_trial(
         "commands",
         "--record-out",
         str(trial_dir),
-        "--record-hand",
-        str(trial_dir / "hand.mp4"),
         "--cam",
         # Optional on the caller: `vision_play.py` drives run_trial with its own namespace
         # and does not offer the flag, so an absent one means the protocol's default view.
@@ -272,6 +270,12 @@ def run_trial(
     # is written from the frame the preview composites, so no window means no footage.
     if getattr(args, "no_cam_window", False):
         command += ["--no-cam-window"]
+    else:
+        # Only meaningful with the preview on: the operator-side video is written from the
+        # frame the preview composites, so passing it without a window promises footage that
+        # is never written. Since 2026-08-20 the trials run without the preview and the hand
+        # footage comes from separate free-play takes.
+        command += ["--record-hand", str(trial_dir / "hand.mp4")]
 
     run_child(command, trial_dir / "console.log")
 
@@ -326,9 +330,9 @@ def main() -> None:
     parser.add_argument(
         "--practice",
         type=int,
-        default=8,
+        default=4,
         help="unrecorded warm-up trials run first and discarded, declared in advance so "
-        "dropping them is not a choice made after seeing them (default 8)",
+        "dropping them is not a choice made after seeing them (default 4)",
     )
     parser.add_argument(
         "--cam",
@@ -340,6 +344,16 @@ def main() -> None:
         "so it is held constant across a session and recorded in assignments.json rather "
         "than changed trial to trial.",
     )
+    parser.add_argument(
+        "--cam-window",
+        dest="cam_window",
+        action="store_true",
+        help="show the operator's camera preview during trials. Off by default since the "
+        "2026-08-20 amendment: the cv2 pump runs at 30 Hz inside the control loop and cost "
+        "~1.4 ms/step measured (0.55x real-time with it, ~0.90x without). It also silences "
+        "--record-hand, since the operator-side video is written from the frame the preview "
+        "composites -- that footage is now taken in separate free-play takes instead.",
+    )
     parser.add_argument("--out", type=Path, default=Path("runs/blind_trial"))
     parser.add_argument("--schedule-seed", type=int, default=20260804)
     parser.add_argument("--gain", type=float, default=None)
@@ -350,6 +364,8 @@ def main() -> None:
     add_logging_arguments(parser)
     arguments = parser.parse_args()
     configure_from_args(arguments)
+    # run_trial reads the negative form (shared with vision_play.py, which has no flag).
+    arguments.no_cam_window = not arguments.cam_window
 
     if arguments.unseal:
         unseal(arguments.out)
