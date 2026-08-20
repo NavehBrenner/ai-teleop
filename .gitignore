@@ -68,6 +68,25 @@ mlruns/
 !docs/results/checkpoints/
 !docs/results/checkpoints/**
 
+# ...and the recorded human corpus, for the opposite reason to every other corpus
+# in data/. Generated datasets commit only their metadata.json because the
+# trajectories rebuild from a seed on demand (dataset_vision/ and
+# dataset_official_ft/ have no episodes on disk at all). data/recorded/ is 54 live
+# teleoperation episodes from 2026-07-03: no seed reproduces them, so the files are
+# the artifact rather than a cache of it, and `runs/` + `*.npz` above would drop the
+# only human data in the project. Trajectories only (52 MB) -- the wrist frames under
+# imgs/ stay ignored (85 MB across 12,432 files) and are re-rendered from the replayed
+# episode by scripts/dev/render_trajectory.py. The directories are re-included
+# explicitly because git cannot re-include a file whose parent directory is excluded.
+# See docs/results/../data/recorded/metadata.json and LAB-124.
+!data/recorded/runs/
+!data/recorded/runs/*/
+!data/recorded/runs/*/episode.npz
+# Re-excluded *after* the directory re-includes above: nothing else covers the wrist
+# frames (they are .jpg, and the `runs/` rule stopped applying once the directories
+# were re-included), so without this the 12,432 of them ride in on the exception.
+data/recorded/runs/*/imgs/
+
 # Media: ignore generated captures (outputs/, runs/) but ALLOW the committed
 # submission media. Without the exceptions below the comment was aspirational —
 # `assets/media/demo.mp4` was silently ignored by the *.mp4 rule.
