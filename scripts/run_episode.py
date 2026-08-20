@@ -484,6 +484,11 @@ def build_input(
             tracker.close()
             _fast_exit(0)
         tracker.set_renderer_origin(neutral.hand_position)  # center the 3D view on neutral
+        # Centering is over; everything from here is the episode. Without this the sensor
+        # health reported on close covers the centering phase too, which can outlast a
+        # short episode and legitimately has the hand in and out of frame -- inflating
+        # drop-out enough to read as a sensor fault on a run that was clean.
+        tracker.mark_measurement_start()
         input_strategy: InputStrategy = VisionInput(
             tracker,
             calibration=WorkspaceCalibration(),
