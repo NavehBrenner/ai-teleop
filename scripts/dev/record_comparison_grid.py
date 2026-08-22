@@ -37,14 +37,36 @@ from ai_teleop.input import ScriptedNoisyHuman
 from ai_teleop.sim.scene import SimEnv
 from ai_teleop.sim.scene_source import resolve_scene_path
 
-_FONT: ImageFont.FreeTypeFont | ImageFont.ImageFont
-_SUBTITLE_FONT: ImageFont.FreeTypeFont | ImageFont.ImageFont
-try:
-    _FONT = ImageFont.truetype("DejaVuSans-Bold.ttf", 22)
-    _SUBTITLE_FONT = ImageFont.truetype("DejaVuSans.ttf", 14)
-except OSError:  # fall back to the bitmap default if the TTF is unavailable
-    _FONT = ImageFont.load_default()
-    _SUBTITLE_FONT = ImageFont.load_default()
+# Font families to try, in order, per weight. DejaVu is the Linux/WSL name this project
+# was written against; it does not exist on Windows, where every caption in every clip was
+# silently falling back to `load_default()` — a *bitmap* font that ignores the size it is
+# handed and has no em-dash, so text rendered tiny and `—` came out as a box.
+_FONT_CANDIDATES: dict[bool, tuple[str, ...]] = {
+    False: ("DejaVuSans.ttf", "C:/Windows/Fonts/segoeui.ttf", "C:/Windows/Fonts/arial.ttf"),
+    True: ("DejaVuSans-Bold.ttf", "C:/Windows/Fonts/segoeuib.ttf", "C:/Windows/Fonts/arialbd.ttf"),
+}
+
+
+def resolve_font(size: int, *, bold: bool = False) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+    """A real scalable font at ``size``, whatever platform this is rendering on.
+
+    Shared with the other clip renderers (``render_trajectory.py``, ``build_demo_cut.py``)
+    so captions look the same everywhere and no caller re-invents the fallback chain.
+    """
+    for candidate in _FONT_CANDIDATES[bold]:
+        try:
+            return ImageFont.truetype(candidate, size)
+        except OSError:
+            continue
+    try:
+        # Pillow >= 10.1 honours `size` here and returns a real scalable face.
+        return ImageFont.load_default(size=size)
+    except TypeError:  # pragma: no cover - only on Pillow < 10.1
+        return ImageFont.load_default()
+
+
+_FONT = resolve_font(22, bold=True)
+_SUBTITLE_FONT = resolve_font(14)
 
 # Burnt into every assisted panel. See `label()` for why this qualifier is not optional.
 _EXPERT_SUBTITLE = "privileged-info controller, not the trained policy"
