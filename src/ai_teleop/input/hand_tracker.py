@@ -249,6 +249,11 @@ class StereoHandSource:
         # (scripts/dev/render_trajectory.py), which costs the live loop nothing.
         self._record_path = record_path
         self._writer: Any = None
+        # Recording is *armed* separately from being configured — see `start_recording()`.
+        # Startup centering runs before the sim is stepped and routinely outlasts a short
+        # episode, so capturing from construction puts minutes of an operator waving at the
+        # cameras ahead of the few seconds anyone wants to watch.
+        self._recording = False
         # Sensor-health counters (logged on close). The control loop polls read() far faster
         # than the cameras produce frames, so what matters for teleop feel is the *effective*
         # rate: how often a genuinely new landmark arrives, and how often the hand drops out.
@@ -317,7 +322,7 @@ class StereoHandSource:
                 # buffer to screen only in poll(); without the poll() the window stays blank.
                 frame = self._tracker.render_step()
                 self._tracker.poll()
-                if self._record_path is not None and frame is not None:
+                if self._recording and self._record_path is not None and frame is not None:
                     self._write_frame(frame)
         reading = self._tracker.read()
         if self._reads == 0:
@@ -426,6 +431,28 @@ class StereoHandSource:
             100.0 * absent / reads,
         )
 
+    def start_recording(self) -> None:
+        """Arm ``record_path`` — call once the operator is actually driving the arm.
+
+        The sibling of :meth:`mark_measurement_start`, for the same reason and on the same
+        boundary. Startup centering (:func:`ai_teleop.input.calibrate_neutral`) runs
+        *before the sim is stepped* and is wall-clock timed: the operator has to find the
+        cameras, present an open palm and hold it still, and any drop restarts the hold. It
+        routinely outlasts the episode. Recording from construction therefore produces a
+        video that is mostly a person waving at a webcam with a motionless robot, and whose
+        duration has no relationship to the trajectory beside it — so pairing the two clips
+        appears to show the arm ignoring the hand for most of the run.
+
+        Gating here also makes the operator video and ``episode.npz`` cover the *same*
+        window by construction, which is what lets them be cut side by side (see
+        ``scripts/dev/take_sync_report.py``).
+
+        Idempotent. Recording is only ever armed by an explicit call, so a caller that
+        configures ``record_path`` and never calls this gets a warning at
+        :meth:`close` rather than a silently empty file.
+        """
+        self._recording = True
+
     def mark_measurement_start(self) -> None:
         """Start the window `close()` reports on — call once the real work begins.
 
@@ -447,6 +474,15 @@ class StereoHandSource:
             self._writer.release()
             self._writer = None
             log.info("hand view saved → %s", self._record_path)
+        elif self._record_path is not None:
+            # Configured but never armed (or armed with the window off, which produces no
+            # composite to write). Say so — the alternative is a caller discovering the
+            # missing file after the operator has gone home.
+            log.warning(
+                "no hand view written to %s — recording was never armed "
+                "(start_recording()) or the camera window was off",
+                self._record_path,
+            )
         self._tracker.close()
         log.info("stereo hand tracker stopped")
 
