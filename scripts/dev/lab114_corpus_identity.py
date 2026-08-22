@@ -17,6 +17,11 @@ from pathlib import Path
 
 import numpy as np
 
+# This script prints `│` and does not otherwise import the package, so it misses the
+# console-encoding fix that `ai_teleop/__init__.py` applies for every other entry point.
+# On a Windows cp1252 console that box-drawing character is a fatal UnicodeEncodeError.
+from ai_teleop.common.log import ensure_console_encoding
+
 A = Path("data/dataset_9")
 B = Path("data/dataset_10")
 
@@ -39,6 +44,7 @@ def array_digest(path: Path) -> str:
 
 
 def main() -> None:
+    ensure_console_encoding()
     files_a, files_b = episode_files(A), episode_files(B)
     print(f"{A}: {len(files_a)} episodes │ {B}: {len(files_b)} episodes")
 
