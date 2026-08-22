@@ -9,10 +9,11 @@ A simulated robotic arm performs peg-in-hole insertions under shared-autonomy co
 A 69-second walkthrough: live stereo-hand teleoperation, four takes from the blinded
 human-operator trial, assistance on against off, and what the measurements actually support.
 
-<video src="https://github.com/NavehBrenner/kevin/raw/master/assets/media/demo.mp4" controls width="100%"></video>
+[![Live teleoperation: tracked hand on the left, robot on the right](./assets/media/demo-preview.gif)](./assets/media/demo.mp4)
 
-▶ **[assets/media/demo.mp4](./assets/media/demo.mp4)** (4.1 MB) — if the player above does not
-load, GitHub is serving the file as a download; the link plays it.
+▶ **Watch the full 69 s: [assets/media/demo.mp4](./assets/media/demo.mp4)** (4.2 MB). The
+animation above is a 6-second excerpt of segment 1 — GitHub strips `<video>` tags from
+rendered Markdown, so a committed MP4 cannot play inline here and the link is the way in.
 
 Every clip is captioned as what it is: single runs on different walls, not a comparison. The
 free-play takes are demonstrations of the tracking pipeline and are *not* measured trials, and

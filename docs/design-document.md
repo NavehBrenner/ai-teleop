@@ -632,12 +632,15 @@ reconstructed:
 
 | Artefact | Content | Status |
 |---|---|---|
-| [`assets/media/demo.mp4`](../assets/media/demo.mp4), 69 s / 4.1 MB | webcam → tracked hand → robot; four blinded-trial takes; assistance on against off; what the measurements support | ✅ **Recorded** 2026-08-22 |
+| [`assets/media/demo.mp4`](../assets/media/demo.mp4), 69 s / 4.2 MB | webcam → tracked hand → robot; four blinded-trial takes; assistance on against off; what the measurements support | ✅ **Recorded** 2026-08-22 |
 | Live-teleoperation takes, unedited | 3 free-play stereo-hand sessions (2 seated, 1 force-abort), shown inside the video above | ✅ **Recorded** 2026-08-22 |
 | [`data/blind_trial/`](../data/blind_trial/) | the 32 trial trajectories the blinded takes render from | ✅ **Committed** |
 
-The video is committed under `assets/media/` and embedded at the top of the README, so it is
-visible from the repository page without cloning. The takes are deliberately not curated down to
+The video is committed under `assets/media/` and linked from the top of the README, so it is
+reachable from the repository page without cloning. GitHub strips `<video>` tags from rendered
+Markdown, so a committed MP4 cannot play inline; the README therefore shows a 1.9 MB animated
+excerpt (`demo-preview.gif`) that links through to the full file — verified on github.com rather
+than assumed. The takes are deliberately not curated down to
 the successful runs — one free-play take and two of the four trial takes fail, and the failure
 modes are the more informative half (§6 explains them).
 
