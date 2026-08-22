@@ -18,6 +18,7 @@ instance state directly; the gate is the whole contract under test.
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any
 
 import numpy as np
@@ -65,6 +66,10 @@ def _source(*, record_path: str | None, recording: bool) -> StereoHandSource:
     source._first_read = 0.0
     source._prev_landmarks = None
     source._mark = None
+    source._pumps = 0
+    source._first_pump = 0.0
+    source._record_started = 0.0
+    source._recorded_frames = 0
     return source
 
 
@@ -138,4 +143,68 @@ def test_close_is_quiet_when_no_recording_was_requested(
 
 class _FakeTrackerWithClose(_FakeTracker):
     def close(self) -> None:
+        pass
+
+
+# --------------------------------------------------------------------------
+# The recording must be stamped with the rate it achieves, not the one it aims for
+# --------------------------------------------------------------------------
+
+
+def test_pump_rate_is_unmeasurable_before_enough_samples() -> None:
+    """No evidence yet — the writer falls back to the nominal rate rather than guess."""
+    source = _source(record_path="hand.mp4", recording=False)
+    source._pumps = 5
+    source._first_pump = time.monotonic() - 1.0
+    assert source._measured_pump_fps() is None
+
+
+def test_pump_rate_reflects_what_was_achieved(monkeypatch: pytest.MonkeyPatch) -> None:
+    """60 pumps over 3 s is 20 fps, not the 30 the interval nominally allows.
+
+    `_WINDOW_PUMP_INTERVAL_S` is a floor on the gap between pumps, not a promise: the
+    pump fires from `read()`, so it slips whenever the control loop is busy. A take on
+    2026-08-20 achieved 21.3 fps, was stamped 30, and played 1.41x quick.
+    """
+    source = _source(record_path="hand.mp4", recording=False)
+    source._pumps = 61
+    monkeypatch.setattr(time, "monotonic", lambda: 100.0)
+    source._first_pump = 97.0
+
+    measured = source._measured_pump_fps()
+    assert measured is not None
+    assert measured == pytest.approx(20.0)
+
+
+def test_measured_rate_never_exceeds_the_nominal_ceiling() -> None:
+    """A sanity property of the gate: pumps can come in late, never early."""
+    source = _source(record_path="hand.mp4", recording=False)
+    source._pumps = 1000
+    source._first_pump = time.monotonic() - 1000 * (1.0 / 30.0)
+    measured = source._measured_pump_fps()
+    assert measured is not None
+    assert measured <= 30.0 + 1e-6
+
+
+def test_close_warns_when_the_stamped_rate_does_not_match(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """A file whose timestamps are a guess must say so — nothing downstream can tell."""
+    source = _source(record_path="hand.mp4", recording=True)
+    source._tracker = _FakeTrackerWithClose()  # type: ignore[assignment]
+    source._writer = _FakeWriter()
+    # Stamped from a 30 fps estimate, but only 21 frames landed in a second.
+    source._pumps = 0  # too few to measure -> `_log_recording_rate` compares against nominal
+    source._recorded_frames = 22
+    monkeypatch.setattr(time, "monotonic", lambda: 100.0)
+    source._record_started = 99.0
+
+    with caplog.at_level(logging.WARNING, logger=LOGGER):
+        source.close()
+
+    assert any("will play" in record.getMessage() for record in caplog.records)
+
+
+class _FakeWriter:
+    def release(self) -> None:
         pass

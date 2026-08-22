@@ -108,6 +108,30 @@ def main() -> None:
     log.info("hand.mp4        : %d frames = %.2f s of wall clock", hand_frames, wall_seconds)
     log.info("real-time factor: %.3fx", realtime_factor)
 
+    # A factor above 1 is physically impossible: the viewer paces the loop to `--time-factor`
+    # (default 1.0) by *sleeping*, and never speeds a slow box up, so sim time cannot outrun
+    # the wall clock. Seeing it means the video's own duration is wrong -- the writer stamps
+    # a frame rate chosen when it opened, and a pump that came in slower than that stamp
+    # yields a file that plays quick and therefore reports as short.
+    if realtime_factor > 1.0:
+        true_fps = hand_frames / sim_seconds
+        log.warning(
+            "hand.mp4's duration is not trustworthy: %.3fx exceeds the 1.0 pacing cap, so "
+            "its stamped rate is too high. At the loop's cap the recorded window is the "
+            "episode's %.2f s, making the true rate %.2f fps (stamped as %.2f).",
+            realtime_factor,
+            sim_seconds,
+            true_fps,
+            hand_frames / wall_seconds,
+        )
+        log.warning(
+            "re-time it first:  ffmpeg -y -i hand.mp4 -vf setpts=PTS*%.4f -r %.2f hand_retimed.mp4",
+            wall_seconds and (sim_seconds / wall_seconds),
+            true_fps,
+        )
+        wall_seconds = sim_seconds
+        realtime_factor = 1.0
+
     # render_trajectory: n_steps/every frames, played at fps -> n_steps/(every*fps) seconds.
     frames = n_steps // arguments.every
     naive_fps = 1.0 / (arguments.every * SIM_DT)
