@@ -1,7 +1,7 @@
-# LAB-78 — Realistic ScriptedNoisyHuman command dynamics
+# Realistic ScriptedNoisyHuman command dynamics
 
-**Issue:** [LAB-78](https://linear.app/naveh-brenner/issue/LAB-78) · **Milestone:** M7 (prerequisite) ·
-**Blocks:** LAB-77 (difficulty recalibration) → LAB-82 (vision corpus).
+**Milestone:** M7 (prerequisite) ·
+**Blocks:** the difficulty recalibration → the vision corpus.
 **Companion design doc:** [`design/human-generation.md`](human-generation.md) (the form this refines).
 
 Implementation spec — written to be picked up cold in a new session. Grounded against
@@ -92,7 +92,7 @@ Determinism is preserved: the stream is still fully determined by `seed`; the on
 
 **`src/ai_teleop/data/generate.py`** (`ScriptedNoisyHuman(...)`, ~line 268) and
 **`docs/guides/cli.md`** — thread `max_approach_speed` through the data-gen config/CLI like the other
-noise params (so the calibration in LAB-77 can sweep it if needed). Bump the default
+noise params (so the difficulty calibration can sweep it if needed). Bump the default
 `position_bias_std` per §5.
 
 **Note on dev scripts:** several `scripts/dev/*` build `ScriptedNoisyHuman(position_bias_std=
@@ -110,7 +110,8 @@ recorded ones:
   IQR ~11–26). Start by bumping `DEFAULT_POSITION_BIAS_STD` 0.010 → ~0.015 and check.
 
 Keep the difficulty operating point honest — these are *realism* knobs; the task-geometry
-difficulty (chamfer / expert authority) is LAB-77's job, calibrated **after** this lands.
+difficulty (chamfer / expert authority) is the difficulty recalibration's job, calibrated
+**after** this lands.
 
 ## 6. Test (one runnable check)
 
@@ -128,10 +129,10 @@ regress (no framework beyond pytest):
 ## 7. Risks / notes
 
 - **Invalidates existing datasets.** `dataset_0/1` and any M5 corpus were generated with the
-  old operator; they're git-ignored and regenerable. Regenerate before LAB-77/82. M5 results
+  old operator; they're git-ignored and regenerable. Regenerate before the difficulty recalibration and the vision corpus. M5 results
   are unaffected as a deliverable (Phase-1 is F/T, insensitive to this) — no M5 rerun required
   unless you want refreshed numbers.
-- **Precedes LAB-77 by design:** changing the operator shifts every success rate, so the
+- **Precedes the difficulty recalibration by design:** changing the operator shifts every success rate, so the
   difficulty recalibration must measure against this final operator (see the issue chain).
 - **Eval pairing intact:** the actor stays seedable and open-loop, so paired-seed comparisons
   ([`design/evaluation-protocol.md`](evaluation-protocol.md)) still hold.
@@ -141,4 +142,4 @@ regress (no framework beyond pytest):
 - DAgger / expert-relabeling of the recorded episodes (deferred; the recordings carry
   privileged poses so it stays available later).
 - Orientation realism beyond the current behavior (rig is position-only).
-- Task-geometry difficulty calibration (LAB-77).
+- Task-geometry difficulty calibration.

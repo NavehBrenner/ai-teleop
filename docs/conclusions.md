@@ -63,12 +63,12 @@ against the same operator.
 | F/T plain BC (batch 2) | 5 | −3.4 pp | [−21, +10] — **31 pp** |
 | F/T DAgger | 5 | **+2.0 pp** | [+1, +3] — **2 pp** |
 | Vision plain BC | 3 | −8.3 pp | [−16, +4] — **20 pp** |
-| Vision DAgger | 3 | **+1.3 pp** | [−4, +12] |
+| Vision DAgger | 3 | **+1.3 pp** | [−4, +12] — **16 pp** |
 
 **No recipe lifts insertion success beyond the resolution of the measurement.** The two
 DAgger recipes are positive in the mean; neither margin approaches the spread that retraining
-the plain recipe alone produces. Across all 21 checkpoints, 9 are above the baseline and 12
-below.
+the plain recipe alone produces. Across all 21 checkpoints, 9 are above the baseline, 11 are
+below it, and 1 lands exactly on it.
 
 That spread is the central methodological finding. Retraining a fixed *plain-BC* recipe,
 changing **only the training seed**, moves the paired outcome by 20–31 pp; the two DAgger

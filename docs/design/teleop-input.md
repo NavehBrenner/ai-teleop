@@ -1,6 +1,6 @@
 # Teleop Input — Stereo Hand-Tracking Design
 
-> **History (2026-06-22, LAB-75):** a monocular MediaPipe baseline (LAB-50/51) shipped
+> **History (2026-06-22):** a monocular MediaPipe baseline shipped
 > first and was then **removed** in favour of stereo-only input — the project drives the
 > arm exclusively from the two-webcam [stereohand](https://github.com/NavehBrenner/stereohand)
 > sensor. The monocular rationale is kept below only to explain *why* stereo was worth it;
@@ -61,7 +61,7 @@ The decisions that aren't obvious from "add a second camera":
   skew exceeds a threshold) is sufficient given teleop is approximate; hardware sync is
   overkill. Rolling-shutter mismatch between unmatched cameras is the nastiest case.
 - **Calibration is two separate things, don't conflate them.** *Camera calibration*
-  (new, LAB-54): per-camera intrinsics + lens distortion, then stereo extrinsics —
+  (new): per-camera intrinsics + lens distortion, then stereo extrinsics —
   **ChArUco over a plain checkerboard** (robust to the partial/occluded board views you
   get with two cameras at an angle) → `cv2.stereoCalibrate` / `cv2.stereoRectify` → P1/P2,
   persisted once; valid until the rig is physically disturbed. *Workspace calibration*
@@ -87,7 +87,7 @@ Three issues, mirroring the sensor/strategy split, sequenced:
 
 The deterministic core stays unit-tested (landmark→reading math; palm-frame fit on a known pose); the live two-camera path is manual.
 
-## Status / placement (stereo-only, LAB-74 / LAB-75)
+## Status / placement (stereo-only)
 
 Stereo capture + calibration + triangulation ship in the standalone
 [stereohand](https://github.com/NavehBrenner/stereohand) package (metric `(21, 3)` landmarks
@@ -108,4 +108,4 @@ Packaging note: the `stereo-input` extra pulls stereohand, which brings a modern
 extra and its legacy `mediapipe==0.10.21` pin are gone). The live two-camera path is manual;
 the deterministic core (metric landmark→reading, calibration mapping) is unit-tested.
 
-> Provenance: design locked 2026-06-20 from direct observation of the monocular baseline's behaviour (depth-proxy drift and orientation jitter), then the baseline was removed 2026-06-22 (LAB-75) in favour of stereo-only. Not from a `raw/` source.
+> Provenance: design locked 2026-06-20 from direct observation of the monocular baseline's behaviour (depth-proxy drift and orientation jitter), then the baseline was removed 2026-06-22 in favour of stereo-only. Not from a `raw/` source.

@@ -35,7 +35,7 @@ guarantee + the mechanism findings. See
 lifted closed-loop success); the mechanism is the deliverable. Spec:
 [`milestone-7-spec.md`](milestone-7-spec.md).
 
-The M9 delivery arc runs through the **LAB-42 project-state review** (code/doc audit, the KPI
+The M9 delivery arc runs through the **project-state review** (code/doc audit, the KPI
 dashboard, the policy guide, a go-forward decision). Two **delivery checkpoints** (D1, D2)
 draw on these — see *Delivery checkpoints* below.
 
@@ -214,12 +214,12 @@ success here. Full retrospective spec: [`milestone-7-spec.md`](milestone-7-spec.
   EE command).
 - Workspace calibration (metric camera-rig → robot-space), clutching + open-palm recenter,
   gain, jitter filter (one-euro), drop-out handling, 6-DoF mirroring.
-- ~~`KeyboardInput` fallback strategy.~~ **Dropped (LAB-42 review):** `scripted` covers
+- ~~`KeyboardInput` fallback strategy.~~ **Dropped (project-state review):** `scripted` covers
   repeatable benchmarking and `vision` covers the live demo, so nothing needed it.
 - All input strategies interchangeable behind the common interface.
 
-**History**: a monocular MediaPipe baseline (LAB-50/51) shipped first, then was **removed**
-(LAB-75) in favour of stereo-only — a second calibrated camera triangulates the 21 landmarks
+**History**: a monocular MediaPipe baseline shipped first, then was **removed**
+in favour of stereo-only — a second calibrated camera triangulates the 21 landmarks
 to *metric* 3D (real depth + observable orientation → true 6-DoF mirroring), which the
 single-camera path could only fake. Keeps the `HandReading` contract and the strategy layer
 unchanged. Full rationale in [`design/teleop-input.md`](../design/teleop-input.md).
@@ -284,7 +284,7 @@ well-engineered Phase-1 project is a strong submission on its own). **Rough effo
 ## Indicative timeline
 
 Solo, ~10–15 h/week, deadline 2026-08-31. **Actuals (as of 2026-07-23): M1–M8 landed on
-schedule; M7 closed as a documented negative; M9 (final eval + polish, via the LAB-42 review) is
+schedule; M7 closed as a documented negative; M9 (final eval + polish, via the project-state review) is
 in progress ahead of the D2 submission.** The windows below are the original plan, kept for the
 record.
 

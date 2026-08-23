@@ -40,10 +40,11 @@ equally consistent with a substantial benefit; it is well inside the ~45 pp this
 cannot resolve. Nothing here establishes that the residual helps a human operator, and
 nothing here establishes that it does not.
 
-The direction happens to match the +8 pp paired Δ the scripted study measured for this same
-checkpoint (`vision/dagger/seed_0/round_4`). At n=16 per arm that is a coincidence-tolerant
-observation, not corroboration, and it must not be reported as agreement between the two
-studies.
+The direction does **not** match the scripted study: on this same checkpoint
+(`vision/dagger/seed_0/round_4`) the scripted paired Δ is **−4.0 pp** (p=0.572,
+[official KPI tables](phase-1/official_kpi_tables.md) §6). At n=16 per arm neither number
+resolves anything, so the disagreement is no more meaningful than agreement would have been —
+but it must not be reported as corroboration.
 
 ### The headline depends on one contested trial
 

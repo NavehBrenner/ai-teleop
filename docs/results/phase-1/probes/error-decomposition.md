@@ -1,4 +1,4 @@
-# LAB-106 error decomposition — where the GRU's offline position error lives
+# Error decomposition — where the GRU's offline position error lives
 
 Regenerate: `uv run python scripts/dev/lab106_error_decomp.py`
 Captured: 2026-08-02 · corpus `dataset_vision` (held-out val split)

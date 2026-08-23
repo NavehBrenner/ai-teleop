@@ -5,7 +5,9 @@ the range across seeds. **That range is the floor the metric's own treatment eff
 clear.** A recipe whose mean Δ is smaller than its family's floor is not distinguishable
 from a re-draw of the same recipe.
 
-Regenerate: `uv run python scripts/dev/official_kpi/noise_floor.py`
+Regenerate: `uv run python scripts/dev/official_kpi/noise_floor.py` — note it reads the
+gitignored `runs/eval_official_*/` layout, not the committed CSVs, so it needs the eval set
+present locally.
 Source: the committed per-trial CSVs in [`official-evals/`](official-evals/).
 
 ### Success rate (%) — paired Δ vs human_only, per training seed

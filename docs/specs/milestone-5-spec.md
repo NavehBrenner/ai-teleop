@@ -56,23 +56,22 @@ By the end of M5 we can:
 > hole location is not inferable from F/T+proprio in free space, so the cloned
 > free-space correction is ≈0 by construction (wiki `concepts/privileged-learning.md` →
 > "The Phase-1 identifiability ceiling"). A spot-check **tie** at the *training* noise
-> (e.g. the LAB-34 40/40) is therefore expected, **not** a milestone failure. M5's real
+> (e.g. the conformance suite's 40/40) is therefore expected, **not** a milestone failure. M5's real
 > bar is the **pipeline** (real-time `ResidualPolicy` behind the seam, captures the
 > achievable contact-reactive behavior without closed-loop drift); a *success-rate* win
 > is gated by **M6 difficulty-calibration** (place contact on the chamfer), with a
-> retrain on the calibrated scenarios only if that band differs (LAB-52). The robust
+> retrain on the calibrated scenarios only if that band differs. The robust
 > Phase-1 wins are time-to-insert and peak force.
 
 ## What's in M5
 
-- **BC dataset loader** (LAB-32, `data/`) — turns flat per-step NPZ rows into
+- **BC dataset loader** (`data/`) — turns flat per-step NPZ rows into
   `(streams, Δ*)` training tensors; episode-level split; normalization. (Batching
   shape — per-step samples vs. episode-sequences — under revision; see banner.)
-- **Phase-1 residual model** (LAB-33, `policy/`) — per-step normalized streams
+- **Phase-1 residual model** (`policy/`) — per-step normalized streams
   concatenated → a **single stateful GRU core** → MLP head → 7-vector `Δ_raw`.
   No learned per-stream encoders; no image branch.
-- **BC train/val loop + checkpointing + seam integration** (LAB-34,
-  `policy/` + `scripts/`) — the training pipeline, plus a `ResidualPolicy`
+- **BC train/val loop + checkpointing + seam integration** (`policy/` + `scripts/`) — the training pipeline, plus a `ResidualPolicy`
   `AssistProvider` that wraps a checkpoint for stateful real-time inference and
   slots into the seam.
 
@@ -85,7 +84,7 @@ spec is their detailed expansion, one build step each.
   heatmap head — that is **M7** (Phase 2). The schema reserves the column; M5
   trains on F/T + proprioception + command only.
 - **The evaluation harness + KPI numbers.** Success-rate/force/time tables and
-  the paired-counterbalanced ablation are **M6** (LAB-36/37/38). M5's "beats
+  the paired-counterbalanced ablation are **M6**. M5's "beats
   human-only" is a qualitative spot-check, not the measured result.
 - **DAgger / expert-action-noise recovery.** Held in reserve
   (`problem-structure.md`); only escalated if open-loop BC rollouts drift. M5
@@ -127,7 +126,7 @@ hard safety clamp (`±2 cm / ±10° / ±5 N`) is applied **outside** the network
 garbage; an optional `tanh`-scaled head keeps raw outputs near range to ease
 training but is *not* the safety bound.
 
-### Model — single stateful GRU core + MLP head (LAB-33)
+### Model — single stateful GRU core + MLP head
 
 ```
 [cmd_t, ft_t, proprio_t] ─(normalize, quat→6D)─► concat = x_t ─► stateful GRU core ─► h_t ─► MLP head ─► Δ_raw (7)
@@ -144,7 +143,7 @@ gradient path). The windowed, separately-encoded late-fusion design — and a
 stateless 1D-CNN encoder — are the documented fallbacks (Decision A). The core is
 deliberately the Phase-2 architecture minus the `e_img` branch.
 
-### Training — behavioral cloning (LAB-34)
+### Training — behavioral cloning
 
 - **Loss**: per-channel weighted, rotation-aware:
   `L = w_pos·Huber(Δ̂.pos, Δ*.pos) + w_ori·rot_loss(Δ̂.ori, Δ*.ori) + w_grip·Huber(Δ̂.grip, Δ*.grip)`.
@@ -161,7 +160,7 @@ deliberately the Phase-2 architecture minus the `e_img` branch.
   more episodes (M4 driver) if the val curve is data-starved.
 - **Checkpointing + early stopping** on the val curve.
 
-### Real-time inference + seam integration (LAB-34)
+### Real-time inference + seam integration
 
 A `ResidualPolicy` in `policy/` wraps a trained checkpoint as an
 `AssistProvider`:
@@ -190,7 +189,7 @@ without torch.
 
 Each step is its own branch → PR → CI → merge, in dependency order.
 
-### Step 1 — BC dataset loader + windowing · LAB-32 (~3–4 h)
+### Step 1 — BC dataset loader + windowing (~3–4 h)
 
 Files: `src/ai_teleop/data/dataset.py` (+ `data/__init__` re-export); tests in
 `tests/test_dataset_loader.py`. Add `torch` to the test/CI environment.
@@ -204,7 +203,7 @@ Files: `src/ai_teleop/data/dataset.py` (+ `data/__init__` re-export); tests in
   zero-padding at episode start verified; no episode appears in both splits; a
   fixed seed reproduces batches; runs without a GPU.
 
-### Step 2 — Phase-1 residual model · LAB-33 (~3–4 h)
+### Step 2 — Phase-1 residual model (~3–4 h)
 
 Files: `src/ai_teleop/policy/model.py` (+ re-export); tests in
 `tests/test_policy_model.py`.
@@ -217,7 +216,7 @@ Files: `src/ai_teleop/policy/model.py` (+ re-export); tests in
   sane; CPU forward is fast; `isinstance` plays nice with the seam (the wrapper,
   not the raw `nn.Module`, is the `AssistProvider`).
 
-### Step 3 — BC train/val loop + checkpointing + seam integration · LAB-34 (~5–7 h)
+### Step 3 — BC train/val loop + checkpointing + seam integration (~5–7 h)
 
 Files: `scripts/train_policy.py`, `src/ai_teleop/policy/residual_policy.py`
 (the `AssistProvider` wrapper) (+ re-export); tests in `tests/test_residual_policy.py`.
@@ -253,7 +252,7 @@ Files: `scripts/train_policy.py`, `src/ai_teleop/policy/residual_policy.py`
 
 ## Total estimated effort
 
-**12–18 hours**, 3–5 sessions, across three PRs. The long pole is LAB-34
+**12–18 hours**, 3–5 sessions, across three PRs. The long pole is the residual-policy step
 (training loop + the stateful real-time wrapper + the qualitative win); the
 loader and model are mechanical given the locked architecture. The genuine risk
 is BC **covariate shift** (open-loop drift) — mitigations (keep-failures already
@@ -264,23 +263,21 @@ if the spot-check shows drift.
 
 ```
 src/ai_teleop/data/
-├── __init__.py        (re-export the loader)                         LAB-32
-└── dataset.py         (new — Dataset/DataLoader + episode-level split) LAB-32
+├── __init__.py        (re-export the loader)
+└── dataset.py         (new — Dataset/DataLoader + episode-level split)
 
 src/ai_teleop/policy/
-├── __init__.py        (populate — re-export model + ResidualPolicy)  LAB-33/34
-├── model.py           (new — single stateful GRU core + MLP head)    LAB-33
-└── residual_policy.py (new — AssistProvider inference wrapper)       LAB-34
-
+├── __init__.py        (populate — re-export model + ResidualPolicy)
+├── model.py           (new — single stateful GRU core + MLP head)
+└── residual_policy.py (new — AssistProvider inference wrapper)
 scripts/
-└── train_policy.py    (new — BC train/val loop + checkpointing)      LAB-34
-
+└── train_policy.py    (new — BC train/val loop + checkpointing)
 tests/
-├── test_dataset_loader.py   (new)                                   LAB-32
-├── test_policy_model.py     (new)                                   LAB-33
-└── test_residual_policy.py  (new — conformance + seam + spot-check) LAB-34
+├── test_dataset_loader.py   (new)
+├── test_policy_model.py     (new)
+└── test_residual_policy.py  (new — conformance + seam + spot-check)
 
-pyproject.toml / CI         (make torch available to tests)           LAB-32
+pyproject.toml / CI         (make torch available to tests)
 ```
 
 `src/ai_teleop/{control,sim,domain,expert,input}/` are **not** modified — M5
@@ -295,7 +292,7 @@ providers (see below).
   (a) the policy sniffs `observation.sim_time` resetting toward 0; (b) add an
   optional `reset()` to the provider that `run_episode` calls at episode start.
   Prefer (b) — explicit, and a no-op for stateless providers (`NoAssist`,
-  `Expert`). Decide in LAB-34; it's the only candidate change to a shared
+  `Expert`). Decide in the residual-policy step; it's the only candidate change to a shared
   contract.
 - **TBPTT truncation length** (steps per backprop chunk) — calibrate against validation curves.
 - **Loss specifics** — Huber vs MSE; per-channel weights `w_pos/w_ori/w_grip`;

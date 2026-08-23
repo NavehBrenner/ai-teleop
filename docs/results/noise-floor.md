@@ -52,7 +52,7 @@ report a broken recipe; read seed 2 alone and you would report an +8 pp win. Nei
 The same trap fires positive elsewhere — vision-DAgger seed 1 (§5.5) reads **+12 pp at p=0.036**
 while its two sibling seeds both read −4.
 
-**Corroborated on independent data.** The floor was first measured (LAB-114, 2026-07-22) on
+**Corroborated on independent data.** The floor was first measured (2026-07-22) on
 `dataset_10` — a 5× smaller, 200-episode corpus with a different master seed — giving a **18 pp**
 spread over five seeds (paired Δ −15 to +3, records in `phase-1/lab114/`). Two corpora, two
 generations of the pipeline, the same order of magnitude. The floor is a property of the task
@@ -103,7 +103,7 @@ except FT DAgger's, and FT DAgger's mean (+2.0 pp) sits far inside the 27–31 p
 *same* plain recipe covers when only its training seed changes. No recipe is distinguishable
 from the baseline at this measurement's resolution. The one thing that does change is the
 *width*: 27 pp and 31 pp for the plain arms, 2 pp for FT DAgger. Regenerate with
-`uv run python scripts/dev/official_kpi/plot_kpis.py` ([provenance](kpi-dashboard.md#7-provenance--how-to-regenerate)).*
+`uv run python scripts/dev/official_kpi/plot_kpis.py` ([provenance](kpi-dashboard.md#9-provenance--how-to-regenerate)).*
 
 **No recipe clears the floor.** The FT-plain row *is* the floor — it is the same
 one-recipe-many-seeds measurement as §5, and its 27 pp spread swallows every mean in the table.
@@ -132,11 +132,11 @@ Two second-order structure notes:
   dominated by force-abort states the bounded expert couldn't relabel — the larger, cleaner corpus
   removes the degradation but adds no lift.)
 - **The noise lives on *both* axes.** Re-evaluating each intermediate DAgger round on the same
-  100 held-out walls (per-round `trials.csv`, LAB-112 backfill) shows the paired Δ swinging
+  100 held-out walls (per-round `trials.csv`, the vision backfill) shows the paired Δ swinging
   *within a single training seed* across rounds — seed-0 vision-DAgger ran **−1 → −28 → −12 → +8
   → −4** over rounds 0–4, a 36 pp range with no trend (Figure 4). A single round's checkpoint is
   as much a lottery draw as a single seed. Reported KPI is the **pre-committed final round**,
-  never max-over-rounds (that is the LAB-114 optimistic-selection bias re-introduced on a new
+  never max-over-rounds (that is the optimistic-selection bias re-introduced on a new
   axis).
 
 **This is the arc's closing measurement.** It does not overturn [what stands](mechanisms.md#7-what-still-stands) — the standing positives never

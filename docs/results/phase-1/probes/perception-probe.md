@@ -1,4 +1,4 @@
-# LAB-105 perception probe — is hole position linearly decodable from the frozen encoder?
+# Perception probe — is hole position linearly decodable from the frozen encoder?
 
 Regenerate: `uv run python scripts/dev/lab105_perception_probe.py data/dataset_vision`
 Captured: 2026-08-02
