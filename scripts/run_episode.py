@@ -489,6 +489,10 @@ def build_input(
         # short episode and legitimately has the hand in and out of frame -- inflating
         # drop-out enough to read as a sensor fault on a run that was clean.
         tracker.mark_measurement_start()
+        # ...and the same boundary governs the operator-side footage, so --record-hand
+        # captures the episode rather than the minutes of centering ahead of it, and the
+        # video covers the same window as the episode.npz it will be cut beside.
+        tracker.start_recording()
         input_strategy: InputStrategy = VisionInput(
             tracker,
             calibration=WorkspaceCalibration(),

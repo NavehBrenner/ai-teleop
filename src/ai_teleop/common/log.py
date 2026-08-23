@@ -31,6 +31,7 @@ Typical use in a script::
 from __future__ import annotations
 
 import argparse
+import contextlib
 import io
 import logging
 import os
@@ -224,12 +225,53 @@ def configure_logging(
         logger.addHandler(_file_handler(path, level=numeric_level))
 
 
+def ensure_console_encoding() -> None:
+    """Make ``sys.stdout``/``sys.stderr`` survive non-ASCII output on Windows.
+
+    Python gives ``sys.stdout`` the console's code page on Windows — cp1252 on a stock
+    en-US install — and **argparse writes ``--help`` straight to it**, in strict mode.
+    One non-ASCII character in a help string is then fatal: this project writes the
+    residual's per-step bound as ``Δ``, so ``run_episode.py --help`` (and ``kvn episode
+    --help``, which forwards to it) died with ``UnicodeEncodeError: 'charmap' codec
+    can't encode character '\\u0394'`` before printing anything. The *logging* path was
+    already immune — :func:`_capture_console_stream` passes ``errors="replace"`` — but
+    the process's own streams were not, so every non-logging write was exposed.
+
+    Prefer real UTF-8, fall back to replacement characters on the existing encoding, and
+    do nothing at all when the streams cannot be reconfigured (redirected to a pipe,
+    swapped by a test harness, already detached). Making the console tolerant must never
+    itself be the reason a command fails, so every failure here is silent by design.
+
+    Idempotent, and called from :func:`add_logging_arguments` — which every entry point
+    invokes while *building* its parser, i.e. before ``parse_args`` can print help.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:  # StringIO, a closed stream, a custom shim
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="replace")
+        except (OSError, ValueError, io.UnsupportedOperation, AttributeError):
+            # The stream refused a re-encode (already detached, or a wrapper that only
+            # supports some kwargs). Tolerating the *existing* encoding still turns a
+            # crash into a mangled character, which is the point.
+            with contextlib.suppress(OSError, ValueError, io.UnsupportedOperation, AttributeError):
+                reconfigure(errors="replace")
+
+
 def add_logging_arguments(parser: argparse.ArgumentParser) -> None:
     """Add the shared ``--log-level`` / ``--quiet`` / ``--log-file`` flags.
 
     Pairs with :func:`configure_from_args` so every script exposes logging the
     same way without duplicating argparse boilerplate.
+
+    Also calls :func:`ensure_console_encoding`. That is a side effect, and it lives here
+    deliberately: it has to run before ``parse_args`` may print ``--help``, and this is
+    the one call all 42 entry points already make while building their parser. Putting it
+    anywhere else would mean touching every script and relying on nobody forgetting it in
+    the next one.
     """
+    ensure_console_encoding()
     group = parser.add_argument_group("logging")
     group.add_argument(
         "--log-level",

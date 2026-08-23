@@ -632,12 +632,35 @@ reconstructed:
 
 | Artefact | Content | Status |
 |---|---|---|
-| Demo video, 1–2 min | webcam → tracked hand → robot; assistance toggling on and off; a KPI summary | 🎬 *being recorded* |
-| 3–5 live-teleoperation clips | full stereo-hand sessions, unedited, including the failures | 🎬 *being recorded* |
+| [`assets/media/demo.mp4`](../assets/media/demo.mp4), 69 s / 4.2 MB | webcam → tracked hand → robot; four blinded-trial takes; assistance on against off; what the measurements support | ✅ **Recorded** 2026-08-22 |
+| Live-teleoperation takes, unedited | 3 free-play stereo-hand sessions (2 seated, 1 force-abort), shown inside the video above | ✅ **Recorded** 2026-08-22 |
+| [`data/blind_trial/`](../data/blind_trial/) | the 32 trial trajectories the blinded takes render from | ✅ **Committed** |
 
-Both are committed under `assets/media/` and embedded in the README, so they are visible from the
-repository page without cloning. The clips are deliberately not curated down to the successful
-runs only — the failure modes are the more informative half, and §6 explains them.
+The video is committed under `assets/media/` and linked from the top of the README, so it is
+reachable from the repository page without cloning. GitHub strips `<video>` tags from rendered
+Markdown, so a committed MP4 cannot play inline; the README therefore shows a 1.9 MB animated
+excerpt (`demo-preview.gif`) that links through to the full file — verified on github.com rather
+than assumed. The takes are deliberately not curated down to
+the successful runs — one free-play take and two of the four trial takes fail, and the failure
+modes are the more informative half (§6 explains them).
+
+Only the assembled cut is committed, not the raw takes: they are ~15 MB of near-duplicate
+footage against a 4.1 MB deliverable, and everything in the video is reproducible —
+`scripts/dev/build_demo_cut.py` rebuilds it, and the trial segments re-render from the committed
+`data/blind_trial/` trajectories via `scripts/dev/render_trajectory.py`. The free-play takes are
+the one exception: a person drove them, so like every recorded corpus here they cannot be
+regenerated, and they survive only inside the cut.
+
+Three honesty constraints govern the captions, and each is enforced in
+`scripts/dev/build_demo_cut.py` rather than left to an editor:
+
+- The free-play takes are captioned as demonstrations of the tracking pipeline, **not** trials.
+  Their operator and robot halves come from a single invocation, so pairing them is factual.
+- The assist-on/off panel is labelled as the **analytical, privileged-information expert** —
+  it is handed the target pose — and explicitly *not* the trained residual, whose success-rate
+  lift was retracted (§5.3).
+- No caption bounds the measured contact force. The residual is clamped by construction and the
+  backbone commands at most 12.5 N, but measured force reaches 77.86 N (§1.4).
 
 ---
 
@@ -652,7 +675,7 @@ against what was measured. Two of them were not met.
 | 2 | *"Phase 1 (F/T-only residual) outperforms human-only on success rate; peak force bounded by construction."* | ❌ **Not met** on success rate · ⚠️ **partly met** on the force clause — the *commanded* force is bounded (≤12.5 N) and the residual is clamped, but *measured* contact force is not; see §1.4 |
 | 3 | *"Phase 2 (vision-conditioned residual) outperforms human-only on success rate **and** peak force, statistically meaningful; and beats Phase 1 (the vision ablation)."* | ❌ **Not met** |
 | 4 | *"Architecture cleanly separates input layer / backbone controller / assistance layer; Strategy pattern at each seam; SOLID compliance defensible during the design review."* | ✅ **Met** |
-| 5 | *"All booklet-required deliverables submitted on time and to professional quality, including self-evaluation writeup."* | 🎬 **In progress** — this document, the README and the code are complete; the demo media (§7) and the self-evaluation are being finished ahead of the 2026-08-31 deadline |
+| 5 | *"All booklet-required deliverables submitted on time and to professional quality, including self-evaluation writeup."* | 🎬 **In progress** — this document, the README, the code and the demo media (§7, recorded 2026-08-22) are complete; the self-evaluation is being finished ahead of the 2026-08-31 deadline |
 
 **On criteria 2 and 3 — what "not met" means here.** The residual does not outperform human-only
 on success rate. Over the official multi-seed run the four recipes measure −4.4, +2.0, −8.3 and

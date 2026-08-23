@@ -17,6 +17,7 @@ from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     configure_logging,
+    ensure_console_encoding,
     get_logger,
 )
 from ai_teleop.common.observation import Observation
@@ -31,6 +32,7 @@ __all__ = [
     "axis_from_quat",
     "configure_from_args",
     "configure_logging",
+    "ensure_console_encoding",
     "get_logger",
     "mat3_to_quat",
     "quat_conjugate",

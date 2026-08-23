@@ -249,6 +249,17 @@ class StereoHandSource:
         # (scripts/dev/render_trajectory.py), which costs the live loop nothing.
         self._record_path = record_path
         self._writer: Any = None
+        # Recording is *armed* separately from being configured — see `start_recording()`.
+        # Startup centering runs before the sim is stepped and routinely outlasts a short
+        # episode, so capturing from construction puts minutes of an operator waving at the
+        # cameras ahead of the few seconds anyone wants to watch.
+        self._recording = False
+        # Pump bookkeeping, used to stamp the recording with the frame rate it actually
+        # achieves rather than the one it aims for -- see `_measured_pump_fps`.
+        self._pumps = 0
+        self._first_pump = 0.0
+        self._record_started = 0.0
+        self._recorded_frames = 0
         # Sensor-health counters (logged on close). The control loop polls read() far faster
         # than the cameras produce frames, so what matters for teleop feel is the *effective*
         # rate: how often a genuinely new landmark arrives, and how often the hand drops out.
@@ -313,11 +324,14 @@ class StereoHandSource:
             now = time.monotonic()
             if now - self._last_pump >= _WINDOW_PUMP_INTERVAL_S:
                 self._last_pump = now
+                if self._first_pump == 0.0:
+                    self._first_pump = now
+                self._pumps += 1
                 # stereohand's split renderer draws in render_step() but flushes the imshow
                 # buffer to screen only in poll(); without the poll() the window stays blank.
                 frame = self._tracker.render_step()
                 self._tracker.poll()
-                if self._record_path is not None and frame is not None:
+                if self._recording and self._record_path is not None and frame is not None:
                     self._write_frame(frame)
         reading = self._tracker.read()
         if self._reads == 0:
@@ -335,6 +349,33 @@ class StereoHandSource:
             self._prev_landmarks = reading.landmarks
         return reading_from_landmarks(reading.landmarks)
 
+    _MIN_PUMPS_TO_MEASURE = 30
+
+    def _measured_pump_fps(self) -> float | None:
+        """The rate the window pump *achieves*, or None before there is enough evidence.
+
+        ``_WINDOW_PUMP_INTERVAL_S`` is a floor on the gap between pumps, not a guarantee
+        of the rate: the pump fires from ``read()``, so it slips whenever the control loop
+        is busy, and it can only ever come in *at or below* the nominal 30 Hz. Stamping a
+        recording with the nominal rate therefore makes it play back too fast — a
+        2026-08-20 take achieved 21.3 fps (the figure the preview itself displays), was
+        written as 30, and ran 1.41x quick, which also read as a physically impossible
+        1.41x real-time factor when the clip was measured against its own trajectory.
+
+        Measured across every pump since the first, which by the time recording is armed
+        means the whole centering phase — the same camera, MediaPipe and compositing work
+        the episode does, so it is a good estimate of the rate about to be achieved. The
+        episode adds physics and control on top, so expect the true rate to come in a
+        little lower still; :meth:`close` reports the actual figure and complains if the
+        two disagree enough to matter.
+        """
+        if self._pumps < self._MIN_PUMPS_TO_MEASURE:
+            return None
+        elapsed = time.monotonic() - self._first_pump
+        if elapsed <= 0.0:
+            return None
+        return (self._pumps - 1) / elapsed
+
     def _write_frame(self, frame: np.ndarray) -> None:
         """Append one composite frame to the recording, opening the writer on the first.
 
@@ -351,12 +392,20 @@ class StereoHandSource:
             path = self._record_path
             assert path is not None  # only called while recording is on
             height, width = frame.shape[:2]
-            fps = 1.0 / _WINDOW_PUMP_INTERVAL_S
+            nominal_fps = 1.0 / _WINDOW_PUMP_INTERVAL_S
+            measured = self._measured_pump_fps()
+            fps = measured if measured is not None else nominal_fps
             for tag in ("mp4v", "avc1", "MJPG"):
                 writer = cv2.VideoWriter(path, cv2.VideoWriter.fourcc(*tag), fps, (width, height))
                 if writer.isOpened():
                     self._writer = writer
-                    log.info("recording hand view → %s (codec %s)", self._record_path, tag)
+                    log.info(
+                        "recording hand view → %s (codec %s, %.1f fps %s)",
+                        self._record_path,
+                        tag,
+                        fps,
+                        "measured" if measured is not None else "nominal — too few pumps yet",
+                    )
                     break
                 writer.release()
             else:
@@ -364,6 +413,7 @@ class StereoHandSource:
                 self._record_path = None
                 return
         self._writer.write(frame)
+        self._recorded_frames += 1
 
     def set_renderer_origin(self, origin: np.ndarray) -> None:
         """Center the preview's 3-D skeleton view on ``origin`` (metric left-camera frame).
@@ -426,6 +476,30 @@ class StereoHandSource:
             100.0 * absent / reads,
         )
 
+    def start_recording(self) -> None:
+        """Arm ``record_path`` — call once the operator is actually driving the arm.
+
+        The sibling of :meth:`mark_measurement_start`, for the same reason and on the same
+        boundary. Startup centering (:func:`ai_teleop.input.calibrate_neutral`) runs
+        *before the sim is stepped* and is wall-clock timed: the operator has to find the
+        cameras, present an open palm and hold it still, and any drop restarts the hold. It
+        routinely outlasts the episode. Recording from construction therefore produces a
+        video that is mostly a person waving at a webcam with a motionless robot, and whose
+        duration has no relationship to the trajectory beside it — so pairing the two clips
+        appears to show the arm ignoring the hand for most of the run.
+
+        Gating here also makes the operator video and ``episode.npz`` cover the *same*
+        window by construction, which is what lets them be cut side by side (see
+        ``scripts/dev/take_sync_report.py``).
+
+        Idempotent. Recording is only ever armed by an explicit call, so a caller that
+        configures ``record_path`` and never calls this gets a warning at
+        :meth:`close` rather than a silently empty file.
+        """
+        self._recording = True
+        self._record_started = time.monotonic()
+        self._recorded_frames = 0
+
     def mark_measurement_start(self) -> None:
         """Start the window `close()` reports on — call once the real work begins.
 
@@ -440,13 +514,54 @@ class StereoHandSource:
         """
         self._mark = (time.monotonic(), self._reads, self._absent, self._fresh)
 
+    def _log_recording_rate(self) -> None:
+        """Report the rate the recording actually captured at, and flag a bad stamp.
+
+        The writer's frame rate is fixed when it opens, from an estimate taken before the
+        episode began (:meth:`_measured_pump_fps`). This is the same number measured over
+        the window that was really recorded, so a disagreement means the file's playback
+        speed is wrong by that ratio — worth saying out loud, because nothing downstream
+        can tell from the file alone that its timestamps are a guess.
+        """
+        elapsed = time.monotonic() - self._record_started
+        if self._recorded_frames < 2 or elapsed <= 0.0:
+            log.info("hand view saved → %s (%d frames)", self._record_path, self._recorded_frames)
+            return
+
+        achieved = (self._recorded_frames - 1) / elapsed
+        stamped = self._measured_pump_fps() or 1.0 / _WINDOW_PUMP_INTERVAL_S
+        log.info(
+            "hand view saved → %s (%d frames, %.2f s, %.1f fps achieved)",
+            self._record_path,
+            self._recorded_frames,
+            elapsed,
+            achieved,
+        )
+        if abs(achieved - stamped) / achieved > 0.05:
+            log.warning(
+                "hand view is stamped ~%.1f fps but captured at %.1f — it will play %.2fx "
+                "off; re-time it before cutting it beside the episode",
+                stamped,
+                achieved,
+                stamped / achieved,
+            )
+
     def close(self) -> None:
         if self._reads > 0:
             self._log_sensor_health()
         if self._writer is not None:
             self._writer.release()
             self._writer = None
-            log.info("hand view saved → %s", self._record_path)
+            self._log_recording_rate()
+        elif self._record_path is not None:
+            # Configured but never armed (or armed with the window off, which produces no
+            # composite to write). Say so — the alternative is a caller discovering the
+            # missing file after the operator has gone home.
+            log.warning(
+                "no hand view written to %s — recording was never armed "
+                "(start_recording()) or the camera window was off",
+                self._record_path,
+            )
         self._tracker.close()
         log.info("stereo hand tracker stopped")
 

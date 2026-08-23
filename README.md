@@ -4,6 +4,22 @@ A simulated robotic arm performs peg-in-hole insertions under shared-autonomy co
 
 **The result is negative.** Across five production recipes retrained over training seeds and evaluated on 100 paired held-out walls, no recipe lifts insertion success above the human-only baseline beyond training-seed noise, and no reduction in contact force is established either. What the project contributes is a bound on the assist's authority that holds by construction, and a mechanism-level account of why per-step imitation cannot lift closed-loop seating on this task — see **[docs/conclusions.md](./docs/conclusions.md)**.
 
+## Demo
+
+A 69-second walkthrough: live stereo-hand teleoperation, four takes from the blinded
+human-operator trial, assistance on against off, and what the measurements actually support.
+
+[![Live teleoperation: tracked hand on the left, robot on the right](./assets/media/demo-preview.gif)](./assets/media/demo.mp4)
+
+▶ **Watch the full 69 s: [assets/media/demo.mp4](./assets/media/demo.mp4)** (4.2 MB). The
+animation above is a 6-second excerpt of segment 1 — GitHub strips `<video>` tags from
+rendered Markdown, so a committed MP4 cannot play inline here and the link is the way in.
+
+Every clip is captioned as what it is: single runs on different walls, not a comparison. The
+free-play takes are demonstrations of the tracking pipeline and are *not* measured trials, and
+one of them fails. The assist-on/off segment shows the **analytical, privileged-information
+expert** — not the trained residual policy, whose success-rate lift was measured and retracted.
+
 Built in [MuJoCo](https://mujoco.org) for the Franka Emika Panda. The residual policy is trained via behavioral cloning against a scripted privileged-info expert. Two configurations — human-only and human + learned residual — are compared head-to-head in a KPI ablation, on a shared always-on impedance backbone.
 
 > **Status**: the simulation, control backbone, assistance seam, expert + data generation, both

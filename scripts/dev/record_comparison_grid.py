@@ -3,8 +3,12 @@
 Runs two episodes through the M3/M4 seam with the *same* scripted operator
 (same seed) so the only difference is the assist source:
 
-    row 0 : EXPERT     [ third-person | wrist camera ]
-    row 1 : NO ASSIST  [ third-person | wrist camera ]
+    row 0 : ANALYTICAL EXPERT  [ third-person | wrist camera ]
+    row 1 : NO ASSIST          [ third-person | wrist camera ]
+
+Row 0 is the *analytical, privileged-information* expert -- it is handed the target
+pose -- and NOT the trained residual policy. The panels say so, because the two are
+routinely conflated and the trained policy's success-rate lift was retracted.
 
 Each panel is labelled. The third-person camera is placed behind the wall,
 looking back toward the arm. Output defaults to MP4 (seekable / pausable);
@@ -33,11 +37,40 @@ from ai_teleop.input import ScriptedNoisyHuman
 from ai_teleop.sim.scene import SimEnv
 from ai_teleop.sim.scene_source import resolve_scene_path
 
-_FONT: ImageFont.FreeTypeFont | ImageFont.ImageFont
-try:
-    _FONT = ImageFont.truetype("DejaVuSans-Bold.ttf", 22)
-except OSError:  # fall back to the bitmap default if the TTF is unavailable
-    _FONT = ImageFont.load_default()
+# Font families to try, in order, per weight. DejaVu is the Linux/WSL name this project
+# was written against; it does not exist on Windows, where every caption in every clip was
+# silently falling back to `load_default()` — a *bitmap* font that ignores the size it is
+# handed and has no em-dash, so text rendered tiny and `—` came out as a box.
+_FONT_CANDIDATES: dict[bool, tuple[str, ...]] = {
+    False: ("DejaVuSans.ttf", "C:/Windows/Fonts/segoeui.ttf", "C:/Windows/Fonts/arial.ttf"),
+    True: ("DejaVuSans-Bold.ttf", "C:/Windows/Fonts/segoeuib.ttf", "C:/Windows/Fonts/arialbd.ttf"),
+}
+
+
+def resolve_font(size: int, *, bold: bool = False) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
+    """A real scalable font at ``size``, whatever platform this is rendering on.
+
+    Shared with the other clip renderers (``render_trajectory.py``, ``build_demo_cut.py``)
+    so captions look the same everywhere and no caller re-invents the fallback chain.
+    """
+    for candidate in _FONT_CANDIDATES[bold]:
+        try:
+            return ImageFont.truetype(candidate, size)
+        except OSError:
+            continue
+    try:
+        # Pillow >= 10.1 honours `size` here and returns a real scalable face.
+        return ImageFont.load_default(size=size)
+    except TypeError:  # pragma: no cover - only on Pillow < 10.1
+        return ImageFont.load_default()
+
+
+_FONT = resolve_font(22, bold=True)
+_SUBTITLE_FONT = resolve_font(14)
+
+# Burnt into every assisted panel. See `label()` for why this qualifier is not optional.
+_EXPERT_SUBTITLE = "privileged-info controller, not the trained policy"
+_NO_ASSIST_SUBTITLE = "scripted operator alone"
 
 PANEL = 480
 OUT_DIR = Path(__file__).resolve().parents[2] / "outputs"
@@ -107,11 +140,24 @@ def run_views(
     return third_frames, wrist_frames, final_mm
 
 
-def label(frame: np.ndarray, text: str) -> Image.Image:
+def label(frame: np.ndarray, text: str, subtitle: str | None = None) -> Image.Image:
+    """Burn a caption into a panel; ``subtitle`` adds a smaller qualifying line.
+
+    The subtitle exists because "EXPERT" alone is misread. This grid's assisted row is
+    the **analytical, privileged-information** expert — it is handed the target pose —
+    and *not* the trained residual policy, whose success-rate lift was measured and
+    retracted (``docs/results/phase-1/noise-floor-per-kpi.md``). A viewer who reads the
+    row as "the AI assistance" takes away a claim the project explicitly withdrew, so
+    the qualifier travels with the frame rather than living in a caption someone might
+    drop when the clip is re-cut.
+    """
     img = Image.fromarray(frame).convert("RGB")
     draw = ImageDraw.Draw(img, "RGBA")
-    draw.rectangle([0, 0, PANEL, 34], fill=(0, 0, 0, 170))
+    banner = 34 if subtitle is None else 56
+    draw.rectangle([0, 0, PANEL, banner], fill=(0, 0, 0, 170))
     draw.text((10, 7), text, fill=(255, 255, 255, 255), font=_FONT)
+    if subtitle is not None:
+        draw.text((10, 34), subtitle, fill=(220, 220, 220, 255), font=_SUBTITLE_FONT)
     return img
 
 
@@ -180,15 +226,19 @@ def main() -> None:
     for i in range(n):
         top = np.concatenate(
             [
-                np.asarray(label(ex_third[i], "EXPERT  -  third person")),
-                np.asarray(label(ex_wrist[i], "EXPERT  -  wrist camera")),
+                np.asarray(
+                    label(ex_third[i], "ANALYTICAL EXPERT  -  third person", _EXPERT_SUBTITLE)
+                ),
+                np.asarray(
+                    label(ex_wrist[i], "ANALYTICAL EXPERT  -  wrist camera", _EXPERT_SUBTITLE)
+                ),
             ],
             axis=1,
         )
         bottom = np.concatenate(
             [
-                np.asarray(label(na_third[i], "NO ASSIST  -  third person")),
-                np.asarray(label(na_wrist[i], "NO ASSIST  -  wrist camera")),
+                np.asarray(label(na_third[i], "NO ASSIST  -  third person", _NO_ASSIST_SUBTITLE)),
+                np.asarray(label(na_wrist[i], "NO ASSIST  -  wrist camera", _NO_ASSIST_SUBTITLE)),
             ],
             axis=1,
         )
