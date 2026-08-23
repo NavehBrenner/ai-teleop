@@ -31,12 +31,12 @@ Built in [MuJoCo](https://mujoco.org) for the Franka Emika Panda. The residual p
 
 ## Project context
 
-Course project for *Workshop in Autonomous Systems Simulation* (OpenU course 20973, fall 2026). Solo project. Final submission deadline: 2026-08-31.
+Course project for *Workshop in Autonomous Systems Simulation* (OpenU course 20973, fall 2026). Solo project.
 
 ## Documents
 
 - **[docs/conclusions.md](./docs/conclusions.md)** — **read this for the outcome.** What the project set out to do, what it delivered, what every KPI measured, what was not possible and why. The short reading of the whole results set.
-- **[docs/design-document.md](./docs/design-document.md)** — **start here for the system.** The submission design document: requirements, system architecture (with architectural diagram and sequence chart), design alternatives and their justification, simulation scenarios, KPIs, challenges and risks, evaluation criteria, timeline.
+- **[docs/design-document.md](./docs/design-document.md)** — **start here for the system.** The design document: requirements, system architecture (with architectural diagram and sequence chart), design alternatives and their justification, simulation scenarios, KPIs, challenges and risks, evaluation criteria, timeline.
 - **[docs/guides/architecture-tour.md](./docs/guides/architecture-tour.md)** — a guided walk through the code in the order the data flows: operator input → the assistance seam → sim → the episode loop → corpus → policy → evaluation. Start here to find your way around `src/`.
 - **[docs/guides/policy-guide.md](./docs/guides/policy-guide.md)** — how to train a policy, deploy one in an episode, and run a paired ablation, as three runnable recipes, plus an inventory of every checkpoint in `outputs/policy/runs/`.
 - **[docs/results/](./docs/results/kpi-dashboard.md)** — the results, one file per question: the [noise floor](./docs/results/noise-floor.md) (what retraining moves), the [KPI board](./docs/results/kpi-board.md) (every recipe × every metric), [within-seed](./docs/results/within-seed.md) (one checkpoint, trial by trial), [mechanisms](./docs/results/mechanisms.md) (why it doesn't work) and the [experiment ledger](./docs/results/experiment-ledger.md) (what ran on what data).
