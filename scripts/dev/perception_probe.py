@@ -1,7 +1,7 @@
-"""LAB-105 Stage-C decision probe: is the true hole position *linearly decodable*
+"""perception-probe Stage-C decision probe: is the true hole position *linearly decodable*
 from the FROZEN image encoder's features?
 
-The DAgger null (LAB-105) was read as a **perception ceiling**: low BC loss + flat
+The DAgger null was read as a **perception ceiling**: low BC loss + flat
 task success + healthy label coverage → the frozen encoder can't localize the hole
 well enough to act on the (correct) label. That diagnosis was *inferred*, never
 measured. This probe measures it directly and cheaply — no training, no rollouts.
@@ -23,7 +23,7 @@ Read-out:
   localize the hole; no linear projection or GRU downstream can recover it →
   **Stage C** (unfreeze the backbone) is the confirmed lever.
 
-    uv run python scripts/dev/lab105_perception_probe.py data/dataset_vision --episodes 80
+    uv run python scripts/dev/perception_probe.py data/dataset_vision --episodes 80
 """
 
 from __future__ import annotations

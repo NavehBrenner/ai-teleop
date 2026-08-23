@@ -1,4 +1,4 @@
-"""Tests for the BC loss (LAB-34) — rotation math + masked per-channel reduction.
+"""Tests for the BC loss — rotation math + masked per-channel reduction.
 
 The orientation channel is the subtle one (axis-angle is non-Euclidean), so the
 rotation helpers get their own known-value checks; the loss itself is verified for

@@ -1,4 +1,4 @@
-"""DAgger CLI — on-policy expert relabel to close the BC imitation gap (LAB-105).
+"""DAgger CLI — on-policy expert relabel to close the BC imitation gap.
 
 Thin front door over ``ai_teleop.dagger``. One invocation runs the batched loop:
 roll out the current vision policy on a fresh wall family, relabel every visited
@@ -7,7 +7,7 @@ frozen-encoder policy, and re-ablate on the held-out eval walls — repeated
 ``--rounds`` times.
 
 Run from ``kevin/`` (always render on the WSL Mesa-d3d12 GPU path — see
-``project-wiki`` / the LAB-105 issue)::
+``project-wiki`` / the perception-probe issue)::
 
     GALLIUM_DRIVER=d3d12 MESA_D3D12_DEFAULT_ADAPTER_NAME=NVIDIA \\
     LD_LIBRARY_PATH=/usr/lib/wsl/lib \\

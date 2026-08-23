@@ -293,14 +293,19 @@ Three statements hold by construction, and a commonly-assumed fourth does not.
 
 1. **The residual is clamped** to ±3 cm / ±10° / ±5 N per step, applied before the controller
    sees the augmented command. A maximally wrong network cannot enlarge its own authority.
-2. **The commanded restoring force is bounded at 12.5 N.** The clamp applies to the Euclidean
-   *norm* of the position delta (‖Δx‖ ≤ 0.025 m), so the bound is `λ_max·‖Δx‖` = 500 × 0.025.
+2. **The assist can move the commanded restoring force by at most 15 N.** `clamp_delta` holds
+   the residual to ‖r‖ ≤ 0.03 m and projection onto the command ball is non-expansive, so the
+   bound is `λ_max × 0.03` — independent of the controller's `max_dpos`. The *total* commanded
+   force under the deployment config every measurement uses (`max_dpos = 0.3`) is ≤ 150 N; the
+   12.5 N figure an earlier revision published came from a `max_dpos` of 0.025 m that nothing
+   was measured under.
 3. **No trial continues past 30 N** — the evaluation observer aborts it. This bounds how long a
    breach lasts, not whether one happens.
-4. **Measured contact force is not bounded.** The wrist sensor reads the contact *reaction*,
-   including impact transients the quasi-static `K·Δx` argument does not cover, and the
-   commanded wrench also carries a damping term no clamp bounds: 1712 of 4200 trials exceed
-   30 N, reaching 77.86 N, and 58% of *successful* trials exceed 12.5 N.
+4. **Measured contact force is not bounded by the watchdog.** The wrist sensor reads the
+   contact *reaction*, including impact transients the quasi-static `K·Δx` argument does not
+   cover, and the commanded wrench also carries a damping term no clamp bounds: 1712 of 4200
+   trials exceed 30 N, reaching 77.86 N — the overshoot lands inside the tick before the abort
+   fires.
 
 The bound is on the assist's **authority**, which is the property a safety argument needs, and
 it holds without reference to any measurement. It is not a bound on what the robot feels.

@@ -1,4 +1,4 @@
-"""LAB-81 — run the trained vision policy on the (re-rendered) recorded corpus.
+"""offline-eval — run the trained vision policy on the (re-rendered) recorded corpus.
 
 `data/recorded/` is 54 **real human vision-teleop** episodes recorded `noassist`
 (no correction applied → logged Δ ≈ 0, so there is no BC target to score against).
@@ -9,14 +9,14 @@ policy would inject** per channel — the first look at the vision policy consum
 real vision input.
 
 It is **open-loop** (the policy sees the recorded human states, does not drive the
-arm — closed-loop vision deploy is unbuilt, LAB-83) and the checkpoint is the weak
+arm — closed-loop vision deploy is unbuilt) and the checkpoint is the weak
 50-episode synthetic bring-up model, so this is a **pipeline / behavior** check, not
 a performance claim. `data/recorded/` has no `metadata.json`, so episodes are loaded
 directly (not via the dataset loader).
 
 Run from ``kevin/`` after rendering the recorded frames::
 
-    uv run python scripts/dev/lab81_recorded_vision_eval.py
+    uv run python scripts/dev/recorded_vision_eval.py
 """
 
 from __future__ import annotations

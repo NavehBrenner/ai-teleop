@@ -1,4 +1,4 @@
-"""Tests for the project console logger (LAB-48).
+"""Tests for the project console logger.
 
 Covers the module's contract: child-logger naming, idempotent configuration,
 level filtering, the optional file tee, and the rich-absent fallback. Output
@@ -103,7 +103,7 @@ def test_unknown_level_raises():
 
 
 # --------------------------------------------------------------------------
-# Console encoding (LAB-125) — `--help` must not die on a legacy code page
+# Console encoding — `--help` must not die on a legacy code page
 # --------------------------------------------------------------------------
 
 

@@ -1,4 +1,4 @@
-"""DAgger rollout-relabel + aggregation smoke (LAB-105).
+"""DAgger rollout-relabel + aggregation smoke.
 
 Exercises the *new* mechanism end-to-end on the static scene (no CadQuery, no
 render, no torch): that on-policy rollout records the **label provider's** Δ (not

@@ -1,4 +1,4 @@
-"""Report whether a free-play take's two halves can be cut side by side (LAB-125).
+"""Report whether a free-play take's two halves can be cut side by side.
 
 A take records the operator half (``hand.mp4``, written frame-by-frame on the **wall
 clock**) and the robot half (``episode.npz``, a trajectory in **sim time**, rendered

@@ -1,7 +1,7 @@
-"""M6 evaluation driver — paired ablation + human-only difficulty sweep (LAB-37).
+"""M6 evaluation driver — paired ablation + human-only difficulty sweep.
 
 The CLI front door to the paired-seed ablation infrastructure (``ai_teleop.eval``).
-It does **not** produce the publishable tables/plots — that is LAB-38; this writes the
+It does **not** produce the publishable tables/plots — that is reporting; this writes the
 flat per-trial CSV (one row per seed × config) those consume, and runs the human-only
 difficulty sweep used to find an operating point with headroom.
 
@@ -58,7 +58,7 @@ def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
 
 
 def _run_pair(args: argparse.Namespace) -> int:
-    # The M7 3-way ablation (LAB-83): human-only vs F/T-only vs vision, matched
+    # The M7 3-way ablation: human-only vs F/T-only vs vision, matched
     # seeds. Any subset is fine — supply only the checkpoints you have. `--residual-
     # checkpoint` stays as the single-treatment "residual" label (back-compat).
     specs = [TrialConfigSpec(label="human_only", checkpoint=None)]
@@ -148,14 +148,14 @@ def main() -> int:
         type=float,
         default=DEFAULT_MAX_DPOS,
         help="Controller command clamp (m/step). Default is the deployment (teleop) "
-        "config the corpus is generated under (LAB-98 re-anchor).",
+        "config the corpus is generated under (expert-brake re-anchor).",
     )
     pair.add_argument(
         "--joint-damping",
         type=float,
         default=DEFAULT_JOINT_DAMPING,
         help="Controller joint-space velocity damping kd. Default is the deployment "
-        "(teleop) config (LAB-98 re-anchor), not the Controller's careful-insertion 4.0.",
+        "(teleop) config (expert-brake re-anchor), not the Controller's careful-insertion 4.0.",
     )
     pair.add_argument(
         "--residual-checkpoint",
@@ -166,13 +166,13 @@ def main() -> int:
     pair.add_argument(
         "--ftonly-checkpoint",
         default=None,
-        help="F/T-only residual checkpoint → the 'ftonly' config (LAB-83 3-way ablation).",
+        help="F/T-only residual checkpoint → the 'ftonly' config (latency 3-way ablation).",
     )
     pair.add_argument(
         "--vision-checkpoint",
         default=None,
         help="Vision (image+F/T) residual checkpoint → the 'vision' config. The env's "
-        "wrist-camera capture is enabled automatically for it (LAB-83).",
+        "wrist-camera capture is enabled automatically for it.",
     )
     pair.add_argument(
         "--device",

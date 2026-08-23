@@ -1,11 +1,11 @@
-"""LAB-85: replaying a recorded episode reproduces it tick-for-tick.
+"""Replaying a recorded episode reproduces it tick-for-tick.
 
 The bug this guards: replay rebuilt the scene from CLI args (not the episode's own
 stored spec), so the recorded commands drove a *different* physical episode. The fix
 stamps the scene spec (``wall_seed``) into metadata and replays the recorded commands
 verbatim (dumb iterator) in the reconstructed scene. Same wall_seed + same commands ⇒
 the exact same trajectory — so the realized peg pose must match the recording to the
-step. Everything is keyed on ``wall_seed`` + arg-less ``reset()`` (LAB-84); the old
+step. Everything is keyed on ``wall_seed`` + arg-less ``reset()``; the old
 ``reset_episode_index`` / ``randomize`` reset model is gone.
 """
 
@@ -81,7 +81,7 @@ def test_replay_reproduces_recorded_trajectory(tmp_path):
 
         # Rebuild the exact scene from the stored wall_seed (the part that was broken —
         # it used to come from CLI args). Arg-less reset() lands on the same wall.
-        # The controller config is part of the episode's spec too (LAB-96).
+        # The controller config is part of the episode's spec too.
         assert meta["wall_seed"] is not None  # generated-wall episode
         env = make_env(EnvConfig(wall_seed=int(meta["wall_seed"])), render_mode="headless")
         controller = Controller(
@@ -105,7 +105,7 @@ def test_replay_reproduces_recorded_trajectory(tmp_path):
 
 
 def test_regenerated_baseline_matches_the_scored_baseline(tmp_path):
-    """LAB-88: the human-only baseline is reproducible from ``human_seed``, so `--policy
+    """The human-only baseline is reproducible from ``human_seed``, so `--policy
     noassist` (which regenerates the operator rather than replaying the assisted run's
     truncated commands) reproduces the exact baseline the dataset scored — length and all.
     Guards the viewer-artifact fix and the ``baseline_n_steps`` measurement.
@@ -150,7 +150,7 @@ def test_regenerated_baseline_matches_the_scored_baseline(tmp_path):
 
 
 def test_replay_is_faithful_under_finite_time_factor(tmp_path):
-    """LAB-88: the loop is always physics-rate (one command per physics step), so replay
+    """The loop is always physics-rate (one command per physics step), so replay
     reproduces the recording at any time_factor — the pacing/sleep path must not perturb
     physics. A large time_factor keeps the sleeps ~0 so the test stays fast; render=True
     (viewer) can't run in CI but only adds a sync that never touches sim data, so headless

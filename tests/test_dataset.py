@@ -1,4 +1,4 @@
-"""Tests for the M4 trajectory schema + data-generation driver (LAB-28).
+"""Tests for the M4 trajectory schema + data-generation driver.
 
 The schema round-trip is the contract M5 depends on; the driver smoke test runs
 a couple of short episodes end-to-end and confirms the files load with the right
@@ -61,7 +61,7 @@ def test_recorder_roundtrip(tmp_path):
         recorder.add(**_synthetic_row(step))
     path = tmp_path / "episode_00000.npz"
     # Deliberately partial: this exercises the recorder's round-trip, not the corpus
-    # spec, and mirrors the sparse blobs pre-LAB-96 episodes carry.
+    # spec, and mirrors the sparse blobs pre-deployment-config episodes carry.
     recorder.save(path, metadata={"master_seed": 0, "episode_index": 0})  # type: ignore[typeddict-item]
 
     columns, metadata = load_episode(path)
@@ -147,7 +147,7 @@ def test_generate_dataset_writes_layout_and_metadata(tmp_path):
     assert "expert_lift" in summary
     assert len(summary["episodes"]) == 2
 
-    # The corpus config (incl. the LAB-96 deployment-controller + speed-draw
+    # The corpus config (incl. the deployment-config deployment-controller + speed-draw
     # knobs) is echoed into metadata.json so the dataset regenerates from it.
     config = summary["config"]
     assert config["max_dpos"] == 0.3 and config["joint_damping"] == 1.5
@@ -158,7 +158,7 @@ def test_generate_dataset_writes_layout_and_metadata(tmp_path):
     _, ep_meta = load_episode(paths[0])
     assert "baseline_terminal_reason" in ep_meta
     assert isinstance(ep_meta["baseline_success"], bool)
-    # ...the controller/operator config replay rebuilds from (LAB-96)...
+    # ...the controller/operator config replay rebuilds from...
     assert ep_meta["joint_damping"] == 1.5
     assert ep_meta["speed_lognormal_median"] == pytest.approx(0.09)
     assert ep_meta["speed_lognormal_sigma"] == pytest.approx(0.76)
@@ -216,10 +216,10 @@ def test_regenerate_from_metadata_reproduces_episodes(tmp_path):
 
 
 def test_fingerprint_of_legacy_config_is_unchanged():
-    # Pre-LAB-96 metadata carries no joint_damping / speed_lognormal_* keys, and
+    # Pre-deployment-config metadata carries no joint_damping / speed_lognormal_* keys, and
     # its committed fingerprint was hashed over the old five-field payload. The
     # legacy config (kd=4.0, speed draw disabled) must keep producing that exact
-    # hash, or every committed pre-LAB-96 manifest would spuriously mismatch on
+    # hash, or every committed pre-deployment-config manifest would spuriously mismatch on
     # regeneration. Pinned to data/dataset_6's committed fingerprint.
     dataset_6 = GenerationConfig(
         seed=6,
@@ -233,14 +233,14 @@ def test_fingerprint_of_legacy_config_is_unchanged():
     )
     legacy = replace(dataset_6, joint_damping=4.0, speed_lognormal_median=0.0).fingerprint()
     assert legacy == "b8dafbe9171f768f"
-    # And the LAB-96 knobs do enter the hash once they leave the legacy config.
+    # And the deployment-config knobs do enter the hash once they leave the legacy config.
     assert (
         replace(dataset_6, joint_damping=1.5, speed_lognormal_median=0.09).fingerprint() != legacy
     )
 
 
 def test_fingerprint_of_legacy_delta_clamp_is_unchanged():
-    # Pre-LAB-100 metadata carries no delta_clamp key — those corpora were
+    # Pre-clamp-recalibration metadata carries no delta_clamp key — those corpora were
     # clamped at the then-module-wide ±2 cm bound. The legacy bound must keep
     # producing the exact committed hash (pinned to data/dataset_8's), and the
     # knob must enter the hash once it leaves the legacy value.

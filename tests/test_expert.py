@@ -1,4 +1,4 @@
-"""Unit tests for the analytical privileged-info expert (M4 / LAB-27).
+"""Unit tests for the analytical privileged-info expert (M4).
 
 The headline property is *far-field zero by construction* — the distance gate
 makes ``Δ* == 0`` whenever the tip is at or beyond ``d_far`` from the hole. The
@@ -29,7 +29,7 @@ _PEG_HALF_LENGTH = 0.030
 
 def _peg_quat_pointing_x() -> np.ndarray:
     # Rotate local +z onto world +x: 90° about world +y (R_y(π/2): z ↦ +x).
-    # (LAB-98 correction: this used -y, which maps z ↦ -x — the peg pointed 180°
+    # (expert-brake correction: this used -y, which maps z ↦ -x — the peg pointed 180°
     # AWAY from the bore, so `aligned` could never fire in these fixtures.)
     quat = np.zeros(4)
     mujoco.mju_axisAngle2Quat(quat, np.array([0.0, 1.0, 0.0]), np.pi / 2)
@@ -143,7 +143,7 @@ def test_orientation_delta_rotates_peg_axis_toward_bore():
 
 
 # ---------------------------------------------------------------------------
-# Approach-speed brake (LAB-98)
+# Approach-speed brake
 # ---------------------------------------------------------------------------
 
 
@@ -168,7 +168,7 @@ def test_brake_retracts_deep_command_lead():
 
     unbraked = Expert(d_near=0.05, d_far=0.2)
     delta_default = unbraked.get_delta(observation, _deep_command())
-    # Default (brake_gain=0) is the pre-LAB-98 law: aligned advance pushes +x.
+    # Default (brake_gain=0) is the pre-expert-brake law: aligned advance pushes +x.
     assert delta_default.delta_position[0] > 0.0
 
 
@@ -215,7 +215,7 @@ def test_delta_respects_clamp_bounds():
 
 
 def test_delta_respects_explicit_max_delta_position():
-    # Data generation passes the fingerprinted per-corpus bound (LAB-100): the
+    # Data generation passes the fingerprinted per-corpus bound: the
     # same saturating state must clamp exactly at whichever bound is supplied,
     # so regenerating a legacy corpus reproduces its recorded ±2 cm labels
     # whatever the module-wide deployed bound is.

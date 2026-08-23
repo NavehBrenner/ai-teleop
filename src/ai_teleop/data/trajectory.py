@@ -11,7 +11,7 @@ Build these paths with the ``episode_dir`` / ``episode_npz_path`` /
 
 The on-disk trajectory format is **NPZ** (numpy's ``savez``): no extra
 dependencies, available everywhere CI runs, and accepted by the M5 dataset
-loader (LAB-32). Each per-step column is stored as a stacked ``(T, …)`` array;
+loader. Each per-step column is stored as a stacked ``(T, …)`` array;
 per-episode metadata is a JSON string under the ``metadata`` key.
 
 The schema is the *only* thing M5 depends on, so it is versioned

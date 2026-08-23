@@ -1,6 +1,6 @@
 """Per-frame breakdown of why the open-palm recenter / centering hold never completes.
 
-LAB-90 follow-up. Both stereohand's demo (``--recenter``) and kevin's startup centering
+Camera-fps follow-up. Both stereohand's demo (``--recenter``) and kevin's startup centering
 (``calibrate_neutral``) gate on the same two per-frame tests over the triangulated metric
 landmarks — >=3 fingers extended (tip->wrist > 1.4x knuckle->wrist) and palm squareness
 (|normal_z| > 0.7*|normal|) — plus a hold that restarts whenever the palm drifts >2 cm from

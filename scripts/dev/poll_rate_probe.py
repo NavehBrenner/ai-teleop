@@ -1,5 +1,5 @@
 """Isolate whether the *polling rate* itself, not the MuJoCo viewer, degrades stereohand's
-effective tracking rate when embedded in kevin (LAB-74 debug: native-Windows fps drop,
+effective tracking rate when embedded in kevin (stereo-rig debug: native-Windows fps drop,
 continued from `viewer_gil_probe.py`).
 
 `viewer_gil_probe.py` already ruled out the viewer's own render thread: fresh fps was

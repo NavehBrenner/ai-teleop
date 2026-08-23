@@ -61,18 +61,23 @@ from ai_teleop.common.log import (  # noqa: E402
 
 log = get_logger("trial-kpis")
 
-# Stiffness (N/m) on the translational axes and the per-step command clamp (m), both from
-# `control/backbone.py`. The largest restoring force the controller can *command* — a bound
-# on the command, which is not the same thing as a bound on the measured contact reaction.
+# Stiffness (N/m) on the translational axes (`control/backbone.py`) and the residual's own
+# per-step position clamp (m, `domain/delta.py`). What this marks is the bound on the
+# *assist's* share of the commanded restoring force — not a bound on the measured reaction,
+# and not a bound on the total command.
 #
-# The clamp is applied to the **Euclidean norm** of the position delta (`backbone.py`:
-# `if norm > max_dpos_per_step: delta_pos *= max_dpos_per_step / norm`), so ‖Δx‖ ≤ 0.025 m
-# and the bound is `λ_max · ‖Δx‖` = 500 × 0.025 = 12.5 N. Taking each axis at the full clamp
-# independently (the root-sum-square, 18.9 N) describes a Δx of norm 0.043 m, which the
-# clamp makes unreachable — it is a valid bound but a 51% loose one.
+# Both clamps apply to the **Euclidean norm**. Projection onto a ball is non-expansive, so a
+# residual of norm <= MAX_DELTA_POSITION moves the commanded restoring force by at most
+# `lambda_max * MAX_DELTA_POSITION` = 500 * 0.03 = 15 N, whatever the controller's max_dpos is.
+#
+# Do NOT compute this from `backbone._DEFAULT_MAX_DPOS` (0.025 m): that is the Controller's
+# careful-insertion default, and nothing in this project is measured under it. Data generation,
+# `eval/ablation.py` and `--input vision` all run the deployment config at max_dpos = 0.3, where
+# the *total* commanded force bound is 500 * 0.3 = 150 N. An earlier revision published 12.5 N
+# here from the 0.025 default; the realised commanded force in a routine eval trial is ~33 N.
 STIFFNESS_TCP = (400.0, 400.0, 500.0)
-MAX_DPOS_PER_STEP = 0.025
-COMMAND_FORCE_BOUND = max(STIFFNESS_TCP) * MAX_DPOS_PER_STEP
+MAX_DELTA_POSITION = 0.03
+ASSIST_FORCE_BOUND = max(STIFFNESS_TCP) * MAX_DELTA_POSITION
 
 # The eval observer aborts a trial whose contact force exceeds this (`eval/observer.py`).
 FORCE_ABORT_THRESHOLD = 30.0
@@ -80,7 +85,7 @@ FORCE_ABORT_THRESHOLD = 30.0
 # Marked as vertical reference lines on the force panels only — no other KPI has a
 # threshold the controller or the harness enforces.
 FORCE_THRESHOLDS: tuple[tuple[float, str, str], ...] = (
-    (COMMAND_FORCE_BOUND, "#1a9641", "-"),
+    (ASSIST_FORCE_BOUND, "#1a9641", "-"),
     (FORCE_ABORT_THRESHOLD, "#000000", "--"),
 )
 
@@ -178,8 +183,8 @@ def caption(metric: MetricSpec) -> str:
     """The figure's subtitle — the thresholds for force, the sampling rule elsewhere."""
     if metric.key == "peak_contact_force":
         return (
-            f"green: commanded-force bound {COMMAND_FORCE_BOUND:.1f} N "
-            f"(stiffness × command clamp)   ·   "
+            f"green: assist-authority bound {ASSIST_FORCE_BOUND:.1f} N "
+            f"(stiffness × the residual's 0.03 m clamp)   ·   "
             f"black dashed: {FORCE_ABORT_THRESHOLD:.0f} N watchdog abort"
         )
     if metric.success_only:

@@ -1,4 +1,4 @@
-"""Per-training-run artifact folder (LAB-34) — make every run self-documenting.
+"""Per-training-run artifact folder — make every run self-documenting.
 
 Each training run writes its own directory so a run is fully reconstructable and
 inspectable after the fact (and so runs can be compared / steered without re-reading

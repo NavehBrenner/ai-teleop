@@ -1,4 +1,4 @@
-"""Unit tests for the M6 passive-observer harness (LAB-36).
+"""Unit tests for the M6 passive-observer harness.
 
 The observer is driven exactly as ``run_episode`` drives it — called with the
 ``(step, observation, base_command, delta, command)`` signature — so these feed
@@ -248,7 +248,7 @@ def test_observer_runs_as_step_callback_through_run_episode():
     Proves the observer consumes live ``Observation``s with the runner's exact
     callback signature and emits a well-formed ``TrialKPIs`` — the integration
     contract. (Whether a real episode *seats* is a 72%-expert / stochastic-scene
-    question covered by LAB-37's ablation, not asserted here.)
+    question covered by ablation's ablation, not asserted here.)
     """
     if not _SCENE_PATH.exists():
         pytest.skip(f"scene file not found: {_SCENE_PATH}")
@@ -285,7 +285,7 @@ def test_observer_runs_as_step_callback_through_run_episode():
 
 
 # ---------------------------------------------------------------------------
-# Near-miss KPI: closest approach to the hole (LAB-121)
+# Near-miss KPI: closest approach to the hole
 # ---------------------------------------------------------------------------
 
 
@@ -374,7 +374,7 @@ def _module_dir(module_name: str) -> pathlib.Path:
 
 
 # The eval *measurement core* — the observer + its record/trace contracts — must
-# never reach into the controller (the LAB-36 DIP pillar: trial/success/KPI concepts
+# never reach into the controller (the observer DIP pillar: trial/success/KPI concepts
 # stay independent of the control stack). `ablation.py` is deliberately exempt: it is
 # the experiment *orchestrator* and, exactly like `data/generate.py`, composes
 # SimEnv + Controller + operator + assist to drive `run_episode`. The load-bearing

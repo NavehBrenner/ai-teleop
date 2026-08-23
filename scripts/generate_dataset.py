@@ -64,7 +64,7 @@ def main() -> int:
         type=float,
         default=DEFAULTS.max_dpos,
         help="Controller command clamp in m/step. Default is the deployment (teleop) "
-        "config the recorded reference corpus ran under (LAB-96), not the Controller's "
+        "config the recorded reference corpus ran under, not the Controller's "
         "careful-insertion 0.025.",
     )
     parser.add_argument(
@@ -72,7 +72,7 @@ def main() -> int:
         type=float,
         default=DEFAULTS.joint_damping,
         help="Controller joint-space velocity damping kd. Default is the deployment "
-        "(teleop) config (LAB-96), not the Controller's careful-insertion 4.0.",
+        "(teleop) config, not the Controller's careful-insertion 4.0.",
     )
     parser.add_argument(
         "--expert-d-far",
@@ -84,8 +84,8 @@ def main() -> int:
         "--expert-brake-gain",
         type=float,
         default=DEFAULTS.expert_brake_gain,
-        help="Expert approach-speed brake gain (LAB-98): allowed command lead is "
-        "gain * distance + floor; 0 disables the brake (pre-LAB-98 aim-only expert).",
+        help="Expert approach-speed brake gain: allowed command lead is "
+        "gain * distance + floor; 0 disables the brake (pre-expert-brake aim-only expert).",
     )
     parser.add_argument(
         "--expert-brake-lead-floor",
@@ -98,7 +98,7 @@ def main() -> int:
         type=float,
         default=DEFAULTS.speed_lognormal_median,
         help="Median (m/s) of the operator's per-episode lognormal max_approach_speed "
-        "draw (LAB-96); 0 disables the draw (fixed max_approach_speed).",
+        "draw; 0 disables the draw (fixed max_approach_speed).",
     )
     parser.add_argument(
         "--speed-lognormal-sigma",
@@ -111,7 +111,7 @@ def main() -> int:
         type=float,
         default=DEFAULTS.delta_clamp,
         help="Shared expert/policy per-step Δ-position bound (m) — the label bound BC "
-        "clones and the brake's authority ceiling (LAB-100). Pre-LAB-100 corpora used 0.02.",
+        "clones and the brake's authority ceiling. Pre-clamp-recalibration corpora used 0.02.",
     )
     parser.add_argument(
         "--force",

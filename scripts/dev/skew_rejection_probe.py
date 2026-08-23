@@ -1,5 +1,5 @@
 """Isolate capture-timestamp skew rejection from MediaPipe detection misses
-(LAB-74 debug, continued from `viewer_gil_probe.py` / `poll_rate_probe.py` /
+(stereo-rig debug, continued from `viewer_gil_probe.py` / `poll_rate_probe.py` /
 `visible_sensor_health_probe.py`).
 
 Every prior probe in this investigation measured the *fused* present/absent rate, which
@@ -24,7 +24,7 @@ The rejections this probe counts were real, and raising the tolerance did make t
 -- but they were only *harmful* because of what the consumer did with them. stereohand's
 tracker woke on a different predicate than `read()` enforced and then published `_ABSENT`
 for each rejected pair, i.e. "the hand is gone", which is what turned a timing artifact into
-78% drop-out and a clutch releasing twice a second (LAB-122, fixed in stereohand v0.2.0).
+78% drop-out and a clutch releasing twice a second (fixed in stereohand v0.2.0).
 Widening the gate hid the mismatch and cost cross-view alignment.
 
 The general lesson, worth keeping: **a probe that measures one layer cannot tell you whether

@@ -1,4 +1,4 @@
-"""Wrist-image CNN encoder (LAB-81) — the Phase-2 vision stream.
+"""Wrist-image CNN encoder — the Phase-2 vision stream.
 
 Implements `docs/design/policy-model.md` **Decision B**: a small torchvision
 backbone (pretrained-init by default, fine-tuned end-to-end) that maps a
@@ -86,14 +86,14 @@ class ImageEncoder(nn.Module):
         # Stage-C memory lever (set by the trainer, off by default): recompute the
         # backbone's forward activations in backward instead of storing them. This is
         # what lets an *unfrozen* backbone fine-tune on the 8 GB box — fine-tuning
-        # otherwise retains the activation graph for all B·F frames and OOMs (LAB-82).
+        # otherwise retains the activation graph for all B·F frames and OOMs.
         # A no-op when frozen (no backbone grad to trade) or in eval (no backward).
         self.use_gradient_checkpoint = False
         # Stage-C memory lever (set by the trainer, 0 = off): cap how many frames go
         # through the backbone in one forward inside `encode_frames`. Checkpointing the
         # *whole* B·F-frame call still recomputes all B·F at once in backward, so peak
         # VRAM stays pinned at B·F; encoding in chunks of this size bounds peak to one
-        # chunk. Same total compute, same "encode each unique frame once" (LAB-102).
+        # chunk. Same total compute, same "encode each unique frame once".
         self.encode_chunk_size = 0
 
         if config.freeze_image_encoder:

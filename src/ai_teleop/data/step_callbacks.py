@@ -42,7 +42,7 @@ class _SeatingMetrics:
     The geometry (penetration / lateral error / distance) comes from the shared
     ``common.seating`` definition so generation and the M6 eval harness cannot drift on
     what "seated" *measures* — the rule each applies to it does differ (see
-    :func:`episode_terminal_reason`); the force magnitude is data-generation's own
+    :func:`episode_terminal_reason`); the force magnitude is data generation's own
     concern. The termination *policy* is the module-level
     :func:`episode_terminal_reason` so any caller can reuse it without coupling to
     this private struct.
@@ -75,7 +75,7 @@ def episode_terminal_reason(
     :class:`~ai_teleop.eval.observer.TrialObserver` scores the same geometry under a
     stricter rule (seating must be *sustained*; a 30 N raw-force cap and no ``locked``
     check), so corpus success rates are an upper bound on eval success rates for the
-    same rollout. LAB-42 finding H-4; the asymmetry is spelled out in ``observer.py``.
+    same rollout. project-review finding H-4; the asymmetry is spelled out in ``observer.py``.
     SUCCESS once seated; FORCE_ABORT if the
     controller's force-cap watchdog has latched HOLD (``locked`` — the arm is
     frozen, so further steps are dead frames) or the raw wrist force exceeds
@@ -112,7 +112,7 @@ class EpisodeLogger:
     F/T-only M5 corpus is generated with rendering off, and ``render_every`` is
     the cadence knob M7 will calibrate (1 ⇒ a frame per trajectory row).
 
-    **DAgger relabel mode (LAB-105).** When ``label_provider`` is set, the row's Δ
+    **DAgger relabel mode.** When ``label_provider`` is set, the row's Δ
     target is the *label provider's* correction at the visited state
     (``label_provider.get_delta(obs, base_command)``) rather than the ``delta`` the
     acting assist produced — the on-policy expert-relabel that closes the BC
@@ -199,7 +199,7 @@ class EpisodeLogger:
 
         # DAgger: a force-latched terminal state is a dead frame — the arm is frozen
         # in HOLD, so the expert's correction there is unrealizable. Drop it rather
-        # than train the clone on it (LAB-105 build note).
+        # than train the clone on it (perception-probe build note).
         if reason is TerminalReason.FORCE_ABORT and self._label_provider is not None:
             self.terminal_reason = reason
             return True

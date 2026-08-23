@@ -1,6 +1,6 @@
-"""LAB-95 probe: scripted raw rollouts, measured with the recorded-corpus forensics.
+"""contact-forensics probe: scripted raw rollouts, measured with the recorded-corpus forensics.
 
-Companion to `lab95_recorded_forensics.py` (which established that recorded
+Companion to `recorded_forensics.py` (which established that recorded
 force-aborts are contact-time transients: the real operator's command is still
 sweeping at ~120-260 mm/s when the peg physically meets the wall, because real
 operators aim *through* the wall — bore-axial cmd-vs-ee error ~45 mm — so the
@@ -18,7 +18,7 @@ contact signature (fast contact-time command, 30N+ transient, force_abort rate
 ~54%, force-abort-vs-success motion differential ~+45%) emerges under a deep
 aim, the lever is validated and worth productizing in the operator.
 
-Rollout wiring mirrors `lab92_raw_motion_probe.py` (raw NoAssist +
+Rollout wiring mirrors `raw_motion_probe.py` (raw NoAssist +
 TerminationProbe — see there for why `eval.ablation.run_trial` is not used).
 
 RESULT (2026-07-06): the aim-depth lever turned out to be moot — the scripted
@@ -28,9 +28,9 @@ the recorded corpus was actually captured under — data-gen uses 4.0/0.025,
 which pins realized contact speed at ~55 mm/s and structurally suppresses the
 force-abort mechanism) plus (b) a per-episode lognormal `max_approach_speed`
 draw (`--speed-lognorm-median 0.09..0.12 --speed-lognorm-sigma 0.76`). See
-`project-wiki/synthesis/scripted-vs-real-operator.md` (LAB-95 section).
+`project-wiki/synthesis/scripted-vs-real-operator.md` (contact-forensics section).
 
-Run: uv run python scripts/dev/lab95_scripted_contact_probe.py --seeds 40 \
+Run: uv run python scripts/dev/scripted_contact_probe.py --seeds 40 \
     --joint-damping 1.5 --max-dpos 0.3 --speed-lognorm-median 0.09
 """
 
@@ -44,7 +44,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import numpy as np  # noqa: E402
-from lab95_recorded_forensics import contact_forensics, print_forensics_table  # noqa: E402
+from recorded_forensics import contact_forensics, print_forensics_table  # noqa: E402
 
 from ai_teleop.common.geometry import axis_from_quat  # noqa: E402
 from ai_teleop.control import Controller  # noqa: E402
@@ -58,7 +58,7 @@ from ai_teleop.sim.runner import run_episode  # noqa: E402
 _TARGET_HOLE_INDEX = 0
 _MAX_STEPS = 6000  # matches data-gen's DEFAULT_MAX_STEPS (~12s @ 500Hz)
 _SUCCESS_DEPTH = 0.015
-_LATERAL_TOLERANCE = 0.010  # post-LAB-77 (data.generate.DEFAULT_LATERAL_TOLERANCE)
+_LATERAL_TOLERANCE = 0.010  # post-difficulty-calibration (data.generate.DEFAULT_LATERAL_TOLERANCE)
 _FORCE_CAP = 50.0
 
 
@@ -101,10 +101,10 @@ def run_one(
         # Per-episode approach-speed draw: the recorded operator's realized
         # contact speed varies ~4x across episodes (26-105 mm/s p10-p90), and
         # that variance IS the force-abort signature (fast episodes abort).
-        # Post-LAB-96 the lognormal draw is productized inside the operator
+        # Post-deployment-config the lognormal draw is productized inside the operator
         # itself (drawn from its seeded RNG, after the bias/careless draws), so
         # the probe routes through the shipped code path — n>=40 runs verify the
-        # corpus recipe, not a simulation of it. (The original LAB-95 probe drew
+        # corpus recipe, not a simulation of it. (The original contact-forensics probe drew
         # externally from a separate RNG stream, so per-seed numbers shift
         # slightly vs the RESULT above; the statistics are the same recipe.)
         human = ScriptedNoisyHuman(
@@ -162,7 +162,7 @@ def main() -> None:
     # Controller config. Defaults match data-gen (`data.generate`); the recorded
     # live-teleop sessions ran `run_episode.py`'s live-input config instead:
     # --max-dpos 0.3 --joint-damping 1.5 (see scripts/run_episode.py) — the
-    # LAB-95 contact-time-dynamics candidate confound.
+    # contact-forensics contact-time-dynamics candidate confound.
     ap.add_argument("--max-dpos", type=float, default=0.025)
     ap.add_argument("--joint-damping", type=float, default=4.0)
     # Per-episode lognormal draw on max_approach_speed (m/s); 0 disables (keep

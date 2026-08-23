@@ -1,4 +1,4 @@
-"""Tests for per-run training artifacts (LAB-34) — ``policy.run_artifacts``.
+"""Tests for per-run training artifacts — ``policy.run_artifacts``.
 
 A run folder must end up with the four files (checkpoint, metadata, history json +
 png), the checkpoint must reload into a deployable ``LearnedResidual``, and the

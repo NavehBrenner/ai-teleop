@@ -1,4 +1,4 @@
-"""Tests for ``LearnedResidual`` (LAB-34) — the trained residual as an AssistProvider.
+"""Tests for ``LearnedResidual`` — the trained residual as an AssistProvider.
 
 Covers the M5 seam-integration acceptance: protocol conformance, the exact
 input-assembly contract with the M4 loader (the silent-covariate-shift guard),
@@ -215,7 +215,7 @@ def test_checkpoint_round_trips_outputs(tmp_path: Path):
 
 def test_checkpoint_with_retired_config_key_still_loads(tmp_path: Path):
     """A checkpoint carrying a config key the current PolicyConfig no longer defines
-    must still load (LAB-110 / A-3).
+    must still load (finding A-3).
 
     Retiring a knob — ``use_tanh_head`` was the first — otherwise strands every
     checkpoint trained before the removal, since ``PolicyConfig(**payload)`` raises on

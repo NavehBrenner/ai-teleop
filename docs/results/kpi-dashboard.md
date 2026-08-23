@@ -166,7 +166,7 @@ uv run python scripts/report_results.py \
   --trials docs/results/phase-1/official-evals/eval_official_ft_s0.csv
 
 # The committed Phase-1 records (30-seed slice, flat-wall, seed-variance, H-C) live here:
-ls docs/results/phase-1/*.csv docs/results/phase-1/lab114/
+ls docs/results/phase-1/*.csv docs/results/phase-1/seed-variance/
 
 # The official multi-seed success distributions (noise-floor.md §5.5), all recipes over seeds:
 uv run python scripts/dev/official_kpi/aggregate.py       # reads runs/eval_official_*
@@ -228,12 +228,12 @@ committed under [`docs/results/checkpoints/`](checkpoints/) (retention policy: t
 | The 2026-07-07 M6 **checkpoint** is gone | H-8 (`outputs/` gitignored) | 70.0% cannot be re-evaluated. |
 | That run's **corpus** was overwritten in place | H-B / G-4 | `dataset_9`'s trajectories are unrecoverable. |
 | `dataset_0`/`dataset_1` fingerprints predate `generated_walls` | C-1a | Corpora predating the `generated_walls` fingerprint do not regenerate byte-identically. |
-| The 2026-07-07 M6 **eval sets** (`band_scale0.4`, `flatwall_scale1.0`) were never committed | — | Their rows in the ledger cannot be re-derived; `scripts/dev/lab114_seed_spread.py` needs them and will not run without them. The official-run numbers, which the results rest on, are unaffected — those CSVs are committed. |
+| The 2026-07-07 M6 **eval sets** (`band_scale0.4`, `flatwall_scale1.0`) were never committed | — | Their rows in the ledger cannot be re-derived; `scripts/dev/seed_spread.py` needs them and will not run without them. The official-run numbers, which the results rest on, are unaffected — those CSVs are committed. |
 
 The reconstruction that built §3–§4 is a read-only sweep over `outputs/policy/runs/`,
 `runs/eval*/`, and `data/dataset_*/` — see the seed-variance evidence scripts
-(`scripts/dev/lab114_corpus_identity.py`, `lab114_weight_distance.py`) and the report audit
-(`scripts/dev/lab42_report_audit.py`).
+(`scripts/dev/corpus_identity.py`, `weight_distance.py`) and the report audit
+(`scripts/dev/report_audit.py`).
 
 ---
 

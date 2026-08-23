@@ -80,7 +80,7 @@ def test_bounding_radius_includes_chamfer():
 def test_header_is_the_commit_marker(tmp_path):
     """A cache dir with meshes + xml but no ``header.json`` (a torn entry, or an
     interrupted write from older non-atomic code) must be a miss; the same dir
-    becomes a hit once the matching header is present (LAB-97)."""
+    becomes a hit once the matching header is present."""
     # `generate` imports the CAD/mesh stack at module load, so this needs the
     # scenegen extra even though `_load_cached_scene` itself only touches files.
     pytest.importorskip("cadquery")
@@ -157,7 +157,7 @@ def test_generated_bore_is_open_and_wall_is_solid(tmp_path, mujoco_mod):
 def test_republish_over_existing_entry_is_safe(tmp_path, mujoco_mod):
     """Building into a dir that already holds a committed entry (the atomic-
     publish 'adopt the winner' path) leaves a loadable cache — it neither
-    corrupts the existing entry nor raises (LAB-97)."""
+    corrupts the existing entry nor raises."""
     out_dir = tmp_path / "wall_x"
     _build(out_dir)  # first publish: rename staging into place
     scene = _build(out_dir)  # out_dir committed -> adopt path in _publish_atomically

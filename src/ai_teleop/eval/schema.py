@@ -1,7 +1,7 @@
 """Per-trial KPI record — the behavior-free on-disk contract for `eval/`.
 
-This is the unit the passive-observer harness (LAB-36) emits and the ablation
-runner (LAB-37) / reporting (LAB-38) consume. Kept implementation-free (no sim,
+This is the unit the passive-observer harness emits and the ablation
+runner / reporting consume. Kept implementation-free (no sim,
 control, or numpy import) so any layer can depend on it without a cycle —
 mirrors the rationale for ``data/schema.py``.
 
@@ -15,12 +15,12 @@ field                             type   role
 ``peak_contact_force``            N      safety proxy — measured, not bounded
 ``contact_events``                count  supporting
 ``jerk_integral``                 —      trajectory smoothness (∫|jerk|dt)
-``min_tip_hole_distance_mm``      mm     near-miss — closest approach (LAB-121)
+``min_tip_hole_distance_mm``      mm     near-miss — closest approach
 ``penetration_at_closest_mm``     mm     diagnostic (axial split of the above)
 ``lateral_error_at_closest_mm``   mm     diagnostic (lateral split of the above)
 ================================  =====  =================================
 
-The near-miss trio (LAB-121) exists because every other field is either conditioned on
+The near-miss trio exists because every other field is either conditioned on
 seating or outcome-agnostic, so an assist that improves *approach accuracy* without
 crossing the seating threshold scores identically to one that flails. All three are read
 off the **same** step — the one minimizing tip→hole distance — so they describe one
@@ -76,8 +76,8 @@ class TrialKPIs:
     # Pairing keys — set by the ablation runner, absent on a standalone observe.
     seed: int | None = None
     config_label: str | None = None
-    # Near-miss trio (LAB-121), all read off the step of closest approach, in MILLIMETRES.
-    # Optional with a ``None`` default so records predating LAB-121 — and the trace-less
+    # Near-miss trio, all read off the step of closest approach, in MILLIMETRES.
+    # Optional with a ``None`` default so records predating near-miss — and the trace-less
     # ``trials.csv`` the DAgger loop writes — still load; appended last so positional
     # construction keeps working.
     min_tip_hole_distance_mm: float | None = None

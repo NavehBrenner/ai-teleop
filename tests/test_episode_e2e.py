@@ -1,4 +1,4 @@
-"""M3 acceptance: end-to-end runner + dummy-Δ seam injection (LAB-25).
+"""M3 acceptance: end-to-end runner + dummy-Δ seam injection.
 
 Two checks, both driving the real composed loop (`run_episode`) headless:
 

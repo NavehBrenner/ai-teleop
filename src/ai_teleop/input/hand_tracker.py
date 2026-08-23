@@ -1,4 +1,4 @@
-"""Stereo hand sensor — metric 3-D landmarks → hand-pose readings (LAB-50/74).
+"""Stereo hand sensor — metric 3-D landmarks → hand-pose readings.
 
 The off-the-shelf **sensor** layer per `docs/design-document.md` §4.4: two calibrated webcams
 feed the :mod:`stereohand` package, which triangulates each frame into 21 *metric*
@@ -295,7 +295,7 @@ class StereoHandSource:
         # still in frame. Raising max_skew_s only widened the gate enough to hide the
         # mismatch, while trading away cross-view alignment during fast hand motion.
         #
-        # Fixed in stereohand v0.2.0 (LAB-122): one shared `pair_status()` predicate, and
+        # Fixed in stereohand v0.2.0: one shared `pair_status()` predicate, and
         # `_ABSENT` published only for a genuinely stalled camera (`max_age_s`). On >= 0.2.0
         # a high drop-out is no longer evidence about skew at all -- look at per-view
         # detection (lighting, shared field of view) instead. Leave this at the default

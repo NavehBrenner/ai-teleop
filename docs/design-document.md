@@ -64,17 +64,26 @@ Three layers, strongest first. The first is the one that matters: it is mechanic
 even if the learned policy emits garbage.
 
 1. **Passive compliance.** The commanded restoring force is bounded by stiffness × the per-step
-   command clamp. The clamp applies to the Euclidean **norm** of the position delta
-   (`backbone.py`), so ‖Δx‖ ≤ 0.025 m and **‖K·Δx‖ ≤ λ_max·‖Δx‖ = 500 × 0.025 = 12.5 N**. No command —
-   including a maximally wrong network output — can ask for more than that.
+   command clamp, applied to the Euclidean **norm** of the position delta (`backbone.py`). Under
+   the deployment config that every measurement in this project runs at (`max_dpos = 0.3` —
+   data generation, evaluation and live teleop alike), ‖Δx‖ ≤ 0.3 m and
+   **‖K·Δx‖ ≤ λ_max·‖Δx‖ = 500 × 0.3 = 150 N**. That is a bound on the *total* command, operator
+   included, and it is loose. The tight, and safety-relevant, bound is on the **assist's share**:
+   see layer 2. (An earlier revision of this document published 12.5 N here, computed from the
+   Controller's `careful-insertion` default of 0.025 m — a configuration nothing was measured
+   under.)
    **This bounds the command, not the measurement.** The wrist F/T sensor reads the contact
    *reaction*, which carries impact transients the quasi-static argument does not cover; measured
    peaks reach 77.86 N on trials that hit the wall hard. Layer 3 exists precisely because layer 1
    does not bound that. Measured distributions:
    [`results/within-seed.md`](./results/within-seed.md).
-2. **Hard clamps on the residual.** `clamp_delta` bounds every correction to **±3 cm position,
-   ±10° orientation, ±5 N grip force per step**, applied *before* the controller sees the
-   augmented command (`domain/delta.py`).
+2. **Hard clamps on the residual — the bound that matters.** `clamp_delta` bounds every
+   correction to **±3 cm position, ±10° orientation, ±5 N grip force per step**, applied
+   *before* the controller sees the augmented command (`domain/delta.py`). Because projection
+   onto the command clamp's ball is non-expansive, a residual of norm ≤ 0.03 m can move the
+   commanded restoring force by at most **λ_max × 0.03 = 15 N** — whatever `max_dpos` is set to,
+   and however wrong the network is. This is the assist-authority guarantee the safety argument
+   rests on, and unlike layer 1 it is configuration-independent.
 3. **Trip-and-lock watchdog.** `control/lock.py` monitors the wrist force; exceeding the cap
    (50 N in data generation, 30 N in evaluation) drives the controller into **hold lock** and the
    trial is recorded as a failure. That is its only automatic trip — the step budget ends the
@@ -413,7 +422,8 @@ central artifact and its shape was not obvious either.
 1. **It is the only one whose safety claim is arithmetic rather than statistical.** Under A and B
    the answer to "what if the network is wrong?" is a measurement. Under C it is arithmetic: the Δ
    is hard-clamped and the backbone is compliant, so a 100 %-wrong output cannot enlarge its own
-   authority — the *commanded* restoring force stays under 12.5 N whatever the network emits.
+   authority — the assist can move the *commanded* restoring force by at most 15 N whatever
+   the network emits.
    That bounds the command, not the measured contact reaction (§1.4). The property survived every
    negative result in the project (§6) and is the standing contribution.
 2. **It matches the problem statement.** The claim is about *teleoperation* — that a human plus a
@@ -518,7 +528,7 @@ not per-step i.i.d. Gaussian, which would reduce the expert to a trivial noise-n
 |---|---|---|
 | **Insertion success** | bool | The headline metric. Scored on *sustained* seating, not first contact. |
 | **Time-to-insert** | s | Efficiency; distinguishes "succeeded" from "succeeded before the budget ran out". |
-| **Peak contact force** | N | Safety proxy — a **measurement**. What the architecture guarantees is the assist's *authority* (≤12.5 N commanded), not this number (§1.4). |
+| **Peak contact force** | N | Safety proxy — a **measurement**. What the architecture guarantees is the assist's *authority* (≤15 N of commanded restoring force), not this number (§1.4). |
 | **Trajectory smoothness** | integrated jerk | Whether the assist buys success at the cost of a jittery arm. |
 
 A fifth KPI, **contact events before success**, was defined and is still recorded per trial. It
@@ -572,7 +582,7 @@ four production recipes retrained across training seeds, each evaluated on the s
 held-out seeds — the answer is a **null**: no recipe lifts closed-loop insertion success
 above the human-only baseline beyond training-seed noise (means of −4.4, +2.0, −8.3 and +1.3 pp
 against a floor of 20–31 pp). The project's standing positive results are the **bounded assist
-authority** (§1.4 — the residual's clamp and the ≤12.5 N commanded-force bound, both structural),
+authority** (§1.4 — the residual's clamp and the ≤15 N assist-authority bound, both structural),
 the **measured reduction in contact force and force-aborts under DAgger**, and the **mechanism
 findings** explaining why per-step imitation cannot lift closed-loop seating on this task.
 
@@ -660,7 +670,8 @@ Three honesty constraints govern the captions, and each is enforced in
   it is handed the target pose — and explicitly *not* the trained residual, whose success-rate
   lift was retracted (§5.3).
 - No caption bounds the measured contact force. The residual is clamped by construction and the
-  backbone commands at most 12.5 N, but measured force reaches 77.86 N (§1.4).
+  assist can move the commanded restoring force by at most 15 N, but measured force reaches
+  77.86 N (§1.4).
 
 ---
 
@@ -672,7 +683,7 @@ against what was measured. Two of them were not met.
 | # | Success criterion, as originally written | Verdict |
 |---|---|---|
 | 1 | *"Working integrated demo: webcam-driven teleop produces visible insertion attempts in MuJoCo, with assistance mode toggleable at runtime."* | ✅ **Met** |
-| 2 | *"Phase 1 (F/T-only residual) outperforms human-only on success rate; peak force bounded by construction."* | ❌ **Not met** on success rate · ⚠️ **partly met** on the force clause — the *commanded* force is bounded (≤12.5 N) and the residual is clamped, but *measured* contact force is not; see §1.4 |
+| 2 | *"Phase 1 (F/T-only residual) outperforms human-only on success rate; peak force bounded by construction."* | ❌ **Not met** on success rate · ⚠️ **partly met** on the force clause — the assist's *commanded* authority is bounded (≤15 N) and the residual is clamped, but *measured* contact force is not; see §1.4 |
 | 3 | *"Phase 2 (vision-conditioned residual) outperforms human-only on success rate **and** peak force, statistically meaningful; and beats Phase 1 (the vision ablation)."* | ❌ **Not met** |
 | 4 | *"Architecture cleanly separates input layer / backbone controller / assistance layer; Strategy pattern at each seam; SOLID compliance defensible during the design review."* | ✅ **Met** |
 | 5 | *"All deliverables complete and to professional quality."* | ✅ **Met** — this document, the [README](../README.md), the code, and the demo media (§7, recorded 2026-08-22) |
@@ -686,8 +697,8 @@ result existed.
 
 The part of criterion 2 that *was* met is the part that never depended on a sampled rate: the
 residual's **authority** is bounded **by construction** (§1.4) rather than by measurement. The
-per-step clamp and the backbone's stiffness cap the *commanded* restoring force at 12.5 N even
-for a maximally wrong network output. The criterion's own wording — "peak force bounded by
+residual clamp and the backbone's stiffness cap the assist's contribution to the *commanded*
+restoring force at 15 N even for a maximally wrong network output. The criterion's own wording — "peak force bounded by
 construction" — reads as a claim about the *measured* contact force, and that does not hold: the
 wrist sensor reads the contact reaction, which reaches 77.86 N on force-aborted trials. Hence
 partly met rather than met.

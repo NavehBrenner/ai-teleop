@@ -1,4 +1,4 @@
-"""Behavioral-cloning loss for the Phase-1 residual (LAB-34).
+"""Behavioral-cloning loss for the Phase-1 residual.
 
 The policy regresses the expert's per-step ``Δ`` = ``(Δposition ∈ ℝ³,
 Δorientation ∈ ℝ³ axis-angle, Δgrip ∈ ℝ¹)``. The three channels live in
@@ -48,7 +48,7 @@ class LossConfig:
     (the dominant alignment signal) with a modest orientation term and a small
     grip term; calibrate against the validation curve.
 
-    ``weight_action_rate`` scales an optional **smoothness** term (LAB-104): a
+    ``weight_action_rate`` scales an optional **smoothness** term: a
     penalty on the per-step *change* in the predicted Δ (‖Δ̂ₜ − Δ̂ₜ₋₁‖), which
     targets the measured jerk regression — both residuals inject sub-clamp
     spurious variance the expert does not (∫|jerk| expert 40 → F/T 162 → vision
@@ -129,7 +129,7 @@ def residual_bc_loss(
     squared first difference of the *predicted* Δ along time, per-channel weighted
     (same weights as the imitation term, for unit consistency) and averaged over
     consecutive step-pairs where both steps are real. It penalizes the sub-clamp
-    jerk both residuals inject (LAB-104).
+    jerk both residuals inject.
     """
     config = config or LossConfig()
     mask = mask.to(predicted.dtype)

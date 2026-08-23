@@ -76,7 +76,7 @@ Tension to acknowledge openly: the **paired-counterbalanced** design maximizes p
 
 ## What the safety argument covers, and what it does not
 
-The assist's **authority** is bounded by design, not by hoping the policy behaves: the residual is **hard-clamped** (±3 cm / ±10° / ±5 N per step) *before* the controller sees it, and the backbone's stiffness against the per-step command clamp caps the *commanded* restoring force at 12.5 N (the clamp is on ‖Δx‖, so the bound is λ_max·‖Δx‖ = 500 × 0.025). A 100%-wrong network output changes neither number — see [policy-model.md](policy-model.md).
+The assist's **authority** is bounded by design, not by hoping the policy behaves: the residual is **hard-clamped** (±3 cm / ±10° / ±5 N per step) *before* the controller sees it, and the backbone's stiffness against that clamp caps the assist's contribution to the *commanded* restoring force at 15 N (projection onto the command ball is non-expansive, so a residual of norm ≤ 0.03 m moves the commanded force by at most λ_max × 0.03 — independent of `max_dpos`). A 100%-wrong network output changes neither number — see [policy-model.md](policy-model.md).
 
 The peak-force **KPI is a measurement**, and it is not bounded by that argument: the wrist sensor reads the contact reaction, including impact transients, which reaches 77.86 N on force-aborted trials. What holds on the measurement is only that no trial continues past 30 N, because exceeding it is what makes a trial a `force_abort`. See [`results/mechanisms.md`](../results/mechanisms.md#7-what-still-stands).
 

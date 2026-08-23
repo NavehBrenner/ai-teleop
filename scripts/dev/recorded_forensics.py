@@ -1,6 +1,6 @@
-"""LAB-95 forensics: what physically drives the recorded force-aborts?
+"""contact forensics: what physically drives the recorded force-aborts?
 
-LAB-91/92 ruled out the operator's *approach-speed profile* as the lever for the
+proportional-deceleration ruled out the operator's *approach-speed profile* as the lever for the
 force-abort-rate / motion-signature gap (see
 `project-wiki/synthesis/scripted-vs-real-operator.md`). The two candidates left
 act at contact time, and they are distinguishable directly from the recorded
@@ -21,7 +21,7 @@ raw-human episodes (`data/recorded/runs`, no assist, so the realized command IS
 
 Prints per-outcome medians of both signatures over the recorded corpus.
 
-Run: uv run python scripts/dev/lab95_recorded_forensics.py [--recorded data/recorded/runs]
+Run: uv run python scripts/dev/recorded_forensics.py [--recorded data/recorded/runs]
 """
 
 from __future__ import annotations
@@ -62,7 +62,7 @@ def contact_forensics(
 ) -> dict:
     """Contact-time signature of one episode from its (T,) force / (T,3) tracks.
 
-    Reused by the scripted-rollout probe (`lab95_scripted_contact_probe.py`) so
+    Reused by the scripted-rollout probe (`scripted_contact_probe.py`) so
     recorded and scripted corpora are measured with the identical definition.
     """
     baseline = float(np.median(force[:_BASELINE_TICKS]))

@@ -60,8 +60,8 @@ class SamplingRanges:
     # Circle bore diameter (m). Default peg is 8 mm Ø; keep openings comfortably
     # above peg+clearance.
     diameter: tuple[float, float] = (0.010, 0.030)
-    # Rim chamfer width (m). The primary difficulty knob. LAB-77 calibration: swept
-    # 1-9mm fixed values against the LAB-37 harness; epsilon_lateral/d_far/advance_per_step
+    # Rim chamfer width (m). The primary difficulty knob. difficulty calibration: swept
+    # 1-9mm fixed values against the ablation harness; epsilon_lateral/d_far/advance_per_step
     # (expert/expert.py) showed zero effect (failures are geometrically unwinnable
     # timeouts, not alignment/authority-limited) while chamfer alone moved expert
     # success 35%->93% (1->7mm) with baseline following more slowly up to 7mm

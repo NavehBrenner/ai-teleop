@@ -1,4 +1,4 @@
-"""LAB-42 stage 1B: doc-coverage matrix over modules, scripts, and CLI commands.
+"""project-review stage 1B: doc-coverage matrix over modules, scripts, and CLI commands.
 
 For every `src/ai_teleop/*` module, every `scripts/*.py`, and every `kvn` command, report:
 
@@ -8,7 +8,7 @@ For every `src/ai_teleop/*` module, every `scripts/*.py`, and every `kvn` comman
   the README should reach "run an episode", "train a policy" and "what were the results"
   without grepping; anything at depth `-` is unreachable by following links at all.
 
-Read-only. Run: `uv run python scripts/dev/lab42_docs_coverage.py`
+Read-only. Run: `uv run python scripts/dev/docs_coverage.py`
 """
 
 from __future__ import annotations

@@ -1,9 +1,9 @@
-"""Real-time latency check for the vision deploy path (LAB-83).
+"""Real-time latency check for the vision deploy path.
 
 Measures the per-step inference cost of the deployed residual policy against the
 ~10 ms / 100 Hz control budget, on the *actual* deploy path (`LearnedResidual.
 get_delta` over a real `Observation` carrying a real wrist frame), so the number is
-the honest one — not the LAB-81 bring-up estimate taken before the CUDA wheel and
+the honest one — not the offline-eval bring-up estimate taken before the CUDA wheel and
 before the deploy path existed.
 
 Three costs, because the env is the frame-rate limiter (`SimEnv.enable_wrist_capture`):
@@ -18,7 +18,7 @@ Three costs, because the env is the frame-rate limiter (`SimEnv.enable_wrist_cap
 Reported: steady-state per-tick (vision compute), worst-case tick (compute + a fresh
 render), and the amortized per-tick (compute + render/`render_every`).
 
-    uv run python scripts/dev/lab83_latency.py --device cuda
+    uv run python scripts/dev/ablation_latency.py --device cuda
 """
 
 from __future__ import annotations
@@ -128,7 +128,7 @@ def main() -> int:
     amortized_ms = vision_ms + render_ms / args.render_every
     worstcase_ms = vision_ms + render_ms
 
-    log.info("=== LAB-83 real-time latency (device=%s, budget=%.1f ms) ===", device, args.budget_ms)
+    log.info("=== latency real-time latency (device=%s, budget=%.1f ms) ===", device, args.budget_ms)
     log.info("F/T-only get_delta          : %6.3f ms/step", ftonly_ms)
     log.info("vision get_delta (encode/tick): %6.3f ms/step", vision_ms)
     log.info("wrist render (1/%d ticks)    : %6.3f ms", args.render_every, render_ms)

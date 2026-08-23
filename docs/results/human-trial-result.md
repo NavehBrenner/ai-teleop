@@ -7,7 +7,7 @@ any data existed. This document applies §6 exactly as written and adds nothing 
 Raw data: [`human-trial/trials.csv`](human-trial/trials.csv) (the session record),
 [`human-trial/assignments.json`](human-trial/assignments.json) (the unsealed schedule),
 [`human-trial/kpis.csv`](human-trial/kpis.csv) (per-trial KPIs). Regenerate the analysis with
-`uv run python scripts/dev/lab120_trial_kpis.py --out <session>`.
+`uv run python scripts/dev/trial_kpis.py --out <session>`.
 
 ---
 
@@ -132,7 +132,9 @@ not bounded by the cap. Any claim that contact force stays under a figure is fal
 project's own retraction on this point stands, and this session reproduces it.
 
 What remains true and is unaffected: the residual is clamped by construction (±3 cm / ±10° /
-±5 N per step), and the backbone can *command* no more than 12.5 N of restoring force.
+±5 N per step), and the assist can move the *commanded* restoring force by no more than 15 N.
+(This session ran the vision default `--max-dpos 0.3`, under which the *total* commanded
+restoring force is bounded at 150 N, not the 12.5 N an earlier revision published.)
 
 ## 7. Session log
 

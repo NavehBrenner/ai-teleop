@@ -1,10 +1,10 @@
-"""LAB-105 diagnosis: how much of each on-policy rollout gets a *non-zero* expert
+"""perception-probe diagnosis: how much of each on-policy rollout gets a *non-zero* expert
 label? The reactive expert is zero beyond d_far (0.15 m), so drift states in free
 space are relabeled "do nothing" — adding no recovery signal. Group the non-zero
 fraction by terminal reason to see whether the timeout rollouts (policy wandering)
 are mostly no-op labels.
 
-    uv run python scripts/dev/lab105_label_coverage.py data/dagger_agg1
+    uv run python scripts/dev/perception_label_coverage.py data/dagger_agg1
 """
 
 from __future__ import annotations

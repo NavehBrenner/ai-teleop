@@ -58,7 +58,7 @@ class ResidualPolicy(nn.Module):
 
         Public so the TBPTT training loop can run the CNN **once per batch** and feed
         chunk-sliced embeddings back through ``forward(image_embedding=...)``, instead
-        of re-encoding the whole CNN on every truncation chunk (LAB-102).
+        of re-encoding the whole CNN on every truncation chunk.
         """
         assert self.image_encoder is not None
         frame_embeddings = self.image_encoder.encode_frames(images)  # (B, F, embed)
@@ -97,7 +97,7 @@ class ResidualPolicy(nn.Module):
         if self.config.use_vision:
             # Prefer a precomputed per-step embedding stream (B, T, embed): the training
             # loop encodes the CNN once per batch and passes chunk slices, so the backbone
-            # isn't re-run on every TBPTT chunk (LAB-102). Fall back to encoding raw frames
+            # isn't re-run on every TBPTT chunk. Fall back to encoding raw frames
             # for callers that pass a full sequence (eval, tests).
             if image_embedding is not None:
                 streams.append(image_embedding)

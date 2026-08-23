@@ -18,7 +18,7 @@ Per-step law (align-then-advance), all in the world frame:
    composes by left-multiply.
 4. **Axial advance — gated by alignment** — only once lateral + angular error are
    within tolerance do we advance the tip along ``+n`` into the hole.
-5. **Approach-speed braking (LAB-98)** — retract the command's axial *lead*
+5. **Approach-speed braking** — retract the command's axial *lead*
    (how far past the arm the operator's command sits along the bore) down to a
    distance-proportional allowance, so the arm decelerates before contact
    instead of slamming the wall at the operator's sweep speed. Under the
@@ -26,7 +26,7 @@ Per-step law (align-then-advance), all in the world frame:
    command tightly, so a hasty operator's contact speed is set by the command
    lead — the one thing the expert can shrink. Off by default
    (``brake_gain=0``): the kd=4 data-gen config suppressed impact transients
-   in the controller itself, so pre-LAB-98 corpora never needed it. Note the
+   in the controller itself, so pre-expert-brake corpora never needed it. Note the
    brake reads only ``command − ee_pose`` — *non-privileged* streams — so this
    correction component is fully inferable by the deployed policy.
 6. **Grip** — reduce grip on a detected jam (lateral contact force) so a
@@ -89,12 +89,12 @@ class Expert:
     advance_per_step:
         Capped axial advance toward the hole, per step (m), once aligned.
     brake_gain, brake_lead_floor:
-        Approach-speed brake (LAB-98). When ``brake_gain > 0``, the command's
+        Approach-speed brake. When ``brake_gain > 0``, the command's
         axial lead beyond ``brake_gain * distance + brake_lead_floor`` is
         subtracted from the correction, so the effective target the impedance
         law chases stays a controlled "carrot" ahead of the arm and the
         approach decelerates toward contact. ``brake_gain = 0`` (default)
-        disables the brake entirely — pre-LAB-98 behavior, bit-exact.
+        disables the brake entirely — pre-expert-brake behavior, bit-exact.
     jam_force_threshold:
         Lateral wrist-force magnitude (N) above which a jam is declared.
     grip_reduce_force:
@@ -105,7 +105,7 @@ class Expert:
         authority, and the label bound BC clones. ``None`` (default) uses the
         shared module bound in ``domain.delta``; data generation passes its
         fingerprinted per-corpus value so regenerating a legacy dataset clamps
-        at the bound that corpus was recorded under (LAB-100).
+        at the bound that corpus was recorded under.
     """
 
     def __init__(
@@ -173,7 +173,7 @@ class Expert:
         if aligned and axial_error > 0.0:
             advance = min(self._advance_per_step, axial_error) * insertion_axis
 
-        # --- Approach-speed brake (LAB-98) --------------------------------
+        # --- Approach-speed brake --------------------------------
         # Under the deployment controller config the arm tracks the command
         # tightly, so contact speed ≈ how far the command leads the arm along
         # the bore. Retract any lead beyond a distance-proportional allowance:

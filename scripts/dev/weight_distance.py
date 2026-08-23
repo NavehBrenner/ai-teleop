@@ -1,4 +1,4 @@
-"""LAB-114 H-C: is CPU-vs-GPU a *different model*, or the same model at float noise?
+"""seed-variance H-C: is CPU-vs-GPU a *different model*, or the same model at float noise?
 
 The 2026-07-07 headline was CPU-trained; every retrain has been on GPU. H-C asks whether
 that alone can move closed-loop success. Training the same seed on both devices gives the
@@ -7,7 +7,7 @@ hash — so the question is one of *scale*: how far apart does the device put th
 compared with how far apart two training **seeds** put them (a distance already known to be
 worth up to 18 pp of closed-loop success)?
 
-Read-only. Run: `uv run python scripts/dev/lab114_weight_distance.py`
+Read-only. Run: `uv run python scripts/dev/weight_distance.py`
 """
 
 from __future__ import annotations

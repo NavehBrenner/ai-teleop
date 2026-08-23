@@ -54,7 +54,7 @@ while its two sibling seeds both read −4.
 
 **Corroborated on independent data.** The floor was first measured (2026-07-22) on
 `dataset_10` — a 5× smaller, 200-episode corpus with a different master seed — giving a **18 pp**
-spread over five seeds (paired Δ −15 to +3, records in `phase-1/lab114/`). Two corpora, two
+spread over five seeds (paired Δ −15 to +3, records in `phase-1/seed-variance/`). Two corpora, two
 generations of the pipeline, the same order of magnitude. The floor is a property of the task
 and the recipe, not of any one dataset.
 
@@ -72,7 +72,7 @@ predictive *within one recipe*, the opposite of its behavior *across* interventi
 Selecting the best-val checkpoint of a fixed recipe is therefore fine; tuning *recipes* by val
 loss is not.
 
-![val loss vs closed-loop success across seeds](phase-1/lab114_val_loss_vs_success.png)
+![val loss vs closed-loop success across seeds](phase-1/seed_variance_val_loss_vs_success.png)
 
 ---
 

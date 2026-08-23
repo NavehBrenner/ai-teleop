@@ -1,7 +1,7 @@
-"""LAB-108 alignment-tolerance sweep: does a tighter advance gate lift the expert
+"""expert-knob-sweep alignment-tolerance sweep: does a tighter advance gate lift the expert
 ceiling that brake/clamp/d_far couldn't?
 
-Context: the brake/clamp/d_far sweeps (scripts/dev/lab108_brake_sweep.py) showed the
+Context: the brake/clamp/d_far sweeps (scripts/dev/expert_brake_sweep.py) showed the
 expert's ~73-75% seating ceiling is inert to approach *speed* and per-step
 *authority* — prevention only converts force-aborts into timeouts. One untested
 lever remains, targeting a different failure than the operator slam: **jam-on-
@@ -14,11 +14,11 @@ committing → timeouts, so both failure modes are reported. Paired with the swe
 brake (gain 0.5) so the peg is held back while it aligns rather than timing out.
 
 Measured through the eval ablation harness (`run_trial`, deployment config, the
-LAB-107 `max_steps=9000` fix) with an `Expert(...)` factory — the same path
-`scripts/evaluate.py pair` uses, and the LAB-77 pattern. Expert-only closed-loop
+step-budget `max_steps=9000` fix) with an `Expert(...)` factory — the same path
+`scripts/evaluate.py pair` uses, and the difficulty-calibration pattern. Expert-only closed-loop
 seating on the generated eval walls is the ceiling any BC clone inherits.
 
-Run: uv run python scripts/dev/lab108_align_sweep.py --seeds 60 --master-seed 0
+Run: uv run python scripts/dev/expert_align_sweep.py --seeds 60 --master-seed 0
 """
 
 from __future__ import annotations
@@ -93,7 +93,7 @@ def main() -> None:
         rows.append((eps_lat_mm, eps_ang_deg, seating, abort, timeout))
 
     log.info(
-        "=== LAB-108 alignment-tolerance sweep (n=%d, seed=%d) ===", args.seeds, args.master_seed
+        "=== expert-knob-sweep alignment-tolerance sweep (n=%d, seed=%d) ===", args.seeds, args.master_seed
     )
     log.info("%-8s %-8s %8s %8s %8s", "eps_lat", "eps_ang", "seat%", "abort%", "timeout%")
     for eps_lat_mm, eps_ang_deg, seating, abort, timeout in rows:

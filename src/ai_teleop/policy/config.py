@@ -15,7 +15,7 @@ class PolicyConfig:
     proprioception_dim: int = 24
 
     # NEGATIVE RESULT — do not enable. Appends the (command_position − ee_position)
-    # tracking error to the proprioception stream (LAB-106). It improves the offline
+    # tracking error to the proprioception stream. It improves the offline
     # metric and *collapses* closed-loop success, because it is a feedback feature the
     # policy amplifies into its own tracking error. Retained only so the M7 result stays
     # reproducible. Why, in full: project-wiki/synthesis/imitation-limits-closed-loop.md.
@@ -27,7 +27,7 @@ class PolicyConfig:
 
         Vision-independent by design (the image embedding widens the GRU input
         separately — see ``gru_input_dim`` — preserving the clean ``Phase2 − Phase1``
-        input-width change, ``docs/design/policy-model.md``). Base is 39; the LAB-106
+        input-width change, ``docs/design/policy-model.md``). Base is 39; the error-decomposition
         ``use_command_ee_delta`` feature adds 3.
         """
         base = self.command_dim + self.force_torque_dim + self.proprioception_dim

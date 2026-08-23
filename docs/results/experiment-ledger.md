@@ -32,7 +32,7 @@ Every closed-loop number is only interpretable against *which corpus trained the
   config under 2026-07-22 code changed 35 of 200 trajectories (34 by a median of 1 step, one
   flipped baseline outcome, corpus baseline 22.5% → 23.0%). The original 2026-07-06 episode
   files were then **overwritten in place** by that regeneration — proven byte-for-byte by
-  `scripts/dev/lab114_corpus_identity.py` — so `data/dataset_9/` now holds `dataset_10`'s
+  `scripts/dev/corpus_identity.py` — so `data/dataset_9/` now holds `dataset_10`'s
   arrays under `dataset_9`'s stale manifest. **The corpus that trained the 2026-07-07 M6 run no longer
   exists on disk.**
 - **A "code era" column is load-bearing.** `dataset_0`/`dataset_1` (schema 1.0) already drift —

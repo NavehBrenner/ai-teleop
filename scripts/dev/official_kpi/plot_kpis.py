@@ -6,7 +6,7 @@ Five figures, all under ``docs/results/phase-1/``:
    mean over training seeds, whiskers to the lowest and highest seed, one dot per seed.
 2. ``kpi_spread_by_recipe.png`` — the same interval chart for **all five** metrics, in
    absolute units, against the ``human_only`` line.
-3. ``near_miss_spread.png`` — the near-miss KPI (LAB-121) pulled out of that grid at full
+3. ``near_miss_spread.png`` — the near-miss KPI pulled out of that grid at full
    size, because ~1 mm of movement on a 14.7 mm baseline is invisible in a small multiple.
 4. ``dagger_vs_plain.png`` — per modality and per metric, the three arms side by side:
    ``human_only``, plain BC, DAgger.
@@ -16,7 +16,7 @@ Five figures, all under ``docs/results/phase-1/``:
 Deliberately conventional: ``Axes.errorbar`` with asymmetric min/max whiskers, white
 background, black text, no bespoke visual language. The whiskers are the **observed
 range over training seeds**, not a confidence interval — with 3–5 seeds a standard error
-would imply a precision the run does not have, and the range is the quantity the LAB-114
+would imply a precision the run does not have, and the range is the quantity the seed-variance
 noise-floor argument is actually about.
 
 Statistics are not computed here; :mod:`kpi_data` reads them out of
@@ -457,7 +457,7 @@ def plot_kpi_spread_by_recipe(recipes: Sequence[Recipe], path: Path) -> Path:
 
 
 # ---------------------------------------------------------------------------
-# Figure 2b — the near-miss KPI on its own (LAB-121)
+# Figure 2b — the near-miss KPI on its own
 # ---------------------------------------------------------------------------
 
 

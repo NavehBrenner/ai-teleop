@@ -1,4 +1,4 @@
-"""LAB-42 H-7: how tightly is the Phase-1 headline actually pinned?
+"""project-review H-7: how tightly is the Phase-1 headline actually pinned?
 
 The +33.3 pp headline rests on **12 discordant pairs** out of 30 seeds (11 won by the
 residual, 1 by human-only). McNemar's p answers "is the sign real"; it says nothing about
@@ -6,7 +6,7 @@ the magnitude. This prints the exact (Clopper-Pearson, conditional on the discor
 count) interval for the paired rate difference, which is what a 100-seed re-run would
 tighten — and what D-6 needs in order to score "scale to 100 seeds" honestly.
 
-Read-only. Run: `uv run python scripts/dev/lab42_headline_interval.py`
+Read-only. Run: `uv run python scripts/dev/headline_interval.py`
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from ai_teleop.eval.report import compare_paired, group_by_config, load_trials
 SETS = [
     ("band es0.4 (headline)", Path("docs/results/phase-1/band_scale0.4_trials.csv"), "residual"),
     ("flat wall es1.0", Path("docs/results/phase-1/flatwall_scale1.0_trials.csv"), "residual"),
-    ("100-seed LAB-53", Path("runs/eval/trials.csv"), "residual"),
+    ("100-seed difficulty-pin", Path("runs/eval/trials.csv"), "residual"),
 ]
 
 

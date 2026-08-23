@@ -1,6 +1,6 @@
 # Delta-target audit — is the BC position target learnable at all?
 
-Regenerate: `uv run python scripts/dev/lab106_delta_target_audit.py`
+Regenerate: `uv run python scripts/dev/delta_target_audit.py`
 Captured: 2026-08-02 · corpus `dataset_vision`
 
 ```

@@ -1,4 +1,4 @@
-"""The near-miss result (LAB-121): did the assist get the peg *closer*, seated or not?
+"""The near-miss result: did the assist get the peg *closer*, seated or not?
 
 Every other reported KPI is either conditioned on seating or outcome-agnostic, so an assist
 that improves approach accuracy without crossing the success threshold is invisible. This
@@ -10,7 +10,7 @@ Four tables, in the order the argument runs:
 1. **Headline** — paired Δ per recipe, mean over training seeds with the observed range.
    Sign convention: negative Δ = the assist got closer = better.
 2. **Against the noise floor** — the same Δ next to the spread the *same recipe* produces
-   across training seeds. Post-LAB-114 that spread, not the p-value, decides whether a
+   across training seeds. Post-seed-variance that spread, not the p-value, decides whether a
    number is a finding. `noise_floor.py` prints this for every metric; it is repeated here
    so the near-miss verdict is readable without cross-referencing.
 3. **By outcome** — closest approach split by how the trial ended. `force_abort` is the
@@ -124,7 +124,7 @@ def _report_headline(recipes: list[Recipe]) -> None:
 def _report_noise_floor(recipes: list[Recipe]) -> None:
     """The Δ against the spread the same recipe produces across training seeds."""
     log.info("")
-    log.info("Against the training-seed noise floor (LAB-114 discipline)")
+    log.info("Against the training-seed noise floor (seed-variance discipline)")
     log.info("A Δ smaller than its own recipe's spread is not established, whatever its sign.")
     log.info("%-22s %12s %12s %10s", "recipe", "mean Δ (mm)", "floor (mm)", "verdict")
     for recipe in recipes:

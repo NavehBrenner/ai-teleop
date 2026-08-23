@@ -1,4 +1,4 @@
-"""Tests for the Phase-2 vision deploy path (LAB-83).
+"""Tests for the Phase-2 vision deploy path.
 
 The Step-0 wiring that lets the trained vision checkpoint run closed-loop:
 

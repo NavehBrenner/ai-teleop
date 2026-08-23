@@ -1,4 +1,4 @@
-"""Eval-trace schema + offline-replay tests (LAB-37).
+"""Eval-trace schema + offline-replay tests.
 
 The load-bearing property: a :class:`TrialObserver` driven **live** over a stream
 and the same observer driven over a saved-then-loaded trace of that stream produce

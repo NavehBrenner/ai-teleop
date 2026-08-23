@@ -1,11 +1,11 @@
-"""LAB-42 H-9: compare two corpus manifests episode-by-episode.
+"""project-review H-9: compare two corpus manifests episode-by-episode.
 
 `dataset_10` was rebuilt from `dataset_9`'s committed config under 2026-07-22 code, so the
 two share a fingerprint by construction. This prints how far apart their episodes actually
 are — the measured size of the G-4 hole (a content hash over the config cannot see code
 drift), on the corpus behind the project's headline result.
 
-Read-only. Run: `uv run python scripts/dev/lab42_corpus_diff.py data/dataset_9 data/dataset_10`
+Read-only. Run: `uv run python scripts/dev/corpus_diff.py data/dataset_9 data/dataset_10`
 """
 
 from __future__ import annotations

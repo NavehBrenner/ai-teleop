@@ -1,4 +1,4 @@
-"""LAB-114 H-B: are `dataset_9` and `dataset_10` actually two corpora?
+"""seed-variance H-B: are `dataset_9` and `dataset_10` actually two corpora?
 
 H-B assumes they differ — audit finding H-9 reported 35 of 200 trajectories changed when
 `dataset_10` was regenerated. But training on the two at the same seed produced
@@ -6,7 +6,7 @@ H-B assumes they differ — audit finding H-9 reported 35 of 200 trajectories ch
 loader sees the same bytes. This checks what is actually on disk: shared inodes (symlink or
 hard link), then a content comparison of every episode array the loader reads.
 
-Read-only. Run: `uv run python scripts/dev/lab114_corpus_identity.py`
+Read-only. Run: `uv run python scripts/dev/corpus_identity.py`
 """
 
 from __future__ import annotations

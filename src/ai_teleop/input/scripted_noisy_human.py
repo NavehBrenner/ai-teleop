@@ -11,7 +11,7 @@ injected noise" — a trivial, unphysical denoising task. Instead this actor
 commits to a *biased, drifting, coarse* trajectory that is internally consistent
 over time, so the correction problem stays a geometric/contact-reasoning one.
 
-The command stream itself carries an **approach phase** (LAB-78): the actor
+The command stream itself carries an **approach phase**: the actor
 integrates a command that *chases* the drifting biased goal at a capped rate,
 seeded from where the arm actually starts. So the command sweeps in from ~400 mm
 out to the goal — the operator owns the approach, not the controller's command
@@ -20,7 +20,7 @@ the clamp to manufacture the approach; that left the command stream — a live
 policy input via the command-history GRU — structurally unlike a real
 operator's, which bit M7 vision specifically.)
 
-Near the goal, the approach **decelerates proportionally to distance** (LAB-91)
+Near the goal, the approach **decelerates proportionally to distance**
 instead of holding the rate cap until the literal last tick: real operators
 visually servo and slow down before contact, which a bang-bang rate cap can't
 reproduce (measured: recorded near-field command speed has a heavy tail, p90:
@@ -29,31 +29,31 @@ median ratio ~2.5x, vs a flat ~1.1x for the old bang-bang model — see
 ``decel_radius`` of the (drifting) goal the per-tick step is scaled by
 ``distance / decel_radius``, a simple proportional/critically-damped approach;
 outside it the actor is still rate-capped at ``max_approach_speed`` exactly as
-before, so LAB-78's far-field aim/travel calibration is untouched.
+before, so the approach phase's far-field aim/travel calibration is untouched.
 
-A per-episode ``careless_probability`` (LAB-92) draws whether *this* episode
+A per-episode ``careless_probability`` draws whether *this* episode
 skips that deceleration entirely — modeling an inattentive/overconfident
 operator who sweeps in at ``max_approach_speed`` all the way to contact. This
-targets a gap LAB-91's continuous per-tick deceleration couldn't close: real
+targets a gap the continuous per-tick deceleration couldn't close: real
 force-abort episodes move ~45% faster/step than real successes (a distinct
 "careless fast approach" failure mode), while a continuously-tuned deceleration
 profile applies the same near-goal slowdown to every episode alike, so
 scripted force-abort and success motion stayed ~3% apart regardless of
-``decel_radius``. Default 0 disables the mode, reproducing LAB-91 behavior
+``decel_radius``. Default 0 disables the mode, reproducing the pre-carelessness behavior
 exactly (including its RNG stream — see the constructor).
 
-A per-episode **lognormal draw on ``max_approach_speed``** (LAB-95/96,
-``speed_lognormal_median``/``speed_lognormal_sigma``) supersedes that discrete
+A per-episode **lognormal draw on ``max_approach_speed``**
+(``speed_lognormal_median``/``speed_lognormal_sigma``) supersedes that discrete
 carelessness draw as the episode-level speed lever: the recorded corpus'
 realized contact speed spreads ~4x across episodes, and that spread — not any
 within-episode profile — is what separates force-abort episodes from successes
-(aborts arrive ~+41% faster). Neither LAB-91's deceleration nor LAB-92's
-carelessness could express it under the old data-gen controller config
+(aborts arrive ~+41% faster). Neither the proportional deceleration nor the
+careless-episode draw could express it under the old data-gen controller config
 (kd=4 pinned realized speed at ~55 mm/s regardless of the command); under the
 deployment config (kd=1.5, the config `data/recorded` was captured under) the
 lognormal draw reproduces the recorded force-abort rate, motion-tail ratio,
 and contact-speed differential simultaneously — see
-`project-wiki/synthesis/scripted-vs-real-operator.md` (LAB-95 section).
+`project-wiki/synthesis/scripted-vs-real-operator.md` (contact-forensics section).
 Default 0 disables the draw (fixed ``max_approach_speed``, RNG untouched).
 
 Composition, fully determined by the constructor `seed` (plus the arm's
@@ -98,38 +98,38 @@ from ai_teleop.common.observation import Observation
 # scale operator difficulty relative to the distribution the M5 corpus was generated
 # at (scale 1.0 == these values). Bias is the constant per-episode offset; drift is
 # the stationary OU wander on top of it — together they set the lateral error at
-# contact, which the difficulty pin (LAB-53) trades against the chamfer capture radius.
+# contact, which the difficulty pin trades against the chamfer capture radius.
 DEFAULT_POSITION_BIAS_STD: float = 0.013
 DEFAULT_DRIFT_POSITION_STD: float = 0.005
 
 # Cap on how fast the command sweeps toward the (drifting) goal, m/s. Sets the
-# approach duration and near-field command speed; the LAB-78 fit target. The
+# approach duration and near-field command speed; the approach-phase fit target. The
 # controller's per-step clamp (2.5 cm/step) sits well above the per-tick move this
 # implies, so the actor — not the clamp — owns the approach.
 DEFAULT_MAX_APPROACH_SPEED: float = 0.35
 
 # Radius (m) around the drifting goal within which the approach decelerates
-# proportionally to distance instead of holding max_approach_speed — the LAB-91
+# proportionally to distance instead of holding max_approach_speed — the proportional-deceleration
 # fit target for the near-field command-speed distribution (real operators slow
 # down before contact; placeholder, calibrated against `data/recorded`).
 DEFAULT_DECEL_RADIUS: float = 0.016
 
-# Per-episode probability the operator is "careless" (LAB-92): skips the
+# Per-episode probability the operator is "careless": skips the
 # decel_radius deceleration entirely for that episode, sweeping in at
 # max_approach_speed all the way through contact. Models operator
 # inattention/overconfidence — a discrete, episode-level failure mode distinct
 # from decel_radius's continuous per-tick profile. 0 (default) disables it,
-# reproducing LAB-91 behavior (and its RNG stream) exactly.
+# reproducing proportional-deceleration behavior (and its RNG stream) exactly.
 DEFAULT_CARELESS_PROBABILITY: float = 0.0
 
-# Per-episode lognormal draw on max_approach_speed (LAB-95/96): a real operator's
+# Per-episode lognormal draw on max_approach_speed: a real operator's
 # realized contact speed spreads ~4x across episodes (26-105 mm/s p10-p90 in
 # `data/recorded`), and that episode-level careful-vs-hasty spectrum IS the
 # force-abort signature (fast episodes abort). A lognormal fitted to the recorded
 # near-field command speeds reproduces it: p90/median ~2.7 => sigma = 0.76;
 # median 0.09-0.12 m/s brackets the recorded stats under the deployment
 # controller config. Median 0 (default) disables the draw — the fixed
-# max_approach_speed applies, and the RNG stream is untouched (LAB-92 pattern).
+# max_approach_speed applies, and the RNG stream is untouched (careless-episode pattern).
 DEFAULT_SPEED_LOGNORMAL_MEDIAN: float = 0.0
 DEFAULT_SPEED_LOGNORMAL_SIGMA: float = 0.76
 
@@ -178,14 +178,13 @@ class ScriptedNoisyHuman:
         deceleration entirely, sweeping in at ``max_approach_speed`` all the
         way to contact. Drawn once at construction, alongside the position/
         orientation bias. Only consumes RNG state when > 0, so the default
-        (0) reproduces the pre-LAB-92 RNG stream exactly. See
+        (0) reproduces the pre-careless-episode RNG stream exactly. See
         :data:`DEFAULT_CARELESS_PROBABILITY`.
     speed_lognormal_median:
         Median (m/s) of a per-episode lognormal draw that *replaces* the fixed
-        ``max_approach_speed`` — the careful-vs-hasty episode spectrum
-        (LAB-95/96). Drawn once at construction; the realized value is exposed
+        ``max_approach_speed`` — the careful-vs-hasty episode spectrum. Drawn once at construction; the realized value is exposed
         as :attr:`max_approach_speed`. Only consumes RNG state when > 0, so
-        the default (0, disabled) reproduces the pre-LAB-96 RNG stream
+        the default (0, disabled) reproduces the pre-deployment-config RNG stream
         exactly. See :data:`DEFAULT_SPEED_LOGNORMAL_MEDIAN`.
     speed_lognormal_sigma:
         Log-space sigma of that draw (p90/median = exp(1.2817·sigma); the
@@ -241,18 +240,18 @@ class ScriptedNoisyHuman:
         self.position_bias: np.ndarray = self._rng.normal(0.0, position_bias_std, size=3)
         self.orientation_bias: np.ndarray = self._rng.normal(0.0, orientation_bias_std, size=3)
 
-        # Per-episode "carelessness" draw (LAB-92) — only consumes the RNG when enabled,
+        # Per-episode "carelessness" draw — only consumes the RNG when enabled,
         # so careless_probability=0.0 (default) leaves the RNG stream identical to
-        # pre-LAB-92 code and every existing seeded trajectory stays reproducible.
+        # pre-careless-episode code and every existing seeded trajectory stays reproducible.
         self._careless = bool(
             careless_probability > 0.0 and self._rng.random() < careless_probability
         )
 
-        # Per-episode approach-speed draw (LAB-95/96) — a lognormal on
+        # Per-episode approach-speed draw — a lognormal on
         # max_approach_speed models the careful-vs-hasty episode spectrum the
         # recorded corpus shows. Only consumes the RNG when enabled, so
         # speed_lognormal_median=0.0 (default) leaves the RNG stream identical
-        # to pre-LAB-96 code and every existing seeded trajectory stays
+        # to pre-deployment-config code and every existing seeded trajectory stays
         # reproducible.
         if speed_lognormal_median > 0.0:
             max_approach_speed = float(
@@ -296,20 +295,20 @@ class ScriptedNoisyHuman:
         self._advance_drift()
 
         # Capped-rate move of the command toward the drifting biased goal. The rate
-        # cap (LAB-91) scales with distance to the *fixed* goal (large-scale "am I
+        # cap scales with distance to the *fixed* goal (large-scale "am I
         # still approaching or have I arrived", not the per-tick drift wobble) —
         # using the drifting target itself here would reset the reference every
         # tick, so the tracking error (and therefore speed) would settle at a
         # narrow near-constant value instead of the observed heavy-tailed
         # near-field speed (real operators cruise in from ~400 mm, then slow over
-        # the final approach). Outside decel_radius this is the LAB-78 bang-bang
+        # the final approach). Outside decel_radius this is the approach-phase bang-bang
         # cap (unchanged); inside it the cap decays proportionally to distance.
         target = self._goal_position + self._drift_position
         step = target - self._command_position
         distance = float(np.linalg.norm(step))
         distance_to_goal = float(np.linalg.norm(self._command_position - self._goal_position))
-        # A careless-drawn episode (LAB-92) never decelerates — it holds the far-field
-        # rate cap all the way to contact, unlike the LAB-91 proportional ramp below.
+        # A careless-drawn episode never decelerates — it holds the far-field
+        # rate cap all the way to contact, unlike the proportional-deceleration proportional ramp below.
         speed_scale = 1.0 if self._careless else min(1.0, distance_to_goal / self._decel_radius)
         effective_max_step = self._max_step * speed_scale
         self._command_position = self._command_position + step * min(

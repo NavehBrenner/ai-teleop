@@ -1,4 +1,4 @@
-"""Tests for the M5 offline BC dataset loader (LAB-32).
+"""Tests for the M5 offline BC dataset loader.
 
 Self-contained: a fixture builds a tiny synthetic dataset on disk (a few short
 episodes written with ``EpisodeRecorder`` + a ``metadata.json`` manifest) in a
@@ -236,7 +236,7 @@ def test_collate_episodes_pads_tail_with_zeros():
 
 
 # ---------------------------------------------------------------------------
-# Wrist-image loading (LAB-80) — load_frame_stream + load_images=True
+# Wrist-image loading — load_frame_stream + load_images=True
 # ---------------------------------------------------------------------------
 
 RENDER_EVERY = 3
@@ -318,7 +318,7 @@ def test_dataset_load_images_true_populates_episode_images(tiny_dataset_with_ima
 
 
 def test_dataset_load_images_true_keeps_frames_lazy(tiny_dataset_with_images: Path):
-    """LAB-103: decoded frames must not be resident in ``self.episodes`` — they decode
+    """Decoded frames must not be resident in ``self.episodes`` — they decode
     per ``__getitem__``. This is the invariant that keeps RAM batch-scaled, not corpus-scaled."""
     dataset = OfflineResidualBCDataset(
         tiny_dataset_with_images, download=False, train=True, load_images=True

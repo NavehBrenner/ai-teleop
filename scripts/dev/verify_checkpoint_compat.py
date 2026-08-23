@@ -1,6 +1,6 @@
 """Load every checkpoint under outputs/policy/runs/ and report what happens.
 
-The A-3 guard (LAB-110): `PolicyConfig.use_tanh_head` was removed, so every
+The A-3 guard: `PolicyConfig.use_tanh_head` was removed, so every
 checkpoint trained before that carries a key the dataclass no longer defines. This
 script proves `load_checkpoint`'s drop-unknown-keys shim rescues them all instead of
 stranding the project's entire trained-model history.

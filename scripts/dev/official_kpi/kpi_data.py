@@ -12,8 +12,7 @@ whether it is the success rate or one of the four continuous KPIs.
 Two things the caller must respect, because they are easy to get wrong:
 
 * **A recipe is a distribution, not a checkpoint.** One eval directory is one training
-  seed's draw. The reportable quantity is mean + observed range over those seeds
-  (LAB-114); a single directory's number is a lottery ticket, not a measurement.
+  seed's draw. The reportable quantity is mean + observed range over those seeds; a single directory's number is a lottery ticket, not a measurement.
 * **``time_to_insert_s`` is success-only.** It exists only on trials that seated, so its
   ``n`` is a fraction of the trial count and differs per config. Every accessor here
   returns that ``n`` alongside the value so no table can quietly print a mean over four
@@ -471,7 +470,7 @@ VISION_DAGGER_SEEDS = (0, 1, 2)
 VISION_TREATMENT_CONFIG = "vision"
 
 # Why seed 0 is special: its intermediate rounds were re-evaluated after the fact
-# (LAB-112 backfill) into `runs/backfill_dag_vis_s0_r{0..3}`, and its final round is the
+# (vision backfill) into `runs/backfill_dag_vis_s0_r{0..3}`, and its final round is the
 # official eval directory itself. Seeds 1 and 2 kept their per-round evals in the
 # training run folder. Same 100 held-out walls in all three cases.
 _SEED0_BACKFILL_ROUNDS = (0, 1, 2, 3)

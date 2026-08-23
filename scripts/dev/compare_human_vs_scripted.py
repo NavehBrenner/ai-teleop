@@ -125,7 +125,7 @@ def main() -> None:
         "--scripted",
         default=str(ROOT / "data" / "dataset_9"),
         help="Scripted dataset dir (holds runs/); dataset_1's runs/ is gone and it "
-        "predates LAB-78, so it's no longer a valid comparison corpus.",
+        "predates approach-phase, so it's no longer a valid comparison corpus.",
     )
     args = ap.parse_args()
 

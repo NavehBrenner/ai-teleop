@@ -1,4 +1,4 @@
-"""Tests for the EnvConfig + argument-less reset contract (LAB-84).
+"""Tests for the EnvConfig + argument-less reset contract.
 
 Pins the new model: (1) ``reset()`` takes no arguments and is a pure restore —
 the same env returns to the same t=0 state every time; (2) the env is defined by

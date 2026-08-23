@@ -1,4 +1,4 @@
-"""BC training pipeline for the residual policy (LAB-34) — corpus in, run folder out.
+"""BC training pipeline for the residual policy — corpus in, run folder out.
 
 Core functionality (the `scripts/train_policy.py` CLI is just its front door, the
 same split `ai_teleop.data.generate` / `scripts/generate_dataset.py` uses). Two
@@ -135,7 +135,7 @@ def _epoch(
             torch.set_grad_enabled(training),
             torch.autocast(device.type, enabled=use_amp),
         ):
-            # Encode the CNN **once per batch** (LAB-102). The per-step image embedding is a
+            # Encode the CNN **once per batch**. The per-step image embedding is a
             # pure function of the frames — independent of the GRU's TBPTT truncation — so
             # re-running the whole backbone on every chunk was pure waste (and blew VRAM:
             # N_chunks × the full B·F-frame grad graph). Encode once here, slice the resulting
@@ -353,7 +353,7 @@ def train_policy(
             f"no metadata.json under {dataset_dir} — is this an M4 dataset directory?"
         )
 
-    # Seed *everything* from the one `--seed`, not just the train/val split (LAB-114).
+    # Seed *everything* from the one `--seed`, not just the train/val split.
     # Until this line existed, weight init and batch shuffling came from OS entropy, so the
     # same command produced a different model every run and no result was arbitrable.
     # `torch.manual_seed` covers CPU + all CUDA devices, and the DataLoader's shuffle sampler
@@ -395,7 +395,7 @@ def train_policy(
         extra={
             "run_name": run_dir.name,
             "batch_size": batch_size,
-            # Renamed from `split_seed` (LAB-114): it now seeds init + shuffling too.
+            # Renamed from `split_seed`: it now seeds init + shuffling too.
             "seed": seed,
             "val_fraction": val_fraction,
             "device": device,

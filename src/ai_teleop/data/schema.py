@@ -73,7 +73,7 @@ class DatasetConfig(TypedDict):
 
     Every trajectory-determining input lives here, so the dataset is
     reproducible from the metadata file alone (see ``regenerate_from_metadata``).
-    The ``NotRequired`` keys were added by LAB-96; metadata written earlier
+    The ``NotRequired`` keys were added by deployment-config; metadata written earlier
     omits them, which readers treat as the legacy config (kd=4.0, no per-episode
     speed draw).
     """
@@ -85,13 +85,13 @@ class DatasetConfig(TypedDict):
     lateral_tolerance: float
     force_cap: float
     scene: str  # scene-file *name* (resolved against the mjcf assets dir)
-    joint_damping: NotRequired[float]  # controller joint-space kd (LAB-96)
+    joint_damping: NotRequired[float]  # controller joint-space kd
     speed_lognormal_median: NotRequired[float]  # operator per-episode speed draw; 0 = off
     speed_lognormal_sigma: NotRequired[float]
-    expert_brake_gain: NotRequired[float]  # expert approach-speed brake (LAB-98); 0 = off
+    expert_brake_gain: NotRequired[float]  # expert approach-speed brake; 0 = off
     expert_brake_lead_floor: NotRequired[float]
-    # Shared expert/policy per-step Δ-position bound (LAB-100); absent ⇒ the
-    # legacy ±2 cm bound every pre-LAB-100 corpus was clamped at.
+    # Shared expert/policy per-step Δ-position bound; absent ⇒ the
+    # legacy ±2 cm bound every pre-clamp-recalibration corpus was clamped at.
     delta_clamp: NotRequired[float]
 
 
@@ -142,19 +142,19 @@ class EpisodeSpec(_EpisodeSpecBase, total=False):
     joint_damping: float
     scene: str  # scene-file name
 
-    # Operator per-episode approach-speed draw (LAB-96). Stamped by data
+    # Operator per-episode approach-speed draw. Stamped by data
     # generation so replay-as-baseline rebuilds the identical operator; absent
-    # on pre-LAB-96 episodes (⇒ draw disabled, fixed max_approach_speed).
+    # on pre-deployment-config episodes (⇒ draw disabled, fixed max_approach_speed).
     speed_lognormal_median: float
     speed_lognormal_sigma: float
 
-    # Expert approach-speed brake (LAB-98). Stamped by data generation; absent
-    # on pre-LAB-98 episodes (⇒ brake off, the aim-only expert).
+    # Expert approach-speed brake. Stamped by data generation; absent
+    # on pre-expert-brake episodes (⇒ brake off, the aim-only expert).
     expert_brake_gain: float
     expert_brake_lead_floor: float
 
-    # Shared expert/policy Δ-position bound (LAB-100). Stamped by data
-    # generation; absent on pre-LAB-100 episodes (⇒ the legacy ±2 cm bound).
+    # Shared expert/policy Δ-position bound. Stamped by data
+    # generation; absent on pre-clamp-recalibration episodes (⇒ the legacy ±2 cm bound).
     delta_clamp: float
 
 
