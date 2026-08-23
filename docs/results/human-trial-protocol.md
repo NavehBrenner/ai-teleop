@@ -1,15 +1,15 @@
 # Human-operator trial — protocol, fixed in advance
 
-**Status: pre-registered, not yet run.** Everything below — the checkpoint, the trial
-count, the analysis, the reporting rule — is fixed *before* any data exists. This file is
-committed first and is not edited after the session starts; the results go in a separate
-document that links back here.
+**Status: pre-registered; the session ran 2026-08-20** — see
+[`human-trial-result.md`](human-trial-result.md). Everything below — the checkpoint, the
+trial count, the analysis, the reporting rule — was fixed *before* any data existed. This
+file was committed first and was not edited after the session started, apart from this
+status line; the results live in a separate document that links back here.
 
-That ordering is the whole point. The project's own post-mortem
-([self-evaluation](../self-evaluation.md) §5) names *"pre-register the reporting rule, not
-just the metric"* as a lesson learned the expensive way: the KPIs were defined up front but
-how results would be *selected* was not, which is what let a single lucky checkpoint become
-a headline. This is that lesson applied once, deliberately, on the record.
+That ordering is the whole point. *Pre-register the reporting rule, not just the metric* is a
+lesson this project learned the expensive way: the KPIs were defined up front but how results
+would be *selected* was not, which is what let a single lucky checkpoint become a headline.
+This is that lesson applied once, deliberately, on the record.
 
 **Related:** [mechanisms](mechanisms.md) · [noise floor](noise-floor.md) ·
 [per-KPI floors](phase-1/noise-floor-per-kpi.md) · [conclusions](../conclusions.md)

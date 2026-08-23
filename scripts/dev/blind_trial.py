@@ -68,7 +68,7 @@ log = get_logger("blind-trial")
 
 # Pre-specified in the protocol, NOT selected on outcome: lowest-numbered training seed,
 # final DAgger round. Picking the best-scoring checkpoint instead is the selection bias the
-# project already documented (docs/self-evaluation.md, "pre-register the reporting rule") --
+# project already documented ("pre-register the reporting rule, not just the metric") --
 # here that would be vision/dagger/seed_1/round_4 (+12 pp at p=0.036), which the rule
 # excludes.
 #

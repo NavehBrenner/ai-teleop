@@ -36,8 +36,8 @@ lifted closed-loop success); the mechanism is the deliverable. Spec:
 [`milestone-7-spec.md`](milestone-7-spec.md).
 
 The M9 delivery arc runs through the **LAB-42 project-state review** (code/doc audit, the KPI
-dashboard, the policy guide, a go-forward decision). Two **graded course checkpoints** (D1, D2)
-draw on these — see *Course checkpoints* below.
+dashboard, the policy guide, a go-forward decision). Two **delivery checkpoints** (D1, D2)
+draw on these — see *Delivery checkpoints* below.
 
 ---
 
@@ -246,7 +246,6 @@ a handful of qualitative runs are recordable.
 - 3–5 recorded webcam-driven qualitative demo runs.
 - Demo video (webcam → robot, assistance toggled on/off, KPI montage).
 - README polish; public repo finalization; reproducibility check (clean clone → run).
-- Self-evaluation & reflective analysis writeup (5% bonus).
 
 **Acceptance**: all final-submission artifacts complete and reproducible (see D2).
 
@@ -254,14 +253,14 @@ a handful of qualitative runs are recordable.
 
 ---
 
-## Course checkpoints (graded)
+## Delivery checkpoints
 
 These are **deliverable** milestones, not code milestones — they require dedicated
 writing/diagram/slide work that draws on the implementation milestones.
 
-### D1 — Design Review Package (~mid-July, ~35% of grade)
+### D1 — Design Review Package (~mid-July)
 
-A professional design-review document + ~slides. Required content (from the booklet):
+A professional design-review document + slides. Required content:
 project requirements, system architecture with **architecture diagram + sequence chart**,
 **≥2 design alternatives** with trade-offs and rationale, simulation scenarios, KPI
 definitions, challenges/risks, a preliminary prototype/demo, evaluation criteria, timeline.
@@ -271,10 +270,10 @@ D1 is largely repackaging it into review form + adding diagrams + a live demo.
 **Milestone readiness target**: M1–M4 done (working expert-driven prototype to demo); M5–M6
 in progress is a bonus. **Rough effort**: 8–12 h (mostly writing + diagrams).
 
-### D2 — Final Submission (2026-08-31, ~65% of grade)
+### D2 — Final delivery (2026-08-31)
 
 Required: a design document (architecture, components, scenarios, metrics, etc.), a README
-(install + run), and the code itself. We additionally deliver the demo video and self-eval.
+(install + run), and the code itself. We additionally deliver the demo video.
 
 **Milestone readiness target**: M1–M9 (Phase 2 ideally; Phase 1 is the floor — a complete,
 well-engineered Phase-1 project is a strong submission on its own). **Rough effort**:

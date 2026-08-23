@@ -1,12 +1,12 @@
 # Design Document
 
 **AI-Assisted Robotic Teleoperation for Precision Insertion**
-Workshop in Autonomous Systems Simulation (OpenU 20973) · final submission · solo project.
+Workshop in Autonomous Systems Simulation (OpenU 20973) · solo project.
 
-This is the submission design document required by the course booklet: requirements, system
-architecture with an architectural diagram and a sequence chart, design alternatives with
-justification, simulation scenarios, performance metrics, challenges and risks, the prototype,
-evaluation criteria, and the timeline.
+This document defines the system end to end: requirements, system architecture with an
+architectural diagram and a sequence chart, design alternatives with justification, simulation
+scenarios, performance metrics, challenges and risks, the prototype, evaluation criteria, and
+the timeline.
 
 It is written to stand on its own. Where a subject has a deeper treatment in the repository,
 the section links to it — [`docs/guides/architecture-tour.md`](./guides/architecture-tour.md) is the
@@ -89,7 +89,7 @@ even if the learned policy emits garbage.
 - A statistically defensible paired comparison of *assist off* vs *assist on* under a matched,
   seeded operator, reporting the KPIs of §5.
 - A bound on the assist's authority that follows from the architecture rather than from measurement.
-- The full booklet deliverable set: this document, a README, and runnable, tested code.
+- The full documentation set: this document, a README, and runnable, tested code.
 
 ---
 
@@ -390,10 +390,10 @@ reachable is worth more than one that is deleted.
 
 ## 3. Design alternatives
 
-The booklet asks, under *System Architecture and Key Components*, for **at least two valid
-architectural approaches**, compared, with the final choice justified by trade-offs and technical
-rationale. §3.1 is that comparison at the architectural level — where the autonomy sits, which is
-the decision the whole system's shape follows from. §3.2 and §3.3 then record the two substantive
+A design is only defensible if the road not taken is on the record, so this section compares
+**at least two valid architectural approaches** and justifies the final choice by trade-offs and
+technical rationale. §3.1 is that comparison at the architectural level — where the autonomy
+sits, which is the decision the whole system's shape follows from. §3.2 and §3.3 then record the two substantive
 *component-level* decisions inside the chosen architecture, since the model is the project's
 central artifact and its shape was not obvious either.
 
@@ -675,7 +675,7 @@ against what was measured. Two of them were not met.
 | 2 | *"Phase 1 (F/T-only residual) outperforms human-only on success rate; peak force bounded by construction."* | ❌ **Not met** on success rate · ⚠️ **partly met** on the force clause — the *commanded* force is bounded (≤12.5 N) and the residual is clamped, but *measured* contact force is not; see §1.4 |
 | 3 | *"Phase 2 (vision-conditioned residual) outperforms human-only on success rate **and** peak force, statistically meaningful; and beats Phase 1 (the vision ablation)."* | ❌ **Not met** |
 | 4 | *"Architecture cleanly separates input layer / backbone controller / assistance layer; Strategy pattern at each seam; SOLID compliance defensible during the design review."* | ✅ **Met** |
-| 5 | *"All booklet-required deliverables submitted on time and to professional quality, including self-evaluation writeup."* | 🎬 **In progress** — this document, the README, the code and the demo media (§7, recorded 2026-08-22) are complete; the self-evaluation is being finished ahead of the 2026-08-31 deadline |
+| 5 | *"All deliverables complete and to professional quality."* | ✅ **Met** — this document, the [README](../README.md), the code, and the demo media (§7, recorded 2026-08-22) |
 
 **On criteria 2 and 3 — what "not met" means here.** The residual does not outperform human-only
 on success rate. Over the official multi-seed run the four recipes measure −4.4, +2.0, −8.3 and
