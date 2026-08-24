@@ -43,7 +43,7 @@ from ai_teleop.domain import Delta  # noqa: E402
 from ai_teleop.eval.observer import TrialObserver  # noqa: E402
 from ai_teleop.eval.schema import TrialKPIs  # noqa: E402
 
-log = get_logger("lab120-kpis")
+log = get_logger("trial-kpis")
 
 Z = 1.96
 

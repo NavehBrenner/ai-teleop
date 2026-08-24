@@ -36,7 +36,7 @@ from scipy.spatial.transform import Rotation
 from ai_teleop.common.log import configure_logging, get_logger
 from ai_teleop.data.trajectory import load_episode
 
-log = get_logger("lab106audit")
+log = get_logger("delta-target-audit")
 
 D_FAR = 0.15  # m — expert gate is zero beyond this; "active"/near-hole steps
 

@@ -16,7 +16,7 @@ configurable: a human-only baseline plus a grid of `Expert` variants
 sweeps stay one-value-per-process (`--chamfer-mm`, same monkeypatch + default-arg
 gotcha as the difficulty sweep).
 
-Per-config output: outcome counts, the lab95 contact-forensics table, plus
+Per-config output: outcome counts, the recorded-forensics contact table, plus
 expert-specific diagnostics — effective (post-delta) vs base command lead along
 the bore at episode end, and how often the expert's Δ saturates its 2 cm clamp
 (the structural bound on braking authority: the expert can never retract the
@@ -87,7 +87,9 @@ from ai_teleop.sim.runner import run_episode  # noqa: E402
 log = get_logger("expert-recalibration-sweep")
 
 _TARGET_HOLE_INDEX = 0
-_DEFAULT_MAX_STEPS = 6000  # pre-clamp-recalibration data-gen budget (~12 s); sweeps override via --max-steps
+_DEFAULT_MAX_STEPS = (
+    6000  # pre-clamp-recalibration data-gen budget (~12 s); sweeps override via --max-steps
+)
 _SUCCESS_DEPTH = 0.015
 _LATERAL_TOLERANCE = 0.010  # data.generate.DEFAULT_LATERAL_TOLERANCE
 _FORCE_CAP = 50.0  # probe-level raw-force abort; the controller's own 30 N watchdog trips first

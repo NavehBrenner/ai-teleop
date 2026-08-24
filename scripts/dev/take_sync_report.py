@@ -14,7 +14,7 @@ choosing the pair that makes that equal. Re-timing the robot render to the wall 
 episode actually ran at is an alignment, not a fabrication — the trajectory is unchanged
 and every frame still comes from the step it was recorded at.
 
-    uv run python scripts/dev/take_sync_report.py outputs/lab125/hand_takes/take_1
+    uv run python scripts/dev/take_sync_report.py outputs/blind-trial/hand_takes/take_1
 """
 
 from __future__ import annotations

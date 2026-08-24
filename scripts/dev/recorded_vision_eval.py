@@ -33,7 +33,7 @@ from ai_teleop.data.dataset import Episode, extract_training_episode, normalize_
 from ai_teleop.data.trajectory import episode_imgs_dir, load_episode
 from ai_teleop.policy.residual_policy import LoadedCheckpoint, load_checkpoint
 
-log = get_logger("lab81rec")
+log = get_logger("recorded-vision-eval")
 
 _RECORDED = Path("data/recorded")
 _RUNS = _RECORDED / "runs"

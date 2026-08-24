@@ -42,7 +42,7 @@ from ai_teleop.policy import LearnedResidual  # noqa: E402
 from ai_teleop.sim.config import EnvConfig  # noqa: E402
 from ai_teleop.sim.env_setup import make_env  # noqa: E402
 
-log = get_logger("lab83-latency")
+log = get_logger("ablation-latency")
 
 _RUNS = Path(__file__).resolve().parents[2] / "outputs" / "policy" / "runs"
 
@@ -128,7 +128,9 @@ def main() -> int:
     amortized_ms = vision_ms + render_ms / args.render_every
     worstcase_ms = vision_ms + render_ms
 
-    log.info("=== latency real-time latency (device=%s, budget=%.1f ms) ===", device, args.budget_ms)
+    log.info(
+        "=== latency real-time latency (device=%s, budget=%.1f ms) ===", device, args.budget_ms
+    )
     log.info("F/T-only get_delta          : %6.3f ms/step", ftonly_ms)
     log.info("vision get_delta (encode/tick): %6.3f ms/step", vision_ms)
     log.info("wrist render (1/%d ticks)    : %6.3f ms", args.render_every, render_ms)

@@ -34,7 +34,7 @@ from pathlib import Path
 from ai_teleop.common.log import add_logging_arguments, configure_from_args, get_logger
 from ai_teleop.data.generate import GenerationConfig, generate_dataset
 
-log = get_logger("lab108-brake")
+log = get_logger("expert-brake-sweep")
 
 # Two levers, measured together against the expert's seating ceiling.
 #
@@ -135,7 +135,9 @@ def main() -> None:
             _pct(counts, "timeout", n),
         ))
 
-    log.info("=== expert-knob-sweep d_far diagnostic sweep (n=%d, seed=%d) ===", args.episodes, args.seed)
+    log.info(
+        "=== expert-knob-sweep d_far diagnostic sweep (n=%d, seed=%d) ===", args.episodes, args.seed
+    )
     log.info("%-7s %-7s %8s %8s %8s", "d_far", "clamp", "seat%", "abort%", "timeout%")
     for d_far, delta_clamp, seating, abort, timeout in rows:
         log.info("%-7.2f %-7.3f %8.1f %8.1f %8.1f", d_far, delta_clamp, seating, abort, timeout)

@@ -5,7 +5,7 @@ held-out (beating the 4.9 mm zero-Δ baseline), while the trained F/T policy was
 reported at 7.74 mm (worse than zero). That gap is a fitting failure, not an
 unlearnable target. Prime suspect: the action-rate action-rate (smoothness) penalty.
 
-This runs the held-out offline eval (reusing lab81's evaluator) across the F/T
+This runs the held-out offline eval (reusing the offline evaluator) across the F/T
 checkpoints that differ only in that penalty, and prints each one's configured
 weight. Run from kevin/:  uv run python scripts/dev/ft_checkpoint_sweep.py
 """
@@ -29,7 +29,7 @@ _offline_eval = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_offline_eval)  # type: ignore[union-attr]
 _evaluate = _offline_eval._evaluate
 
-log = get_logger("lab106sweep")
+log = get_logger("ft-checkpoint-sweep")
 
 DATASET = Path("data/dataset_vision")
 RUNS = ["ftonly_baseline_lab82", "ftonly_wpos10_wd"]

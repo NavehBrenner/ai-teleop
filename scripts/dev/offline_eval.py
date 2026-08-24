@@ -30,7 +30,7 @@ from ai_teleop.data import build_dataloaders
 from ai_teleop.policy.losses import _GRIP, _ORI, _POS, geodesic_angle
 from ai_teleop.policy.residual_policy import load_checkpoint
 
-log = get_logger("lab81eval")
+log = get_logger("offline-eval")
 
 _DATASET = Path("data/dataset_vision_bringup")
 _BRINGUP = Path("outputs/policy/bringup")
@@ -116,7 +116,8 @@ def main() -> int:
 
     configure_logging()
     log.info(
-        "offline-eval offline held-out eval on %s val split (policy Δ̂ vs expert Δ*)", args.dataset.name
+        "offline-eval offline held-out eval on %s val split (policy Δ̂ vs expert Δ*)",
+        args.dataset.name,
     )
     _report("ft_only", args.dataset, args.ft_run, vision=False)
     _report("vision", args.dataset, args.vision_run, vision=True)

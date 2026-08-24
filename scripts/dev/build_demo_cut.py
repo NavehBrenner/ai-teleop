@@ -58,8 +58,8 @@ FPS = 20.0
 BACKGROUND = (16, 16, 18)
 
 DEFAULT_OUT = Path("assets/media/demo.mp4")
-TAKES = Path("outputs/lab125/hand_takes")
-BLIND = Path("outputs/lab125")
+TAKES = Path("outputs/blind-trial/hand_takes")
+BLIND = Path("outputs/blind-trial")
 RESULTS = Path("docs/results/phase-1")
 
 

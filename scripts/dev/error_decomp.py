@@ -27,7 +27,7 @@ from ai_teleop.data.dataset import (
 from ai_teleop.data.trajectory import load_episode
 from ai_teleop.policy.residual_policy import load_checkpoint
 
-log = get_logger("lab106decomp")
+log = get_logger("error-decomp")
 
 DATASET = Path("data/dataset_vision")
 D_FAR = 0.15

@@ -32,7 +32,7 @@ from ai_teleop.eval.ablation import Config, run_trial
 from ai_teleop.eval.schema import TrialOutcome
 from ai_teleop.expert import Expert
 
-log = get_logger("lab108-align")
+log = get_logger("expert-align-sweep")
 
 # (epsilon_lateral_mm, epsilon_angular_deg, brake_gain). Row 0 is the deployment
 # default (eps 3mm/8°, brake gain 1.0); the rest tighten the advance gate under the
@@ -93,7 +93,9 @@ def main() -> None:
         rows.append((eps_lat_mm, eps_ang_deg, seating, abort, timeout))
 
     log.info(
-        "=== expert-knob-sweep alignment-tolerance sweep (n=%d, seed=%d) ===", args.seeds, args.master_seed
+        "=== expert-knob-sweep alignment-tolerance sweep (n=%d, seed=%d) ===",
+        args.seeds,
+        args.master_seed,
     )
     log.info("%-8s %-8s %8s %8s %8s", "eps_lat", "eps_ang", "seat%", "abort%", "timeout%")
     for eps_lat_mm, eps_ang_deg, seating, abort, timeout in rows:

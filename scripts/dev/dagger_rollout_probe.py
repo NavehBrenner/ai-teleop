@@ -20,7 +20,7 @@ from ai_teleop.dagger import expert_from_config, rollout_and_relabel
 from ai_teleop.data.trajectory import load_episode
 from ai_teleop.policy import LearnedResidual
 
-log = get_logger("lab105-probe")
+log = get_logger("dagger-rollout-probe")
 
 BASE = Path("data/dataset_vision")
 CHECKPOINT = Path("outputs/policy/runs/vision_frozen_ar100/checkpoint.pt")
