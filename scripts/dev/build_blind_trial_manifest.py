@@ -1,4 +1,4 @@
-"""Build ``data/blind_trial/metadata.json`` from the blinded-trial episodes (LAB-125).
+"""Build ``data/blind_trial/metadata.json`` from the blinded-trial episodes.
 
 The sibling of ``build_recorded_manifest.py``, for the other corpus in this project that
 no seed can rebuild: the 32 trials of the pre-registered blinded human-operator session

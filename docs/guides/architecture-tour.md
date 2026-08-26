@@ -138,7 +138,7 @@ The pipeline, in order:
 
 | Module | Step |
 |---|---|
-| `scenegen/config.py` | The vocabulary: `HoleSpec`, `WallSpec`, `WallScene`, and `SamplingRanges` — the distribution a random wall is drawn from. Several of its constants embed the sweep that chose them (the chamfer range carries LAB-77 in a comment). |
+| `scenegen/config.py` | The vocabulary: `HoleSpec`, `WallSpec`, `WallScene`, and `SamplingRanges` — the distribution a random wall is drawn from. Several of its constants embed the sweep that chose them (the chamfer range cites its sweep in a comment). |
 | `scenegen/sampler.py` | `sample_wall_spec` — resolve a sparse, possibly-partial request into a fully concrete `WallSpec`. Pure, numpy-only, no I/O. |
 | `scenegen/shapes2d.py` | The hole outline in the wall-face plane (y, z) — rings and the outer boundary. |
 | `scenegen/partition2d.py` | `convex_pieces` — convex partition of the face (a rectangle minus the hole rims). MuJoCo collides convex geoms only, so this is not optional. |
@@ -204,7 +204,7 @@ Two constants worth knowing about, because they have already caused a bug: the *
 budget (`data.generate.DEFAULT_MAX_STEPS`, 9000) and the *live/interactive* budget
 (`runner.DEFAULT_LIVE_MAX_STEPS`, 5000) are different numbers and used to share a name.
 Eval once scored at 5000 against a corpus generated at 9000, making cross-path numbers
-incomparable (LAB-107, audit finding H-3). The rename is the fix; the comment at
+incomparable (audit finding H-3). The rename is the fix; the comment at
 `runner.py:48` is the memorial.
 
 ---

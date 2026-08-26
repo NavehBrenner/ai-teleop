@@ -1,9 +1,9 @@
-"""Regenerate the Phase-1 KPI tables + plots from a stored ablation run (LAB-38).
+"""Regenerate the Phase-1 KPI tables + plots from a stored ablation run.
 
 The reporting front door: it reads the per-trial ``trials.csv`` that
 ``scripts/evaluate.py pair`` writes and regenerates the publishable comparison — the
 KPI tables (markdown), the success-rate / distribution / paired-delta plots, and the
-paired summary statistics — with **one command**, which is the LAB-38 acceptance::
+paired summary statistics — with **one command**, which is the reporting acceptance::
 
     uv run python scripts/report_results.py --trials runs/eval/trials.csv --out-dir runs/eval/report
 

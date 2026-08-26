@@ -1,4 +1,4 @@
-"""Report whether a free-play take's two halves can be cut side by side (LAB-125).
+"""Report whether a free-play take's two halves can be cut side by side.
 
 A take records the operator half (``hand.mp4``, written frame-by-frame on the **wall
 clock**) and the robot half (``episode.npz``, a trajectory in **sim time**, rendered
@@ -14,7 +14,7 @@ choosing the pair that makes that equal. Re-timing the robot render to the wall 
 episode actually ran at is an alignment, not a fabrication — the trajectory is unchanged
 and every frame still comes from the step it was recorded at.
 
-    uv run python scripts/dev/take_sync_report.py outputs/lab125/hand_takes/take_1
+    uv run python scripts/dev/take_sync_report.py outputs/blind-trial/hand_takes/take_1
 """
 
 from __future__ import annotations

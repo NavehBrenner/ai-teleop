@@ -1,4 +1,4 @@
-"""Passive-observer evaluation harness (LAB-36).
+"""Passive-observer evaluation harness.
 
 A :class:`TrialObserver` watches a runtime episode through the existing
 ``run_episode`` per-tick hook and emits one :class:`~ai_teleop.eval.schema.TrialKPIs`
@@ -17,7 +17,7 @@ Plug it in as the runner's ``step_callback``::
 Because it is a plain per-tick callback that reads only its ``observation``
 argument (never the runner), the *same* observer computes the *same* KPIs whether
 driven live by ``run_episode`` or replayed offline over a logged trajectory — the
-eval-log producer/consumer split LAB-37 adds. The metric math has one home, not
+eval-log producer/consumer split ablation adds. The metric math has one home, not
 two; "offline" just points this calculator at a recorded ``Observation`` stream.
 
 The observer self-detects a trial boundary from ``sim_time`` resetting toward 0
@@ -29,7 +29,7 @@ only, never fed to a deployed policy):
 
 * ``peg_pose`` + ``hole_poses[target_hole_index]`` → insertion depth along the
   hole axis and lateral error → success/failure classification, plus the closest
-  approach the tip ever made to the hole centre (the LAB-121 near-miss trio).
+  approach the tip ever made to the hole centre (the near-miss near-miss trio).
 * ``wrist_ft`` → peak contact force and contact-event counts. The wrench is
   **tared at trial start** (bias captured on the first step, exactly as data-gen
   and the deployed policy tare at reset), so "contact force" is the static-offset
@@ -57,10 +57,10 @@ from ai_teleop.eval.schema import TrialKPIs, TrialOutcome
 __all__ = ["PEG_HALF_LENGTH", "TrialObserver"]
 
 # Classification thresholds. Success depth/tolerance default to the data-generation
-# values (``data.generate.DEFAULT_*``); LAB-37 calibrates the operating point (these are
+# values (``data.generate.DEFAULT_*``); ablation calibrates the operating point (these are
 # the knobs it sweeps).
 #
-# **Not the same success rule as data generation** (LAB-42 finding H-4). Given identical
+# **Not the same success rule as data generation** (project-review finding H-4). Given identical
 # geometry the two disagree in two ways, both deliberate:
 #
 #   * *Sustained seating.* This observer requires the peg to stay seated for
@@ -68,19 +68,21 @@ __all__ = ["PEG_HALF_LENGTH", "TrialObserver"]
 #     episode on the **first** seated step. A transient overshoot that pops back out is a
 #     data-gen success and an eval timeout.
 #   * *Force abort.* Data-gen aborts on ``locked or force > 50 N``; this observer has no
-#     controller reference (LAB-36 decoupling) and aborts on raw ``force > 30 N``.
+#     controller reference (observer decoupling) and aborts on raw ``force > 30 N``.
 #
 # Consequence for any table that mixes them: **a corpus-reported success rate is an upper
 # bound on the eval-reported rate for the same rollout.** They are two metrics; the
 # operating-point ledger records which one scored each number.
 DEFAULT_SUCCESS_DEPTH = 0.015  # penetration past the hole entry → seated (m)
-DEFAULT_LATERAL_TOLERANCE = 0.010  # max lateral tip error for a seated peg (m); LAB-77 calibration
+DEFAULT_LATERAL_TOLERANCE = (
+    0.010  # max lateral tip error for a seated peg (m); difficulty calibration
+)
 # Matches `Controller`'s own watchdog (`force_cap_n`, default 30N in
-# control/backbone.py), NOT data-generation's DEFAULT_FORCE_CAP (50N) — the
+# control/backbone.py), NOT data generation's DEFAULT_FORCE_CAP (50N) — the
 # controller freezes the arm at its own threshold first, so a raw-force check set
-# any higher than that is practically unreachable here (LAB-94: this observer,
+# any higher than that is practically unreachable here (this observer,
 # unlike data-gen's TerminationProbe, has no controller reference to fall back on
-# a `locked` check, per LAB-36's harness/controller decoupling — so the raw
+# a `locked` check, per observer's harness/controller decoupling — so the raw
 # threshold itself must be the one that's actually reachable).
 DEFAULT_FORCE_CAP = 30.0  # contact-force magnitude that aborts the trial (N)
 DEFAULT_SUSTAINED_DURATION = 0.05  # seating must hold this long to count (s)
@@ -141,7 +143,7 @@ class TrialObserver:
         self._in_contact = False
         self._seated_since_time: float | None = None  # when the current seat began
         self._time_to_insert_s: float | None = None
-        # Closest approach (LAB-121) — the running argmin over tip→hole distance, plus that
+        # Closest approach — the running argmin over tip→hole distance, plus that
         # step's axial/lateral split. Captured together so the trio describes one instant.
         # Tracked in metres here (the geometry's own unit); converted to mm on the way out.
         self._min_tip_hole_distance: float | None = None
@@ -178,7 +180,7 @@ class TrialObserver:
         # Geometry is computed *before* the force-abort check so the aborting step itself
         # counts toward closest approach — on a force abort, where the peg was driven into
         # the plate is the measurement of interest, and that is the last step there is
-        # (LAB-121). Pure computation, so hoisting it changes no other KPI.
+        # . Pure computation, so hoisting it changes no other KPI.
         geometry = SeatingGeometry.from_observation(observation, self._target_hole_index)
         self._update_closest_approach(geometry)
 

@@ -1,6 +1,6 @@
-"""LAB-98 sweep: expert recalibration under the deployment controller config.
+"""expert-brake sweep: expert recalibration under the deployment controller config.
 
-LAB-96 moved the corpus to the deployment (teleop) controller config
+deployment-config moved the corpus to the deployment (teleop) controller config
 (`joint_damping=1.5, max_dpos=0.3`) + the per-episode lognormal approach-speed
 draw, and the kd=4-tuned expert stopped reaching its ceiling: dataset_7 measures
 expert 56% success / 28% force-abort (was 77.5% / 5% under kd=4). The expert
@@ -8,30 +8,30 @@ corrects *aim* but not *approach speed* — under the responsive controller the
 arm tracks the operator's command tightly, so a hasty episode slams the wall at
 its drawn sweep speed and trips the controller's 30 N watchdog.
 
-This probe is the LAB-77-style calibration harness for that regime. Wiring
-mirrors `lab95_scripted_contact_probe.py` (same wall/operator pairing, same
+This probe is the difficulty-calibration-style calibration harness for that regime. Wiring
+mirrors `scripted_contact_probe.py` (same wall/operator pairing, same
 TerminationProbe outcome policy as data generation), but the assist layer is
 configurable: a human-only baseline plus a grid of `Expert` variants
-(`d_far` x the LAB-98 braking knobs `brake_gain`/`brake_lead_floor`). Chamfer
+(`d_far` x the expert-brake braking knobs `brake_gain`/`brake_lead_floor`). Chamfer
 sweeps stay one-value-per-process (`--chamfer-mm`, same monkeypatch + default-arg
-gotcha as `lab77_difficulty_sweep.py`).
+gotcha as the difficulty sweep).
 
-Per-config output: outcome counts, the lab95 contact-forensics table, plus
+Per-config output: outcome counts, the recorded-forensics contact table, plus
 expert-specific diagnostics — effective (post-delta) vs base command lead along
 the bore at episode end, and how often the expert's Δ saturates its 2 cm clamp
 (the structural bound on braking authority: the expert can never retract the
 command more than 2 cm from where the operator put it).
 
 Run (diagnosis, current expert):
-    uv run python scripts/dev/lab98_expert_recalibration_sweep.py --seeds 40
+    uv run python scripts/dev/expert_recalibration_sweep.py --seeds 40
 Run (brake sweep):
-    uv run python scripts/dev/lab98_expert_recalibration_sweep.py --seeds 40 \
+    uv run python scripts/dev/expert_recalibration_sweep.py --seeds 40 \
         --brake-gain 0.25,0.5 --brake-lead-floor-mm 5,10
 
-LAB-100 additions — the ceiling levers this probe can now open, one value per
+clamp-recalibration additions — the ceiling levers this probe can now open, one value per
 process each (like --chamfer-mm):
-    --max-steps       episode step budget (default 6000, the pre-LAB-100
-                      data-gen value; LAB-100 pinned data-gen at 9000);
+    --max-steps       episode step budget (default 6000, the pre-clamp-recalibration
+                      data-gen value; clamp-recalibration pinned data-gen at 9000);
                       converts the slow-transit timeout tail.
     --delta-clamp-cm  monkeypatches domain.delta._MAX_DELTA_POSITION for the
                       whole process (seam + expert clamp alike — both read the
@@ -57,7 +57,7 @@ sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import numpy as np  # noqa: E402
-from lab95_recorded_forensics import contact_forensics, print_forensics_table  # noqa: E402
+from recorded_forensics import contact_forensics, print_forensics_table  # noqa: E402
 
 import ai_teleop.domain.delta as delta_module  # noqa: E402
 import ai_teleop.sim.scenegen.config as scenegen_config  # noqa: E402
@@ -84,12 +84,14 @@ from ai_teleop.sim.config import EnvConfig, episode_wall_seed  # noqa: E402
 from ai_teleop.sim.env_setup import make_env  # noqa: E402
 from ai_teleop.sim.runner import run_episode  # noqa: E402
 
-log = get_logger("lab98_sweep")
+log = get_logger("expert-recalibration-sweep")
 
 _TARGET_HOLE_INDEX = 0
-_DEFAULT_MAX_STEPS = 6000  # pre-LAB-100 data-gen budget (~12 s); sweeps override via --max-steps
+_DEFAULT_MAX_STEPS = (
+    6000  # pre-clamp-recalibration data-gen budget (~12 s); sweeps override via --max-steps
+)
 _SUCCESS_DEPTH = 0.015
-_LATERAL_TOLERANCE = 0.010  # data.generate.DEFAULT_LATERAL_TOLERANCE (LAB-77)
+_LATERAL_TOLERANCE = 0.010  # data.generate.DEFAULT_LATERAL_TOLERANCE
 _FORCE_CAP = 50.0  # probe-level raw-force abort; the controller's own 30 N watchdog trips first
 _LEAD_WINDOW_TICKS = 25  # ~50 ms tail over which end-of-episode command lead is averaged
 _PEG_HALF_LENGTH = 0.030  # Expert default — peg tip offset along the peg's local +z
@@ -101,7 +103,7 @@ def _human_seed(master_seed: int, episode_index: int) -> int:
 
 
 def _set_chamfer(chamfer_fixed: float) -> None:
-    """Pin the sampled chamfer for this process (see lab77_difficulty_sweep.py:
+    """Pin the sampled chamfer for this process (see the difficulty sweep.py:
     re-patching after scenegen's first import is silently inert, so one chamfer
     value per process)."""
     scenegen_config.DEFAULT_RANGES = replace(
@@ -265,14 +267,14 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--seeds", type=int, default=40)
     ap.add_argument("--master-seed", type=int, default=950)
-    # Deployment (teleop / data-gen) config by default — the LAB-98 regime.
+    # Deployment (teleop / data-gen) config by default — the expert-brake regime.
     ap.add_argument("--joint-damping", type=float, default=1.5)
     ap.add_argument("--max-dpos", type=float, default=0.3)
     ap.add_argument("--speed-lognorm-median", type=float, default=0.09)
     ap.add_argument("--speed-lognorm-sigma", type=float, default=0.76)
     # Optional chamfer pin (mm). One value per process — see module docstring.
     ap.add_argument("--chamfer-mm", type=float, default=None)
-    # LAB-100 ceiling levers — one value per process each (see module docstring).
+    # clamp-recalibration ceiling levers — one value per process each (see module docstring).
     ap.add_argument("--max-steps", type=int, default=_DEFAULT_MAX_STEPS)
     ap.add_argument(
         "--delta-clamp-cm",
@@ -283,7 +285,7 @@ def main() -> None:
     # Expert grid (comma-separated lists; the grid is their product).
     ap.add_argument("--d-far-mm", default="100")
     ap.add_argument("--epsilon-lateral-mm", default="3")
-    ap.add_argument("--brake-gain", default="0", help="0 disables the LAB-98 brake.")
+    ap.add_argument("--brake-gain", default="0", help="0 disables the expert brake.")
     ap.add_argument("--brake-lead-floor-mm", default="8")
     ap.add_argument("--skip-baseline", action="store_true")
     ap.add_argument("--skip-expert", action="store_true")

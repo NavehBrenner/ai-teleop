@@ -1,4 +1,4 @@
-"""``LearnedResidual`` — the trained Phase-1 residual as an ``AssistProvider`` (LAB-34).
+"""``LearnedResidual`` — the trained Phase-1 residual as an ``AssistProvider``.
 
 This is the deployment side of M5: it wraps a trained checkpoint so the learned
 policy slots into the M3 seam exactly where ``NoAssist`` / ``Expert`` do, with **no
@@ -382,7 +382,7 @@ class LearnedResidual:
             observation.joint_velocities,
             np.array([observation.gripper_width]),
         ]
-        # LAB-106: mirror extract_training_episode's command_ee_delta feature exactly
+        # error-decomposition: mirror extract_training_episode's command_ee_delta feature exactly
         # (same trailing position in the proprioception stream).
         if self._model.config.use_command_ee_delta:
             proprioception_parts.append(command.target_position - observation.ee_pose[:3])  # (3,)
@@ -423,7 +423,7 @@ class LearnedResidual:
         the viewer's floor rate is counted in *sim*-seconds, that showed up as roughly
         1 fps on screen. Deployment was the only path still re-encoding; training already
         hoists the CNN out of the recurrent loop the same way (``forward``'s
-        ``image_embedding``, LAB-102).
+        ``image_embedding``).
 
         Keyed on object identity, not content: the env hands back the held frame itself, so
         ``is`` is exact and free, where hashing 224x224x3 every tick would not be. A frame

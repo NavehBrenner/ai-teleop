@@ -1,11 +1,11 @@
-"""LAB-42 H-7: per-config outcome mix across every committed trials.csv.
+"""project-review H-7: per-config outcome mix across every committed trials.csv.
 
-The 100-seed LAB-53 run (`runs/eval/trials.csv`, 2026-06-28) has **zero** force-aborts;
+The 100-seed difficulty-pin run (`runs/eval/trials.csv`, 2026-06-28) has **zero** force-aborts;
 every later eval set is ~70% force-abort. This prints the per-config split so the
 operating-point ledger can say whether the abort mechanism lands symmetrically on the
 two arms — if it fires more on the residual, a pre-abort measurement flatters it.
 
-Read-only. Run: `uv run python scripts/dev/lab42_outcome_breakdown.py`
+Read-only. Run: `uv run python scripts/dev/outcome_breakdown.py`
 """
 
 from __future__ import annotations

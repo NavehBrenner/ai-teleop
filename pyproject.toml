@@ -115,7 +115,7 @@ preview = true
 [tool.mypy]
 python_version = "3.12"
 # The gate type-checks the package **and the tests**. `scripts/` is checked at
-# default strictness (`uv run python -m mypy scripts/` — clean, LAB-113), but stays
+# default strictness (`uv run python -m mypy scripts/` — clean), but stays
 # out of `files` here: under this section's `check_untyped_defs` it reports 14
 # further errors, most of them TypedDict-shape noise in `run_episode.py`'s argparse
 # plumbing. Folding it in is worth doing on its own, not as a rider.

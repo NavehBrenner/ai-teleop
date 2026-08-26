@@ -59,7 +59,7 @@ was never scored. On a force abort that is the single most informative pose ther
 ### Pre-registered decision rule
 
 Fixed before running, because searching across candidate near-miss formulations until one
-shows a favourable Δ would rebuild [the LAB-114 trap](noise-floor.md) with more knobs:
+shows a favourable Δ would rebuild [the seed-selection trap](noise-floor.md) with more knobs:
 
 1. Headline = paired Δ, **unconditional** over all matched trials, aggregated across each
    recipe's training seeds as mean + observed range.
@@ -108,7 +108,7 @@ seed.
 
 The one that clears — FT DAgger, −0.69 mm against a 0.64 mm floor — clears by a hair, and
 clears partly *because its floor is unusually narrow*. That is consistent with the independent
-LAB-114 finding that DAgger **tightens the seed distribution without moving its centre**: a
+seed-variance finding that DAgger **tightens the seed distribution without moving its centre**: a
 narrow floor is easier to clear, so "clears" here is a much weaker claim than the same word
 would carry for a recipe with a 3 mm floor. **[§4](#4-only-the-walls-the-assist-never-flipped)
 removes even this one** — on walls the assist never flipped, FT DAgger falls to −0.40 against a
@@ -134,7 +134,7 @@ is suggestive, not established.
 **The baseline is deterministic, which is the provenance check.** The checkpoint-free
 `human_only` arm returns **exactly 14.73 mm in every one of the 21 runs** — same eval walls,
 same operator stream, no policy. Every millimetre of spread in the table above therefore comes
-from the training draw and nothing else. This is the same signature LAB-114 used to exonerate
+from the training draw and nothing else. This is the same signature the seed-variance study used to exonerate
 the environment, reproduced independently on a metric that did not exist at the time.
 
 ## 2. The trap: by outcome, it looks like a large win

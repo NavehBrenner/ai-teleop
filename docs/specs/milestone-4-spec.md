@@ -45,18 +45,18 @@ By the end of M4 we can:
 
 ## What's in M4
 
-- **Realistic `ScriptedNoisyHuman`** (LAB-39, `input/`) — structured
+- **Realistic `ScriptedNoisyHuman`** (`input/`) — structured
   low-frequency noise: per-episode position/orientation **bias**, correlated
   **drift**, optional **tremor**, ~5–10 Hz refresh held to the control rate,
   grip release at episode end. Replaces the M3 stub behind the same
   `InputStrategy` interface.
-- **Coverage randomization** (LAB-40, `sim/`) — per-episode randomization of the
+- **Coverage randomization** (`sim/`) — per-episode randomization of the
   reset state: target hole index, hole layout (via `scenegen`), initial peg
   offset, noise seed — all keyed off `(master_seed, episode_index)`.
-- **Analytical privileged-info expert** (LAB-27, `expert/`) — closed-form
+- **Analytical privileged-info expert** (`expert/`) — closed-form
   align-then-advance geometric law as an `AssistProvider`, with the
   far-field-zero distance gate `g(d)`. The behavioral-cloning *teacher*.
-- **Data-generation rollout + trajectory schema** (LAB-28, `scripts/` + `data/`)
+- **Data-generation rollout + trajectory schema** (`scripts/` + `data/`)
   — wraps `run_episode` with structured per-step logging to disk, terminal-
   condition detection, the keep-all-episodes policy, and deterministic
   per-episode seeding. The schema is the stable contract M5 reads.
@@ -68,12 +68,12 @@ By the end of M4 we can:
   Phase 1 (M5) trains on F/T + proprioception + command only; M4 logs no pixels.
 - **The dataset loader / windowing.** Turning these flat per-step rows into
   batched, windowed training tensors (`H_c×7` command history, `H_f×6` F/T
-  history, …) is **M5** (LAB-32). M4 logs *flat* per-step rows; it does not
+  history, …) is **M5**. M4 logs *flat* per-step rows; it does not
   assemble histories.
 - **The learned policy.** M4 ships only the analytical expert; the BC-trained
   residual `AssistProvider` is **M5+**.
 - **The evaluation harness / KPIs.** Trial-level KPIs computed by a *passive,
-  non-privileged* observer are **M6** (LAB-36). M4's terminal-condition
+  non-privileged* observer are **M6**. M4's terminal-condition
   detection is a *privileged* convenience inside the data-gen driver (it reads
   true poses), used only to label episodes and stop the loop — it is **not** the
   eval harness and the controller stays mode-less (`docs/design-document.md` *Runtime
@@ -86,7 +86,7 @@ By the end of M4 we can:
 
 ## Design — the four pieces
 
-### 1. Realistic noisy human (LAB-39)
+### 1. Realistic noisy human
 
 Per `docs/design/human-generation.md`. The command stream `c_t` is a composition
 of three layers, **fully determined by `(master_seed, episode_index)`**:
@@ -119,7 +119,7 @@ drifting + coarse); the noise **magnitudes** (`σ_bias`, drift time-constant and
 amplitude, tremor) stay placeholders calibrated post-baseline against the
 human-only failure rate.
 
-### 2. Coverage randomization (LAB-40)
+### 2. Coverage randomization
 
 Today `SimEnv.reset()` always loads the fixed `home` keyframe — **no
 randomization exists**, so this is new work on the sim/reset path. Per episode,
@@ -146,7 +146,7 @@ config (constructor args / YAML).
 `target_hole_index`) must remain correct after randomization — a logged
 spot-check must line up.
 
-### 3. The analytical expert (LAB-27)
+### 3. The analytical expert
 
 Per `docs/design/expert-corrections.md`. A deterministic state-feedback law: in,
 the privileged true state `s_t` + the noisy command `c_t`; out, a clamped
@@ -216,11 +216,11 @@ rotates the wrong way. Unit-test a known rotation through `apply_delta`.
   hole *site* frame. Which site axis points *into* the hole is a convention to
   confirm (see `scripts/dev/probe_cadquery_hole_frame.py` for prior probing).
 
-### 4. Data-generation rollout + trajectory schema (LAB-28)
+### 4. Data-generation rollout + trajectory schema
 
 A `scripts/` driver wraps the M3 `run_episode` (which stays logging-free — the
 shape M3 deliberately left) and bolts logging around it. For each of N episodes:
-seed → randomize scene (LAB-40) → build noisy human (LAB-39) + expert (LAB-27)
+seed → randomize scene → build noisy human + expert
 → run the loop, recording one row per control step → detect the terminal
 condition → write one file.
 
@@ -271,8 +271,7 @@ console/IO, `run_episode` stays pure.
 
 **File format**: **Parquet** (one file per episode, per-step rows as columns +
 per-episode metadata in the file's key-value metadata), chosen because it is
-columnar, self-describing, pandas/pyarrow-native, and exactly what the M5 loader
-(LAB-32) expects to read. NPZ is the fallback if a Parquet dependency is
+columnar, self-describing, pandas/pyarrow-native, and exactly what the M5 loader expects to read. NPZ is the fallback if a Parquet dependency is
 unwelcome. The schema is documented in `docs/` (or `data/`'s docstring) as the
 **stable M5 contract**.
 
@@ -282,7 +281,7 @@ Order chosen so each step is testable against the previous and the heavy
 integration (data-gen) comes last. Each step is its own branch → PR → CI →
 merge.
 
-### Step 1 — Realistic noise model · LAB-39 (~2–3 h)
+### Step 1 — Realistic noise model (~2–3 h)
 
 File: `src/ai_teleop/input/scripted_noisy_human.py` (rewrite), tests in
 `tests/test_scripted_noisy_human.py`.
@@ -294,7 +293,7 @@ File: `src/ai_teleop/input/scripted_noisy_human.py` (rewrite), tests in
   constant within / varying across episodes; drift autocorrelation ≫ white
   noise; `position_noise → 0` recovers the coarse trajectory; `poe check` green.
 
-### Step 2 — Coverage randomization · LAB-40 (~2–3 h)
+### Step 2 — Coverage randomization (~2–3 h)
 
 Files: `src/ai_teleop/sim/scene.py` (reset path) + `scenegen` glue; tests in
 `tests/`.
@@ -314,9 +313,9 @@ Files: `src/ai_teleop/common/observation.py`, `src/ai_teleop/sim/scene.py`.
 - Decide + implement F/T bias subtraction ownership; document the convention.
 - **Acceptance**: `get_observation` returns the new field; a reset free-space
   wrench tares to ≈0 after bias subtraction; existing tests still pass. (Folded
-  into LAB-28's PR if trivial, or its own small commit.)
+  into the data-generation driver's PR if trivial, or its own small commit.)
 
-### Step 4 — Analytical expert · LAB-27 (~3–4 h)
+### Step 4 — Analytical expert (~3–4 h)
 
 Files: `src/ai_teleop/expert/` (new module, re-exported from `__init__`); tests
 in `tests/test_expert.py`.
@@ -336,7 +335,7 @@ in `tests/test_expert.py`.
     expert visibly improves seating vs `NoAssist` (smaller final `d` / deeper
     insertion).
 
-### Step 5 — Data-generation rollout + schema · LAB-28 (~3–4 h)
+### Step 5 — Data-generation rollout + schema (~3–4 h)
 
 Files: `scripts/generate_dataset.py` (driver), `src/ai_teleop/data/` (schema +
 writer), `docs/` schema note; tests in `tests/`.
@@ -384,32 +383,27 @@ the noise/gate constants are deliberately left as post-baseline calibration.
 
 ```
 src/ai_teleop/input/
-└── scripted_noisy_human.py     (rewrite — structured noise model)            LAB-39
-
+└── scripted_noisy_human.py     (rewrite — structured noise model)
 src/ai_teleop/sim/
-└── scene.py                    (reset randomization + gripper_width + F/T bias) LAB-40 / Step 3
+└── scene.py                    (reset randomization + gripper_width + F/T bias) Step 3
 
 src/ai_teleop/common/
 └── observation.py              (add gripper_width field)                      Step 3
 
 src/ai_teleop/expert/
-├── __init__.py                 (populate — re-export Expert)                  LAB-27
-└── expert.py                   (new — analytical align-then-advance expert)   LAB-27
-
+├── __init__.py                 (populate — re-export Expert)
+└── expert.py                   (new — analytical align-then-advance expert)
 src/ai_teleop/data/
-├── __init__.py                 (populate)                                     LAB-28
-└── schema.py / writer.py       (new — trajectory schema + Parquet writer)     LAB-28
-
+├── __init__.py                 (populate)
+└── schema.py / writer.py       (new — trajectory schema + Parquet writer)
 scripts/
-└── generate_dataset.py         (new — unattended data-gen driver)            LAB-28
-
+└── generate_dataset.py         (new — unattended data-gen driver)
 docs/
-└── (schema note — the stable M5 contract)                                    LAB-28
-
+└── (schema note — the stable M5 contract)
 tests/
-├── test_scripted_noisy_human.py (extend — bias/drift/determinism)            LAB-39
-├── test_expert.py               (new — gate, conformance, convention)        LAB-27
-└── test_dataset.py              (new — schema round-trip)                     LAB-28
+├── test_scripted_noisy_human.py (extend — bias/drift/determinism)
+├── test_expert.py               (new — gate, conformance, convention)
+└── test_dataset.py              (new — schema round-trip)
 ```
 
 `src/ai_teleop/control/` is **not** modified — M2's
@@ -441,7 +435,7 @@ composes *above* the controller through the M3 seam, exactly as `NoAssist` did.
 M5 (Phase-1 F/T-only residual) consumes exactly **one** thing from M4: the
 **on-disk trajectory schema**. M5 adds:
 
-- The **dataset loader + windowing** (LAB-32) — reads these flat per-step
+- The **dataset loader + windowing** — reads these flat per-step
   Parquet rows and assembles the Phase-1 windowed streams (command history
   `H_c×7`, F/T history `H_f×6` bias-subtracted, proprioception), with the
   expert's `delta_*` columns as the regression target.

@@ -1,5 +1,5 @@
 """Isolate whether MuJoCo's passive-viewer render thread starves the stereohand tracker
-of GIL time (LAB-74 debug: native-Windows fps drop investigation).
+of GIL time (stereo-rig debug: native-Windows fps drop investigation).
 
 `mujoco.viewer.launch_passive()` spawns its own background `threading.Thread` running a
 continuous GLFW render loop on any non-macOS platform (see `_launch_internal` /

@@ -1,5 +1,5 @@
 """Measure each camera's own raw capture fps independently - no stereo pairing, no
-MediaPipe, no stereohand tracker at all (LAB-90 debug follow-up).
+MediaPipe, no stereohand tracker at all (camera-fps debug follow-up).
 
 After landing the `max_skew_s` fix, both the standalone `stereohand/scripts/demo.py` and
 `kevin`'s `run_episode --input vision` regressed again (demo ~60 -> ~30 fps; run_episode back

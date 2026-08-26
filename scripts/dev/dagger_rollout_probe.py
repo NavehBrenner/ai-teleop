@@ -1,4 +1,4 @@
-"""LAB-105 probe: time a real vision DAgger rollout + confirm the relabel path.
+"""perception probe: time a real vision DAgger rollout + confirm the relabel path.
 
 Runs a couple of on-policy rollouts with the actual vision checkpoint and rendering
 ON, so we (a) confirm the vision policy acts on captured frames and the expert
@@ -6,7 +6,7 @@ relabels, and (b) measure per-episode wall time to size the real round.
 
     GALLIUM_DRIVER=d3d12 MESA_D3D12_DEFAULT_ADAPTER_NAME=NVIDIA \\
     LD_LIBRARY_PATH=/usr/lib/wsl/lib \\
-    uv run python scripts/dev/lab105_rollout_probe.py
+    uv run python scripts/dev/dagger_rollout_probe.py
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from ai_teleop.dagger import expert_from_config, rollout_and_relabel
 from ai_teleop.data.trajectory import load_episode
 from ai_teleop.policy import LearnedResidual
 
-log = get_logger("lab105-probe")
+log = get_logger("dagger-rollout-probe")
 
 BASE = Path("data/dataset_vision")
 CHECKPOINT = Path("outputs/policy/runs/vision_frozen_ar100/checkpoint.pt")
@@ -33,7 +33,7 @@ def main() -> int:
     policy = LearnedResidual.from_checkpoint(CHECKPOINT, device="cuda")
     log.info("policy use_vision=%s", policy.use_vision)
 
-    runs_dir = Path("data/_lab105_probe/runs")
+    runs_dir = Path("data/_perception_probe/runs")
     for rollout_index in range(2):
         start = time.time()
         summary = rollout_and_relabel(

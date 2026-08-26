@@ -1,4 +1,4 @@
-"""Headless backbone regression smoke test (LAB-21).
+"""Headless backbone regression smoke test.
 
 The impedance law and lock state machine are otherwise exercised only by
 `scripts/dev_harness_controller.py --headless`, which CI does not run. This

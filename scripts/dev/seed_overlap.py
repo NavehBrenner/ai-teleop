@@ -1,4 +1,4 @@
-"""LAB-42/H-8: is the new 100-seed run's disagreement policy, harness, or sampling?
+"""project-review/H-8: is the new 100-seed run's disagreement policy, harness, or sampling?
 
 The published Phase-1 band run (30 seeds) and the 2026-07-22 re-run (100 seeds) share a
 master seed, so seeds 0..29 are the *same trials*. That makes the causes separable:
@@ -9,7 +9,7 @@ master seed, so seeds 0..29 are the *same trials*. That makes the causes separab
   does not, the difference is the policy, cleanly.
 * If both match on 0..29, the headline gap is pure sampling over seeds 30..99.
 
-Read-only. Run: `uv run python scripts/dev/lab42_seed_overlap.py`
+Read-only. Run: `uv run python scripts/dev/seed_overlap.py`
 """
 
 from __future__ import annotations

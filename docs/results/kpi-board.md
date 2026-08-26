@@ -156,7 +156,7 @@ what keeps this from becoming a max-over-rounds selection bias.*
 
 **The F/T DAgger arm has no per-round evaluation at all.** Its round checkpoints under
 `outputs/policy/runs/dag_ft_s*/dagger_round*/` hold weights and training history but no
-`trials.csv` — the intermediate rounds were never scored on the held-out walls, and the LAB-112
+`trials.csv` — the intermediate rounds were never scored on the held-out walls, and the vision
 backfill covered vision only. Nothing about how the F/T arm evolved across rounds can be claimed
 from this run; the gap is stated rather than filled.
 

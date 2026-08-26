@@ -1,12 +1,12 @@
-"""LAB-108 approach-brake sweep: raise the expert's seating ceiling by *preventing*
+"""expert-knob-sweep approach-brake sweep: raise the expert's seating ceiling by *preventing*
 the force-abort slam, measured on the deployment-config corpus.
 
-Context (LAB-106): the dominant insertion failure is a force-abort — the
+Context: the dominant insertion failure is a force-abort — the
 contact-unaware scripted operator drives the peg into the flat wall outside the
 chamfer at speed, jamming it at the force cap. The bounded analytical expert can't
-recover that, so its own seating ceiling (~65-72%, LAB-77/LAB-100) caps any BC
-clone. The one imitation-compatible lever (LAB-108) is a *better expert* that
-prevents the slam. The mechanism already exists — the LAB-98 approach brake
+recover that, so its own seating ceiling (~65-72%, difficulty-calibration/clamp-recalibration) caps any BC
+clone. The one imitation-compatible lever is a *better expert* that
+prevents the slam. The mechanism already exists — the expert-brake approach brake
 (`expert.py`: retract the command's axial lead beyond `brake_gain*distance +
 lead_floor`) — but at the deployment default (gain 1.0, d_far 0.15) the operator's
 per-episode lognormal speed draw still has a fast tail it can't arrest.
@@ -16,13 +16,13 @@ This sweeps `expert_brake_gain` x `expert_d_far` and reads each corpus's
 setting that drops force-abort without trading it for timeouts (over-braking stalls
 the approach → the peg never seats). No code change to the expert — pure knob tuning,
 the first rung. Measured only by the closed-loop seating the corpus records (the
-teacher-forced offline BC metric is anti-predictive here — LAB-106).
+teacher-forced offline BC metric is anti-predictive here).
 
 F/T-only (no image render) and `--no-baseline` keep each run fast; the expert ceiling
 doesn't need images or the human-only replay. Baseline lift is re-measured once on the
 winner via a full `generate_dataset.py` run.
 
-Run: uv run python scripts/dev/lab108_brake_sweep.py --episodes 60 --seed 0
+Run: uv run python scripts/dev/expert_brake_sweep.py --episodes 60 --seed 0
 """
 
 from __future__ import annotations
@@ -34,11 +34,11 @@ from pathlib import Path
 from ai_teleop.common.log import add_logging_arguments, configure_from_args, get_logger
 from ai_teleop.data.generate import GenerationConfig, generate_dataset
 
-log = get_logger("lab108-brake")
+log = get_logger("expert-brake-sweep")
 
 # Two levers, measured together against the expert's seating ceiling.
 #
-# BRAKE (LAB-98): retracts the command's axial lead beyond `allowed_lead =
+# BRAKE: retracts the command's axial lead beyond `allowed_lead =
 # brake_gain*distance + brake_lead_floor` (expert.py). Braking gets STRONGER as
 # brake_gain / brake_lead_floor DECREASE. Sweep-1 (raising gain) weakened the brake
 # and worsened seating (73→63%); sweep-2 (lowering gain) halved force-aborts
@@ -48,7 +48,7 @@ log = get_logger("lab108-brake")
 # Δ-CLAMP (delta_clamp → the expert's max_delta_position): the per-step position
 # authority. The distance gate zeroes the correction in free space, so this bound
 # only binds NEAR CONTACT — and the expert is clamp-SATURATED on exactly the abort
-# episodes (the wiki's LAB-98/LAB-100 note). So raising it hands lateral authority
+# episodes (the wiki's expert-brake/clamp-recalibration note). So raising it hands lateral authority
 # precisely where the slam happens: the peg can align onto the chamfer before axial
 # contact instead of being capped at 3 cm/step. This is the one lever with headroom
 # (re-opened 2026-07-11) — braking provably can't fix a lateral miss. A larger clamp
@@ -65,7 +65,7 @@ _C = _DEFAULTS.delta_clamp  # 0.03
 # — widen d_far into free space. This sweeps d_far (with a strong brake + large
 # clamp so authority isn't the limiter) to answer one question: is the privileged
 # ceiling liftable AT ALL by early engagement? (A yes is not a clone fix — early
-# free-space correction needs lateral hole info the deployed policy lacks, LAB-105 —
+# free-space correction needs lateral hole info the deployed policy lacks, perception-probe —
 # it only establishes whether the expert ceiling and the clone are decoupled.)
 #
 # (brake_gain, brake_lead_floor, delta_clamp, d_far). Row 0 = deployment baseline.
@@ -89,7 +89,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=0, help="Master seed (shared across settings).")
     parser.add_argument(
         "--out-root",
-        default="data/lab108_brake_sweep",
+        default="data/expert_brake_sweep",
         help="Root dir; each setting writes a subdir with its own metadata.json.",
     )
     add_logging_arguments(parser)
@@ -135,7 +135,9 @@ def main() -> None:
             _pct(counts, "timeout", n),
         ))
 
-    log.info("=== LAB-108 d_far diagnostic sweep (n=%d, seed=%d) ===", args.episodes, args.seed)
+    log.info(
+        "=== expert-knob-sweep d_far diagnostic sweep (n=%d, seed=%d) ===", args.episodes, args.seed
+    )
     log.info("%-7s %-7s %8s %8s %8s", "d_far", "clamp", "seat%", "abort%", "timeout%")
     for d_far, delta_clamp, seating, abort, timeout in rows:
         log.info("%-7.2f %-7.3f %8.1f %8.1f %8.1f", d_far, delta_clamp, seating, abort, timeout)

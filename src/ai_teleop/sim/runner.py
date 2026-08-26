@@ -47,7 +47,7 @@ StepCallback = Callable[[int, Observation, Command, Delta, Command], bool]
 SIM_DT = 0.002
 # Budget for a *live* (interactive / free-play) episode — ~10 s of sim time. Deliberately
 # NOT named DEFAULT_MAX_STEPS: `data.generate.DEFAULT_MAX_STEPS` is the *task* budget (9000)
-# that data generation and eval must share, and a same-named 5000 here is how LAB-107's
+# that data generation and eval must share, and a same-named 5000 here is how the step-budget bug's
 # harness bug happened (eval scored at 5000 against a corpus generated at 9000).
 DEFAULT_LIVE_MAX_STEPS = 5000
 DEFAULT_RENDER_FPS = 30.0  # target viewer frames per *sim* second when there's spare time.

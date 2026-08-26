@@ -1,4 +1,4 @@
-"""Backfill the LAB-121 near-miss columns into existing ``trials.csv`` files.
+"""Backfill the near-miss near-miss columns into existing ``trials.csv`` files.
 
 The near-miss trio (``min_tip_hole_distance`` + its axial/lateral split at the same step)
 is a pure function of the realized state, and every official eval already logged that

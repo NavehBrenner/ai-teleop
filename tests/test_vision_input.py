@@ -1,7 +1,7 @@
 """Unit tests for the M8 vision teleop: hand-tracking sensor + VisionInput.
 
-Covers only the deterministic, camera-free core (LAB-50 landmark→reading math,
-LAB-51 calibration / one-euro / clutch state machine). The live webcam path is
+Covers only the deterministic, camera-free core (monocular-baseline landmark→reading math,
+monocular-baseline calibration / one-euro / clutch state machine). The live webcam path is
 exercised manually — see `uv run kvn episode --input vision`.
 """
 
@@ -70,7 +70,7 @@ class _FakeSource:
 
 
 # ---------------------------------------------------------------------------
-# LAB-50 — landmark → reading
+# monocular-baseline — landmark → reading
 # ---------------------------------------------------------------------------
 
 
@@ -137,7 +137,7 @@ def test_open_palm_facing_sets_recenter_pose():
 
 
 # ---------------------------------------------------------------------------
-# LAB-51 — calibration transform
+# monocular-baseline — calibration transform
 # ---------------------------------------------------------------------------
 
 
@@ -154,7 +154,7 @@ def test_calibration_remaps_and_scales_axes():
 
 
 # ---------------------------------------------------------------------------
-# LAB-51 — one-euro filter
+# monocular-baseline — one-euro filter
 # ---------------------------------------------------------------------------
 
 
@@ -172,7 +172,7 @@ def test_one_euro_smooths_a_jump():
 
 
 # ---------------------------------------------------------------------------
-# LAB-51 — clutch / drop-out state machine
+# monocular-baseline — clutch / drop-out state machine
 # ---------------------------------------------------------------------------
 
 

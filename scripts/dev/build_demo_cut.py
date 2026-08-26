@@ -1,4 +1,4 @@
-"""Assemble the submission demo video from its already-rendered parts (LAB-125).
+"""Assemble the submission demo video from its already-rendered parts.
 
 ``submission-handoffs/video-cut.md`` is the authority on this cut; this script is its
 executable form, so the captions are reviewable in the diff rather than living in someone's
@@ -58,8 +58,8 @@ FPS = 20.0
 BACKGROUND = (16, 16, 18)
 
 DEFAULT_OUT = Path("assets/media/demo.mp4")
-TAKES = Path("outputs/lab125/hand_takes")
-BLIND = Path("outputs/lab125")
+TAKES = Path("outputs/blind-trial/hand_takes")
+BLIND = Path("outputs/blind-trial")
 RESULTS = Path("docs/results/phase-1")
 
 
@@ -287,7 +287,7 @@ def build(out: Path, quality: int) -> None:
             RESULTS / "success_rate_spread.png",
             7.0,
             "Per-recipe success against the human-only baseline",
-            "No recipe clears a 20-31 pp training-seed noise floor. 9 of 21 checkpoints sit above baseline — a coin flip.",
+            "No recipe clears its own training-seed noise floor. 9 of 21 checkpoints sit above baseline — a coin flip.",
         )
         total += _emit_card(
             writer,
@@ -295,7 +295,7 @@ def build(out: Path, quality: int) -> None:
                 "What can be claimed",
                 (
                     "The residual is clamped by construction: +/-3 cm, +/-10 deg, +/-5 N per step,",
-                    "and the backbone can command no more than 12.5 N of restoring force.",
+                    "so the assist can move the commanded restoring force by at most 15 N.",
                     "Measured contact force is NOT bounded — it reaches 77.86 N.",
                     "The only established effects are two costs: slower, and rougher.",
                 ),

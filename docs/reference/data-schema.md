@@ -1,7 +1,7 @@
 # Trajectory Schema — the M4→M5 Data Contract
 
-The data-generation driver (`scripts/generate_dataset.py`, LAB-28) writes **one
-file per episode**; M5's dataset loader (LAB-32) reads them. This schema is the
+The data-generation driver (`scripts/generate_dataset.py`) writes **one
+file per episode**; M5's dataset loader reads them. This schema is the
 *only* thing M5 depends on — it is versioned (`SCHEMA_VERSION`) and frozen by
 meaning. Everything else about data generation (noise magnitudes, gate
 constants, scene layout) may change without breaking M5.
@@ -10,7 +10,7 @@ Authoritative definition + writer/reader: `src/ai_teleop/data/trajectory.py`.
 
 ## Dataset layout
 
-One directory per master seed (LAB-47); **one sub-directory per episode**
+One directory per master seed; **one sub-directory per episode**
 (`SCHEMA_VERSION` 2.0):
 
 ```
@@ -116,9 +116,9 @@ loader's responsibility, not M4's.
 | `human_seed` | concrete int seeding the scripted operator (derived from the key) |
 | `fingerprint` | hash of all trajectory-determining inputs (used for the regen cache) |
 | `max_dpos`, `expert_d_far` | controller clamp / expert engagement distance used |
-| `joint_damping` | controller joint-space kd used (LAB-96: data-gen defaults to the deployment/teleop config, kd=1.5 + clamp 0.3) |
-| `speed_lognormal_median`, `speed_lognormal_sigma` | operator per-episode `max_approach_speed` lognormal draw (LAB-96); median 0 = draw disabled. Absent on pre-LAB-96 episodes |
-| `expert_brake_gain`, `expert_brake_lead_floor` | expert approach-speed brake (LAB-98): allowed command lead is `gain·distance + floor`; gain 0 = brake disabled (aim-only expert). Absent on pre-LAB-98 episodes |
+| `joint_damping` | controller joint-space kd used (data-gen defaults to the deployment/teleop config, kd=1.5 + clamp 0.3) |
+| `speed_lognormal_median`, `speed_lognormal_sigma` | operator per-episode `max_approach_speed` lognormal draw; median 0 = draw disabled. Absent on episodes predating the draw |
+| `expert_brake_gain`, `expert_brake_lead_floor` | expert approach-speed brake: allowed command lead is `gain·distance + floor`; gain 0 = brake disabled (aim-only expert). Absent on episodes predating the brake |
 | `target_hole_index` | which hole was the active target |
 | `terminal_reason` | `success` \| `force_abort` \| `timeout` (combined human **+** expert) |
 | `episode_success` | bool (`terminal_reason == success`) |
@@ -141,7 +141,7 @@ command + expert residual. It is *not* the expert alone or the human alone.
 
 **All episodes are kept** (failures included): diverse state coverage helps BC.
 
-## Human-only baseline (LAB-47)
+## Human-only baseline
 
 Unless disabled with `--no-baseline`, each episode is re-run on the **same scene
 and the same operator command stream** with the expert replaced by `NoAssist` (no
@@ -172,7 +172,7 @@ dataset generated before the baseline existed, re-summarized with baseline on).
 
 ## Wrist-camera frames (M7 load side)
 
-Rendered frames (LAB-80) live beside the trajectory at
+Rendered frames live beside the trajectory at
 `runs/episode_NNNNN/imgs/step_NNNNN.jpg` — 224×224 JPEG q90, one file per
 *rendered* step, decimated by `--render-every` (so this is normally a strict
 subset of the episode's `T` steps, not one frame per step). Populated only when

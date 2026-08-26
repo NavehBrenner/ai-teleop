@@ -147,14 +147,26 @@ rather than the observer's sustained one, so they are **not** directly comparabl
 
 ## 9. Provenance & how to regenerate
 
-Every table above is a pure function of committed artifacts. Re-aggregate any eval set:
+Every table above is a pure function of committed artifacts.
+
+> **Precondition: these scripts read the working `runs/` layout, which is gitignored.**
+> The durable copies of the per-trial rows are the flat CSVs in
+> [`../results/phase-1/official-evals/`](phase-1/official-evals/) — every table on this page is
+> a pure function of *those*. The `official_kpi/` aggregators below, however, still glob
+> `runs/eval_official_*/trials.csv`, so from a fresh clone they exit with
+> `no finished official evals under runs` until the eval set is re-run or the committed CSVs
+> are staged back into that layout. `report_results.py` takes a `--trials` path and works on
+> the committed files directly.
+
+Re-aggregate any eval set:
 
 ```bash
 # One eval set → success + paired McNemar + per-KPI Wilcoxon, from raw per-trial rows.
-uv run python scripts/report_results.py --trials runs/eval_lab101_band100_ar0/trials.csv
+uv run python scripts/report_results.py \
+  --trials docs/results/phase-1/official-evals/eval_official_ft_s0.csv
 
 # The committed Phase-1 records (30-seed slice, flat-wall, seed-variance, H-C) live here:
-ls docs/results/phase-1/*.csv docs/results/phase-1/lab114/
+ls docs/results/phase-1/*.csv docs/results/phase-1/seed-variance/
 
 # The official multi-seed success distributions (noise-floor.md §5.5), all recipes over seeds:
 uv run python scripts/dev/official_kpi/aggregate.py       # reads runs/eval_official_*
@@ -176,7 +188,7 @@ uv run python scripts/dev/official_kpi/near_miss.py
 ```
 
 The near-miss columns are recovered from the stored per-tick traces rather than re-run. If a
-`trials.csv` predates LAB-121 it simply lacks them (every reader tolerates their absence);
+`trials.csv` predates the near-miss KPI it simply lacks them (every reader tolerates their absence);
 `backfill_near_miss.py` replays the traces to add them, and refuses to write any run whose
 replay does not first reproduce that run's already-stored KPI columns exactly:
 
@@ -215,13 +227,13 @@ committed under [`docs/results/checkpoints/`](checkpoints/) (retention policy: t
 |---|---|---|
 | The 2026-07-07 M6 **checkpoint** is gone | H-8 (`outputs/` gitignored) | 70.0% cannot be re-evaluated. |
 | That run's **corpus** was overwritten in place | H-B / G-4 | `dataset_9`'s trajectories are unrecoverable. |
-| `dataset_0`/`dataset_1` fingerprints predate `generated_walls` | C-1a | Pre-LAB-91 corpora do not regenerate byte-identically. |
-| The 2026-07-07 M6 **eval sets** (`band_scale0.4`, `flatwall_scale1.0`) were never committed | — | Their rows in the ledger cannot be re-derived; `scripts/dev/lab114_seed_spread.py` needs them and will not run without them. The official-run numbers, which the results rest on, are unaffected — those CSVs are committed. |
+| `dataset_0`/`dataset_1` fingerprints predate `generated_walls` | C-1a | Corpora predating the `generated_walls` fingerprint do not regenerate byte-identically. |
+| The 2026-07-07 M6 **eval sets** (`band_scale0.4`, `flatwall_scale1.0`) were never committed | — | Their rows in the ledger cannot be re-derived; `scripts/dev/seed_spread.py` needs them and will not run without them. The official-run numbers, which the results rest on, are unaffected — those CSVs are committed. |
 
 The reconstruction that built §3–§4 is a read-only sweep over `outputs/policy/runs/`,
-`runs/eval*/`, and `data/dataset_*/` — see the LAB-114 evidence scripts
-(`scripts/dev/lab114_corpus_identity.py`, `lab114_weight_distance.py`) and the report audit
-(`scripts/dev/lab42_report_audit.py`).
+`runs/eval*/`, and `data/dataset_*/` — see the seed-variance evidence scripts
+(`scripts/dev/corpus_identity.py`, `weight_distance.py`) and the report audit
+(`scripts/dev/report_audit.py`).
 
 ---
 

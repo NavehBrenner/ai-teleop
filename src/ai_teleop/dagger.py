@@ -1,4 +1,4 @@
-"""DAgger — close the BC imitation gap by on-policy expert relabel (LAB-105).
+"""DAgger — close the BC imitation gap by on-policy expert relabel.
 
 The M7 headline is blocked by a behavioral-cloning **covariate-shift** gap, not a
 corpus mismatch: the clone drifts into states the privileged expert never
@@ -456,7 +456,7 @@ def run_dagger(
     aggregate_dir = Path(aggregate_dir)
     config = json.loads((base_dir / "metadata.json").read_text(encoding="utf-8"))["config"]
 
-    # Modality is read from the base checkpoint (LAB-106): an F/T base needs no wrist
+    # Modality is read from the base checkpoint: an F/T base needs no wrist
     # render (much faster rounds) and must retrain F/T-only, not vision. render_every
     # is passed to the rollout only for a vision policy (None ⇒ no capture).
     use_vision = load_checkpoint(Path(checkpoint)).config.use_vision
@@ -521,7 +521,7 @@ def run_dagger(
         )
 
         # Retrain on the aggregate. Vision rounds reuse the frozen-encoder recipe and
-        # decode frames in worker processes; an F/T-only base trains F/T-only (LAB-106).
+        # decode frames in worker processes; an F/T-only base trains F/T-only.
         trained = train_policy(
             aggregate_dir,
             config=PolicyConfig(use_vision=use_vision, freeze_image_encoder=use_vision),

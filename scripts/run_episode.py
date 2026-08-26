@@ -211,7 +211,7 @@ def _resolve_assist(
         )
         from ai_teleop.expert import Expert
 
-        # The corpus operating point (LAB-98): live/replay expert runs brake the
+        # The corpus operating point: live/replay expert runs brake the
         # approach exactly like the data-gen expert, so "--policy expert" shows
         # the behavior the policy is trained to clone (and the assist actually
         # prevents wall-slams under the deployment controller config).
@@ -262,7 +262,7 @@ def _rebuild_for_replay(meta: EpisodeMetadata, render_mode):
     )
     observation = env.reset()
 
-    # Episodes old enough to omit max_dpos predate LAB-96's deployment-config
+    # Episodes old enough to omit max_dpos predate the deployment config
     # data-gen default (0.3), so the right fallback is the careful-insertion
     # clamp they actually ran under — not data.generate's current default.
     controller_kwargs: dict[str, float] = {"max_dpos_per_step": float(meta.get("max_dpos", 0.025))}
@@ -274,7 +274,7 @@ def _rebuild_for_replay(meta: EpisodeMetadata, render_mode):
     # stamp the 50 N *episode-terminal* threshold under the same key; their
     # controller always ran the default watchdog. Mapping the 50 N threshold
     # onto the watchdog let a replayed arm sail past the 30 N transients the
-    # original run locked on (surfaced by LAB-96's corpus, where ~half the
+    # original run locked on (surfaced by deployment-config's corpus, where ~half the
     # baselines lock).
     if "force_cap" in meta and "fingerprint" not in meta:
         force_cap = meta["force_cap"]
@@ -447,9 +447,9 @@ def build_input(
             seed,
         )
         target_pose = np.concatenate([target_position, home_quaternion])
-        # Rebuild the operator's speed-draw config too (LAB-96): the drawn
+        # Rebuild the operator's speed-draw config too: the drawn
         # max_approach_speed comes from the operator's own seeded RNG, so seed +
-        # config reproduce it; pre-LAB-96 episodes carry no keys ⇒ draw disabled.
+        # config reproduce it; pre-deployment-config episodes carry no keys ⇒ draw disabled.
         return ScriptedNoisyHuman(
             target_pose,
             seed=seed,
@@ -521,7 +521,7 @@ def _terminal_callback_extra(recorded_reason: object) -> int:
     control+physics, so an episode that terminated via the probe ran its firing
     callback on the iteration *after* its last physics step. A replay budgeted
     to exactly the recorded step count never reaches that callback and would
-    report every probe-terminated episode as TIMEOUT (surfaced by LAB-96's
+    report every probe-terminated episode as TIMEOUT (surfaced by deployment-config's
     corpus, where ~half the baselines force-abort). The extra iteration only
     runs the callback — the probe fires before any extra physics, so the step
     count and trajectory are untouched. Timeout recordings get no extra

@@ -7,7 +7,7 @@ any data existed. This document applies §6 exactly as written and adds nothing 
 Raw data: [`human-trial/trials.csv`](human-trial/trials.csv) (the session record),
 [`human-trial/assignments.json`](human-trial/assignments.json) (the unsealed schedule),
 [`human-trial/kpis.csv`](human-trial/kpis.csv) (per-trial KPIs). Regenerate the analysis with
-`uv run python scripts/dev/lab120_trial_kpis.py --out <session>`.
+`uv run python scripts/dev/trial_kpis.py --out <session>`.
 
 ---
 
@@ -40,10 +40,11 @@ equally consistent with a substantial benefit; it is well inside the ~45 pp this
 cannot resolve. Nothing here establishes that the residual helps a human operator, and
 nothing here establishes that it does not.
 
-The direction happens to match the +8 pp paired Δ the scripted study measured for this same
-checkpoint (`vision/dagger/seed_0/round_4`). At n=16 per arm that is a coincidence-tolerant
-observation, not corroboration, and it must not be reported as agreement between the two
-studies.
+The direction does **not** match the scripted study: on this same checkpoint
+(`vision/dagger/seed_0/round_4`) the scripted paired Δ is **−4.0 pp** (p=0.572,
+[official KPI tables](phase-1/official_kpi_tables.md) §6). At n=16 per arm neither number
+resolves anything, so the disagreement is no more meaningful than agreement would have been —
+but it must not be reported as corroboration.
 
 ### The headline depends on one contested trial
 
@@ -131,7 +132,9 @@ not bounded by the cap. Any claim that contact force stays under a figure is fal
 project's own retraction on this point stands, and this session reproduces it.
 
 What remains true and is unaffected: the residual is clamped by construction (±3 cm / ±10° /
-±5 N per step), and the backbone can *command* no more than 12.5 N of restoring force.
+±5 N per step), and the assist can move the *commanded* restoring force by no more than 15 N.
+(This session ran the vision default `--max-dpos 0.3`, under which the *total* commanded
+restoring force is bounded at 150 N, not the 12.5 N an earlier revision published.)
 
 ## 7. Session log
 

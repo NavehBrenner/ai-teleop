@@ -1,4 +1,4 @@
-"""LAB-106 delta-target audit — is the BC position target learnable at all?
+"""error-decomposition delta-target audit — is the BC position target learnable at all?
 
 The council's "one thing first": before any training, characterize the delta
 *target* itself (no checkpoints, no rollouts). Four questions, all answered
@@ -14,7 +14,7 @@ B. **Is the target ≈ −operator_bias?** At `joint_damping=1.5` the arm tracks
    from-command quantity. Test tip≈command and the cross-episode bias spread.
 
 C. **Linear probe: F/T-modality observables → delta target, held out by episode.**
-   The non-vision analog of the LAB-105 perception probe. If lateral R²≈0 from
+   The non-vision analog of the perception-probe perception probe. If lateral R²≈0 from
    [command, proprio, wrist_ft], then the F/T policy is *structurally* incapable
    of the lateral correction → "worse than zero" is expected, not a bug, and
    vision is the only modality that could help. A privileged probe (adds the true
@@ -22,7 +22,7 @@ C. **Linear probe: F/T-modality observables → delta target, held out by episod
 
 D. **Hole world-position spread across walls** — does world-frame even vary?
 
-Run from kevin/:  uv run python scripts/dev/lab106_delta_target_audit.py
+Run from kevin/:  uv run python scripts/dev/delta_target_audit.py
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ from scipy.spatial.transform import Rotation
 from ai_teleop.common.log import configure_logging, get_logger
 from ai_teleop.data.trajectory import load_episode
 
-log = get_logger("lab106audit")
+log = get_logger("delta-target-audit")
 
 D_FAR = 0.15  # m — expert gate is zero beyond this; "active"/near-hole steps
 

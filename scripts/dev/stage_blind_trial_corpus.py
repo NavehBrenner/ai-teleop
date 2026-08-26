@@ -1,11 +1,11 @@
-"""Stage the 32 blinded-trial episodes into ``data/blind_trial/`` (LAB-125).
+"""Stage the 32 blinded-trial episodes into ``data/blind_trial/``.
 
 The session wrote them to ``runs/blind_trial/trial_NNN/`` (gitignored, and holding a
 per-trial ``console.log`` beside each trajectory). This copies **only** the
 ``episode.npz`` into the per-episode folder layout every other corpus uses
 (``runs/episode_NNNNN/episode.npz``, ``trajectory.EPISODE_DIR_TEMPLATE``) — so the
 destination directories are clean *by construction* rather than by a ``.gitignore``
-re-exclude, which is the trap LAB-124 hit with 12,432 wrist frames.
+re-exclude, which is the trap the corpus staging hit with 12,432 wrist frames.
 
 Trial ordering is preserved: ``trial_007`` becomes ``episode_00007``, so the manifest's
 ``episode_index`` still joins against the published ``docs/results/human-trial/kpis.csv``

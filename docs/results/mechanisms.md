@@ -28,7 +28,7 @@ Each is a mechanism, not just a missing win.
   **collapsed to 10%** (`ftonly_gate_wpos10_wd`, es0.4, vs 35% human), with *more* force-aborts.
   Online, the policy amplifies its own tracking error into wall-slams. **A more accurate
   imitator is a worse controller** — offline BC fidelity is *anti*-correlated with closed-loop
-  success on this task (LAB-106).
+  success on this task.
 - **DAgger degrades, it doesn't rescue — REGRESSION.** Three F/T rounds on the ar100 base:
   **40% → 30% → 15%** (rollout success 0.325 → 0.25). Mechanism: the policy's rollouts are
   dominated by force-abort states, and the **bounded analytical expert cannot demonstrate a
@@ -38,9 +38,9 @@ Each is a mechanism, not just a missing win.
 - **Stage-C vision fine-tune — NULL.** Unfreezing the image encoder (`vision_stageC`) ties
   F/T-only in-band (40% vs 40%, es0.4) and loses out-of-band (10% vs 20%, es1.0, inside the
   floor). Vision carries little marginal signal because **the operator command already proxies
-  the hole location** (LAB-77 identifiability); the free-space correction the clone would learn
+  the hole location** (the identifiability finding); the free-space correction the clone would learn
   is ≈0 by construction.
-- **A better analytical expert — REFUTED (LAB-108).** Five expert knobs meant to prevent the
+- **A better analytical expert — REFUTED.** Five expert knobs meant to prevent the
   slam were all inert; the expert's own ceiling stayed at ~73.3%. The binding constraint is
   operator-originated, pre-contact force-abort, which a bounded residual cannot fix.
 
@@ -58,20 +58,29 @@ because a claim about a continuous metric is subject to exactly the same standar
   1. **The residual is clamped** — ±3 cm / ±10° / ±5 N per step, applied *before* the controller
      sees the augmented command (`domain/delta.py`). A maximally wrong network cannot enlarge its
      own authority.
-  2. **The commanded restoring force is bounded at 12.5 N.** The backbone clamps the **Euclidean
-     norm** of the position delta to 0.025 m (`control/backbone.py`), so with translational
-     stiffness `[400, 400, 500]` N/m the most the controller can ever *ask* for is
-     `λ_max·‖Δx‖ = 500 × 0.025 = 12.5 N`. (Taking each axis at the full clamp independently gives
-     18.9 N, but that describes a `Δx` of norm 0.043 m, which the clamp makes unreachable — a
-     valid bound, 51% loose.) The bound holds in `ACTIVE` and `HOLD`; `PARK` returns the home
-     pose directly and bypasses the clamp.
+  2. **The assist can move the commanded restoring force by at most 15 N.** `clamp_delta`
+     bounds the residual to `‖r‖ ≤ 0.03 m`, and projection onto the backbone's command ball is
+     non-expansive, so with translational stiffness `[400, 400, 500]` N/m the residual changes
+     the commanded restoring force by at most `λ_max × 0.03 = 15 N` — **independent of
+     `max_dpos`**. The bound holds in `ACTIVE` and `HOLD`; `PARK` returns the home pose directly
+     and bypasses the clamp.
+
+     The *total* commanded restoring force is a different, looser quantity: the backbone clamps
+     `‖Δx‖` to `max_dpos`, which under the deployment config every measurement uses is **0.3 m**
+     (`eval/ablation.py`, `data/generate.py`, and `--input vision`), giving `500 × 0.3 = 150 N`.
+     An earlier revision published **12.5 N** here from `backbone._DEFAULT_MAX_DPOS = 0.025` —
+     the Controller's `careful-insertion` default, which nothing in this project was measured
+     under. Instrumenting one `human_only` eval trial puts the realised commanded force at
+     33.4 N, above the retired figure on 94% of its steps.
   3. **No trial continues past 30 N** — the eval observer aborts it (`eval/observer.py`).
-  4. **Measured contact force is *not* bounded.** The wrist F/T sensor reads the contact
-     *reaction*, which includes impact transients the quasi-static `K·Δx` argument says nothing
-     about, and the commanded wrench also carries a damping term `−D·ẋ` that no command clamp
-     bounds. **1712 of 4200 official trials exceed 30 N, reaching 77.86 N** — every one of them a
-     `force_abort`, the overshoot occurring within the tick before the watchdog fires. 58% of
-     *successful* trials exceed the 12.5 N commanded bound. See [within-seed.md](within-seed.md).
+  4. **Measured contact force is *not* bounded by the watchdog.** The wrist F/T sensor reads
+     the contact *reaction*, which includes impact transients the quasi-static `K·Δx` argument
+     says nothing about, and the commanded wrench also carries a damping term `−D·ẋ` that no
+     command clamp bounds. **1712 of 4200 official trials exceed 30 N, reaching 77.86 N** — every
+     one of them a `force_abort`, the overshoot occurring within the tick before the watchdog
+     fires. That overshoot is the operative unbounded-ness: no measured trial approaches the
+     150 N total-command envelope, so the gap to watch is measurement against the **watchdog**,
+     not measurement against the command. See [within-seed.md](within-seed.md).
 
 - **The measured effects, against each metric's own floor.** Retraining one recipe with a
   different training seed moves *every* KPI, not just success. The floor per recipe per metric is
@@ -97,17 +106,17 @@ because a claim about a continuous metric is subject to exactly the same standar
   modality and batch size, which is a stronger form of evidence than any mean clearing a floor.
   Their magnitudes remain seed-dependent (jerk's floor reaches 186 on FT DAgger).
 - **The mechanism findings**, each theory or a byte-identical/exact probe:
-  - **Identifiability ceiling** (LAB-77) — the operator command proxies the hole; a no-vision
+  - **Identifiability ceiling** — the operator command proxies the hole; a no-vision
     residual cannot lift success outside the chamfer band. A structurally-flat flat-wall delta
     is a *result*, not a failure.
-  - **Far-field gating failure** (LAB-106) — trained GRUs emit a **5.64 mm** correction floor
+  - **Far-field gating failure** — trained GRUs emit a **5.64 mm** correction floor
     across the 123797 of 209143 held-out steps (59%) beyond `d_far` where the expert is
     exactly zero. Near and close in, the same GRU beats the zero baseline (8.78 vs 9.42 mm;
     12.02 vs 13.56 mm) — the entire offline deficit is the free-space floor
-    ([probe output](phase-1/probes/lab106-error-decomposition.md)).
-  - **Offline/closed-loop anti-correlation** (LAB-106) — fixing offline BC error made
+    ([probe output](phase-1/probes/error-decomposition.md)).
+  - **Offline/closed-loop anti-correlation** — fixing offline BC error made
     closed-loop worse; only a closed-loop ablation is a valid signal here.
-  - **The bounded-expert/DAgger argument** (LAB-105/106) — on-policy relabeling can only teach
+  - **The bounded-expert/DAgger argument** — on-policy relabeling can only teach
     what the expert can perform, and it cannot un-jam a force-aborted peg.
 
 The engineering summary: **Phase 1 delivers an assist whose authority is bounded by

@@ -1,4 +1,4 @@
-"""LAB-106: WHERE does the trained GRU's position error live — near or far field?
+"""error-decomposition: WHERE does the trained GRU's position error live — near or far field?
 
 Normalization already exists (inputs are z-scored end-to-end; targets are left
 raw). Yet the GRU scores ~7.6 mm held-out vs a linear probe's 2.36 mm. This splits
@@ -7,7 +7,7 @@ tell a *gating* failure (emits junk where the expert target is 0, far field) fro
 *correction* failure (near field), and compare to the zero-Δ baseline per bucket.
 
 Reuses the exact val split + feature assembly + normalization the checkpoint trained
-under. Run from kevin/:  uv run python scripts/dev/lab106_error_decomp.py
+under. Run from kevin/:  uv run python scripts/dev/error_decomp.py
 """
 
 from __future__ import annotations
@@ -27,7 +27,7 @@ from ai_teleop.data.dataset import (
 from ai_teleop.data.trajectory import load_episode
 from ai_teleop.policy.residual_policy import load_checkpoint
 
-log = get_logger("lab106decomp")
+log = get_logger("error-decomp")
 
 DATASET = Path("data/dataset_vision")
 D_FAR = 0.15

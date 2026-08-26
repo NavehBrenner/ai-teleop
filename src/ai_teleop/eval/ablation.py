@@ -1,4 +1,4 @@
-"""Paired-seed ablation runner — the mechanism behind the M6 head-to-head (LAB-37).
+"""Paired-seed ablation runner — the mechanism behind the M6 head-to-head.
 
 One *trial* is a fixed ``(master_seed, episode_index)`` pair: it pins the
 procedural wall (built from a seed derived from exactly that pair, mirroring data
@@ -14,7 +14,7 @@ Each trial is observed live by a :class:`TrialObserver` (computes the KPIs and e
 the episode on seating / force-abort) and, optionally, persisted as an
 :class:`EvalTraceRecorder` trace so the KPIs can be recomputed offline without
 re-running (see :mod:`ai_teleop.eval.trace`). This module owns the *mechanism*; the
-~100-trial run against the fine-tuned residual and the difficulty pin are LAB-53.
+~100-trial run against the fine-tuned residual and the difficulty pin are difficulty-pin.
 
 This stays a pure consumer of the M3 runner and the M5 assist seam — no controller
 edit, mirroring the data-gen rollout. The configs are supplied by the caller as
@@ -65,21 +65,21 @@ from ai_teleop.sim.scene import DEFAULT_WRIST_RENDER_EVERY
 _TARGET_HOLE_INDEX = 0
 
 # Controller command clamp (m/step). Re-anchored to the data-gen / deployment
-# (teleop) config by LAB-98: eval trials must sample the same contact dynamics
+# (teleop) config by expert-brake: eval trials must sample the same contact dynamics
 # and operator distribution the corpus trains on, or the difficulty pin measures
-# a different task than the policy learned (LAB-96 moved the corpus; the pin
+# a different task than the policy learned (deployment-config moved the corpus; the pin
 # follows). The Controller's own careful-insertion default (0.025) is still
 # reachable per-trial via the ``max_dpos`` argument.
 DEFAULT_MAX_DPOS = _DATAGEN_MAX_DPOS
 
 # Per-episode step budget for an insertion trial (~18 s of sim @ 500 Hz). **Bound to**
 # data.generate.DEFAULT_MAX_STEPS, not copied from it: eval must use the same task budget as
-# data-gen or timeout rates measure the budget, not the policy — LAB-107 was exactly that bug
-# (eval at 5000 against a corpus generated at 9000). Pre-LAB-100 corpora (dataset_8 and
+# data-gen or timeout rates measure the budget, not the policy — step-budget was exactly that bug
+# (eval at 5000 against a corpus generated at 9000). Pre-clamp-recalibration corpora (dataset_8 and
 # earlier) were generated at 6000, before the operator speed draw's slow tail needed 9000.
 INSERTION_MAX_STEPS = _DATAGEN_MAX_STEPS
 
-# Difficulty knob for the LAB-53 pin: a multiplier on the scripted operator's lateral
+# Difficulty knob for the difficulty pin: a multiplier on the scripted operator's lateral
 # error (per-episode bias + OU drift) relative to the M5 training distribution.
 # 1.0 == the σ's the corpus was generated at (where contact lands on the flat wall, far
 # outside the ~chamfer-width capture band); < 1.0 shrinks the error toward that band so
@@ -121,7 +121,7 @@ def run_trial(
     generated_walls: bool = True,
     # Default is the insertion budget (9000), NOT the generic sim budget: eval must
     # use the same task budget as data-gen or timeouts measure the budget, not the
-    # policy. LAB-107: this default silently disagreed with scripts/evaluate.py's
+    # policy. step-budget: this default silently disagreed with scripts/evaluate.py's
     # (which always passed INSERTION_MAX_STEPS), so callers that omit max_steps —
     # e.g. dagger._reablate — under-budgeted at 5000 and depressed human-only.
     max_steps: int = INSERTION_MAX_STEPS,
@@ -143,13 +143,13 @@ def run_trial(
     on the static wall instead (no ``scenegen``/CadQuery — for fast tests). The
     controller config (``max_dpos``, ``joint_damping``) and the operator's
     per-episode approach-speed draw (``speed_lognormal_*``) default to the
-    data-gen deployment config (LAB-96/98), so eval trials sample the same task
+    data-gen deployment config, so eval trials sample the same task
     distribution the corpus trains on.
 
     ``operator_error_scale`` multiplies the scripted operator's lateral-error σ's
-    (bias + drift) off their training defaults — the difficulty knob the LAB-53 pin
+    (bias + drift) off their training defaults — the difficulty knob the difficulty pin
     sweeps. ``force_cap`` feeds **both** the controller's watchdog (``force_cap_n``)
-    and the observer's own FORCE_ABORT threshold — they must match (LAB-94: the
+    and the observer's own FORCE_ABORT threshold — they must match (the
     controller freezes the arm at its threshold first, so a higher observer
     threshold is never reached and FORCE_ABORT silently never fires). When
     ``trace_path`` is given, the realized-state trace is written there so the KPIs
@@ -245,7 +245,7 @@ def run_paired(
     kwargs) is forwarded verbatim to `run_trial` — see its signature for the
     defaults.
 
-    It forwards rather than re-declares deliberately: LAB-107 was caused by this
+    It forwards rather than re-declares deliberately: step-budget was caused by this
     function carrying its own copy of ``max_steps``'s default, which drifted from
     `run_trial`'s and silently under-budgeted the DAgger eval path by 4000 steps.
     One definition of each default is the fix (audit finding C-3).

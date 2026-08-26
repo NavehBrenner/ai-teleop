@@ -1,10 +1,10 @@
 """Recompute every committed dataset's fingerprint from its metadata.json.
 
-The guard for the LAB-42 / C-1 `GenerationConfig` refactor: the fingerprint a
+The guard for the project-review / C-1 `GenerationConfig` refactor: the fingerprint a
 committed manifest regenerates under must not change. Run before and after any
 change to `_episode_fingerprint` / `regenerate_from_metadata` and diff the output.
 
-    uv run python scripts/dev/lab42_fingerprint_audit.py
+    uv run python scripts/dev/fingerprint_audit.py
 """
 
 from __future__ import annotations

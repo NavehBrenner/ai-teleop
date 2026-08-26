@@ -1,10 +1,10 @@
-"""LAB-78 realism regressions for ScriptedNoisyHuman's command stream.
+"""approach-phase realism regressions for ScriptedNoisyHuman's command stream.
 
 The command is a live policy input (the command-history GRU), so its *dynamics*
 matter, not just where it ends up. These pin the three behaviors that the old
 "parked at the goal from tick 0" model lacked and that would silently regress:
 an approach phase, per-tick continuity (no holds, no jumps), and determinism.
-Magnitudes are still placeholders (calibrated in LAB-77); only the form is fixed.
+Magnitudes are still placeholders (calibrated in difficulty-calibration); only the form is fixed.
 """
 
 from __future__ import annotations
@@ -88,7 +88,7 @@ def test_deterministic_for_same_seed_and_observations():
 
 
 def test_approach_decelerates_near_goal():
-    # LAB-91: real operators slow down before contact; the command should too —
+    # proportional-deceleration: real operators slow down before contact; the command should too —
     # per-tick speed should shrink once near the (fixed) goal, not hold
     # max_approach_speed until the literal last tick (the old bang-bang model,
     # which gave a flat near-field speed distribution — see
@@ -110,7 +110,7 @@ def test_approach_decelerates_near_goal():
 
 
 def test_careless_probability_zero_is_a_true_no_op():
-    # LAB-92: careless_probability defaults to 0, and must not perturb the RNG
+    # careless-episode: careless_probability defaults to 0, and must not perturb the RNG
     # stream at all (it's only drawn from when > 0) -- so passing it explicitly
     # as 0.0 must reproduce the exact same command stream as not passing it, for
     # every existing caller/seeded dataset.
@@ -126,8 +126,8 @@ def test_careless_probability_zero_is_a_true_no_op():
 
 
 def test_careless_episode_never_decelerates():
-    # LAB-92: a careless-drawn episode (careless_probability=1.0 forces the draw)
-    # skips the LAB-91 deceleration and keeps sweeping at the far-field rate cap
+    # careless-episode: a careless-drawn episode (careless_probability=1.0 forces the draw)
+    # skips the proportional deceleration and keeps sweeping at the far-field rate cap
     # all the way to contact, unlike a normal (non-careless) episode.
     obs = _make_observation(np.array([0.5, 0.0, 0.3]))
     actor = _make_actor(seed=3, careless_probability=1.0)
@@ -152,7 +152,7 @@ def test_careless_draw_depends_on_seed():
 
 
 def test_speed_lognormal_zero_is_a_true_no_op():
-    # LAB-96: speed_lognormal_median defaults to 0, and must not perturb the RNG
+    # deployment-config: speed_lognormal_median defaults to 0, and must not perturb the RNG
     # stream at all (only drawn when > 0) -- so passing it explicitly as 0.0 must
     # reproduce the exact same command stream as not passing it, keeping every
     # existing seeded dataset reproducible.
@@ -199,7 +199,7 @@ def test_speed_lognormal_draw_depends_on_seed_and_is_reproducible():
 
 def test_speed_lognormal_draw_leaves_bias_draws_untouched():
     # The speed draw happens after the bias/careless draws, so enabling it must
-    # not shift the per-episode aim (the LAB-77/78 calibration) for a given seed.
+    # not shift the per-episode aim (the difficulty calibration) for a given seed.
     plain = _make_actor(seed=8)
     drawn = _make_actor(seed=8, speed_lognormal_median=0.09)
     np.testing.assert_array_equal(plain.position_bias, drawn.position_bias)

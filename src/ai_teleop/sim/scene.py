@@ -167,7 +167,7 @@ class SimEnv:
         self._camera_width = camera_width
         self._renderer: mujoco.Renderer | None = None
 
-        # Wrist-camera capture for the Phase-2 vision policy (LAB-83). Off by
+        # Wrist-camera capture for the Phase-2 vision policy. Off by
         # default so F/T-only runs, data-gen and every pre-M7 caller render nothing.
         # When enabled the env is the frame-rate limiter: it re-renders every
         # `_wrist_capture_every` observation ticks and holds the last frame between,
@@ -289,7 +289,7 @@ class SimEnv:
         )
 
     def enable_wrist_capture(self, render_every: int = DEFAULT_WRIST_RENDER_EVERY) -> None:
-        """Start stamping a wrist-camera frame onto each ``Observation`` (LAB-83).
+        """Start stamping a wrist-camera frame onto each ``Observation``.
 
         The env becomes the frame-rate limiter for the vision policy: it renders a
         new wrist frame every ``render_every`` observation ticks and returns the held

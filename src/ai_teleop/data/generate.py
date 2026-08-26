@@ -87,73 +87,75 @@ _TARGET_HOLE_INDEX = 0
 # actual scene-file name instead.
 _GENERATED_SCENE_LABEL = "generated"
 
-# ~18 s @ 500 Hz. Raised 6000 → 9000 by LAB-100: under the operator speed
+# ~18 s @ 500 Hz. Raised 6000 → 9000 by clamp-recalibration: under the operator speed
 # draw's slow tail the peg arrives late and the expert timeouts run out of
-# clock mid-seating (LAB-100 probe: every dataset_8-config timeout had already
+# clock mid-seating (clamp-recalibration probe: every dataset_8-config timeout had already
 # entered the expert's d_far band — late arrivals, not non-arrivals). The
 # extra 6 s converts most of them (timeouts 20% → 8% at n=40, aborts
-# unchanged) without disturbing the LAB-95/96 realism anchor (baseline
+# unchanged) without disturbing the contact-forensics realism anchor (baseline
 # force-aborts hold at ~50%). Comparability caveat: the recorded reference
 # sessions ran 5000 steps (10 s).
 DEFAULT_MAX_STEPS = 9000
 DEFAULT_SUCCESS_DEPTH = 0.015  # insertion past the hole entry → success (m)
-DEFAULT_LATERAL_TOLERANCE = 0.010  # max lateral error for a "seated" peg (m); LAB-77 calibration
+DEFAULT_LATERAL_TOLERANCE = (
+    0.010  # max lateral error for a "seated" peg (m); difficulty calibration
+)
 DEFAULT_FORCE_CAP = 50.0  # wrist force magnitude that aborts the episode (N)
 # Distance (m) at which the expert starts engaging. Widened 0.10 → 0.15 by
-# LAB-98: under the deployment controller config the extra 5 cm is braking
+# expert-brake: under the deployment controller config the extra 5 cm is braking
 # window (aborts 8% → 5%, success 72% → 75% at n=40; 0.20 adds nothing).
-# Under kd=4 this knob was byte-identical 0.10–0.20 (LAB-77) — the effect is
+# Under kd=4 this knob was byte-identical 0.10–0.20 — the effect is
 # specific to the responsive controller. Kept as small as achieves the ceiling:
 # d_far bounds the region where Phase-1 labels are non-zero.
 DEFAULT_EXPERT_D_FAR = 0.15
 
-# Controller config for the corpus (LAB-95/96): the DEPLOYMENT (teleop) config —
+# Controller config for the corpus: the DEPLOYMENT (teleop) config —
 # what `run_episode.py --input vision` runs and what `data/recorded` was captured
 # under — NOT the Controller's own careful-insertion defaults (kd=4.0, clamp
 # 0.025). Training data must match the contact dynamics the policy deploys into:
 # under kd=4 the free-space slew pins at ~0.05 m/s, erasing the episode-to-episode
-# speed variance that IS the recorded force-abort signature (LAB-95 root cause).
+# speed variance that IS the recorded force-abort signature (contact-forensics root cause).
 DEFAULT_MAX_DPOS = 0.3  # controller command clamp (m/step)
 DEFAULT_JOINT_DAMPING = 1.5  # flat joint-space kd (N·m·s/rad)
 
-# Per-episode lognormal draw on the operator's max_approach_speed (LAB-95/96):
+# Per-episode lognormal draw on the operator's max_approach_speed:
 # median calibrated against `data/recorded` under the deployment controller
 # config (0.09 m/s landed 47.5% force-aborts / 2.77x motion tail at 40 seeds);
 # sigma 0.76 fits the recorded near-field command-speed spread (p90/median ~2.7).
 DEFAULT_SPEED_LOGNORMAL_MEDIAN = 0.09
 DEFAULT_SPEED_LOGNORMAL_SIGMA = 0.76
 
-# Expert approach-speed brake (LAB-98): under the deployment controller config
+# Expert approach-speed brake: under the deployment controller config
 # the arm tracks the operator's command tightly, so a hasty episode slams the
 # wall at its drawn sweep speed — the kd=4-tuned expert corrected aim but not
 # approach speed (dataset_7: expert force-aborts 5% → 28%). The brake retracts
 # the command's axial lead beyond `gain * distance + floor`, decelerating the
-# approach. Calibrated by the LAB-98 sweep (scripts/dev/
-# lab98_expert_recalibration_sweep.py, n=40, master_seed 950): gain is monotone
+# approach. Calibrated by the expert-brake sweep (scripts/dev/
+# expert_recalibration_sweep.py, n=40, master_seed 950): gain is monotone
 # 0 → 1.0 (aborts 28% → 8%) and degrades by 1.5 (brake too weak); floor 8 mm
 # beat 5/12 mm. Together with the widened d_far (below): expert 75% / aborts 5%.
 DEFAULT_EXPERT_BRAKE_GAIN = 1.0
 DEFAULT_EXPERT_BRAKE_LEAD_FLOOR = 0.008
 
-# Shared expert/policy per-step Δ-position bound for the corpus (LAB-100). The
+# Shared expert/policy per-step Δ-position bound for the corpus. The
 # expert clamps its label to this, and it is what bounds the brake's authority
-# — the structural residual LAB-98 measured (operator sweeps faster than the
-# clamp can absorb still crash). Raised 0.02 → 0.03 by the LAB-100 sweep
+# — the structural residual expert-brake measured (operator sweeps faster than the
+# clamp can absorb still crash). Raised 0.02 → 0.03 by the clamp-recalibration sweep
 # (n=40 × two seed families, 9000-step budget): expert aborts 22% → 15% on
 # the corpus family with success-episode clamp saturation at zero; 0.04
 # measured the same ceiling within noise, so the smaller bound is kept.
 # Matches domain.delta._MAX_DELTA_POSITION (the deployed bound).
 DEFAULT_DELTA_CLAMP = 0.03
 
-# The pre-LAB-96 corpus config (the Controller's careful-insertion defaults, no
+# The pre-deployment-config corpus config (the Controller's careful-insertion defaults, no
 # per-episode speed draw). Fingerprints and `regenerate_from_metadata` treat this
 # as the implicit config of metadata written before these knobs existed, so
 # legacy datasets keep regenerating byte-identical with matching fingerprints.
 _LEGACY_JOINT_DAMPING = 4.0
 _LEGACY_SPEED_LOGNORMAL_MEDIAN = 0.0
-# Pre-LAB-98: no expert brake (gain 0 disables it inside `Expert`).
+# Pre-expert-brake: no expert brake (gain 0 disables it inside `Expert`).
 _LEGACY_EXPERT_BRAKE_GAIN = 0.0
-# Pre-LAB-100: the ±2 cm Δ-position bound every earlier corpus was clamped at
+# Pre-clamp-recalibration: the ±2 cm Δ-position bound every earlier corpus was clamped at
 # (the `domain.delta` module bound of the time).
 _LEGACY_DELTA_CLAMP = 0.02
 
@@ -217,12 +219,12 @@ class GenerationConfig:
         so ``seed`` (hashed here) + the episode index (in the file path) already pin it;
         only the wall *mode* (``generated_walls``) needs to enter the hash.
 
-        The LAB-96 knobs extend the payload only when they leave the legacy config
-        (kd=4.0, no speed draw — behavior-identical to pre-LAB-96 code, RNG
+        The deployment-config knobs extend the payload only when they leave the legacy config
+        (kd=4.0, no speed draw — behavior-identical to pre-deployment-config code, RNG
         included), so a legacy dataset's committed fingerprint still matches its
-        regeneration. The LAB-98 expert-brake knobs follow the same pattern (gain 0
-        == the brake-free pre-LAB-98 expert, bit-exact), as does the LAB-100
-        Δ-clamp (the legacy ±2 cm bound == pre-LAB-100 behavior, bit-exact).
+        regeneration. The expert-brake expert-brake knobs follow the same pattern (gain 0
+        == the brake-free pre-expert-brake expert, bit-exact), as does the clamp-recalibration
+        Δ-clamp (the legacy ±2 cm bound == pre-clamp-recalibration behavior, bit-exact).
         """
         payload = (
             f"{self.seed}|{self.max_steps}|{self.max_dpos:.6f}"
@@ -306,7 +308,7 @@ class GenerationConfig:
             speed_lognormal_sigma=config.get(
                 "speed_lognormal_sigma", DEFAULT_SPEED_LOGNORMAL_SIGMA
             ),
-            # Absent ⇒ pre-LAB-100 corpus, clamped at the legacy ±2 cm bound.
+            # Absent ⇒ pre-clamp-recalibration corpus, clamped at the legacy ±2 cm bound.
             delta_clamp=config.get("delta_clamp", _LEGACY_DELTA_CLAMP),
             success_depth=config["success_depth"],
             lateral_tolerance=config["lateral_tolerance"],
@@ -408,7 +410,7 @@ def generate_dataset(
     max_dpos=0.3`` — what live vision teleop and the ``data/recorded`` reference
     corpus run), not the Controller's own careful-insertion defaults, and the
     operator draws a per-episode ``max_approach_speed`` from a lognormal
-    (``speed_lognormal_*``) — the LAB-95/96 recipe that closes the
+    (``speed_lognormal_*``) — the contact-forensics recipe that closes the
     scripted-vs-recorded force-abort and motion-tail gaps. When ``cache`` is set,
     an existing episode file whose stored ``fingerprint`` matches the current
     config is reused instead of being re-simulated.
@@ -439,7 +441,7 @@ def generate_dataset(
         target_hole_index=_TARGET_HOLE_INDEX,
         # Explicit per-corpus bound (not the module default): regenerating a
         # legacy dataset must clamp the expert at the bound it was recorded
-        # under, whatever the deployed bound is today (LAB-100).
+        # under, whatever the deployed bound is today.
         max_delta_position=config.delta_clamp,
     )
     fingerprint = config.fingerprint()

@@ -1,13 +1,13 @@
-"""LAB-106: does the action-rate penalty explain F/T "worse than zero"?
+"""error-decomposition: does the action-rate penalty explain F/T "worse than zero"?
 
 The delta-target audit showed a *linear* probe on F/T observables gets ~2.4 mm
 held-out (beating the 4.9 mm zero-Δ baseline), while the trained F/T policy was
 reported at 7.74 mm (worse than zero). That gap is a fitting failure, not an
-unlearnable target. Prime suspect: the LAB-104 action-rate (smoothness) penalty.
+unlearnable target. Prime suspect: the action-rate action-rate (smoothness) penalty.
 
-This runs the held-out offline eval (reusing lab81's evaluator) across the F/T
+This runs the held-out offline eval (reusing the offline evaluator) across the F/T
 checkpoints that differ only in that penalty, and prints each one's configured
-weight. Run from kevin/:  uv run python scripts/dev/lab106_ft_checkpoint_sweep.py
+weight. Run from kevin/:  uv run python scripts/dev/ft_checkpoint_sweep.py
 """
 
 from __future__ import annotations
@@ -22,14 +22,14 @@ from ai_teleop.policy.residual_policy import load_checkpoint
 
 # Reuse the exact held-out evaluator (same split seed/fraction, same metric).
 _spec = importlib.util.spec_from_file_location(
-    "lab81_offline_eval", Path(__file__).with_name("lab81_offline_eval.py")
+    "offline_eval", Path(__file__).with_name("offline_eval.py")
 )
-assert _spec is not None, "lab81_offline_eval.py must sit beside this script"
-_lab81 = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(_lab81)  # type: ignore[union-attr]
-_evaluate = _lab81._evaluate
+assert _spec is not None, "offline_eval.py must sit beside this script"
+_offline_eval = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_offline_eval)  # type: ignore[union-attr]
+_evaluate = _offline_eval._evaluate
 
-log = get_logger("lab106sweep")
+log = get_logger("ft-checkpoint-sweep")
 
 DATASET = Path("data/dataset_vision")
 RUNS = ["ftonly_baseline_lab82", "ftonly_wpos10_wd"]

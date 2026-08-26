@@ -127,14 +127,14 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         "--action-rate-weight",
         type=float,
         default=LossConfig.weight_action_rate,
-        help="Smoothness penalty weight (LAB-104): penalizes the per-step change in the "
+        help="Smoothness penalty weight: penalizes the per-step change in the "
         "predicted Δ to kill the sub-clamp jerk regression. 0 disables (default).",
     )
     parser.add_argument(
         "--weight-position",
         type=float,
         default=LossConfig.weight_position,
-        help="BC loss weight on the position channel (LAB-106). The Δposition target is "
+        help="BC loss weight on the position channel. The Δposition target is "
         "~mm-scale next to orientation in radians, so the default 1.0 under-serves it; raise "
         "to force the optimizer to fit the (success-critical) lateral correction.",
     )
@@ -143,12 +143,12 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         type=float,
         default=TrainConfig.weight_decay,
         help="Adam weight decay (L2). >0 regularizes the far-field spurious-correction floor "
-        "the BC net emits where the expert is structurally zero (LAB-106).",
+        "the BC net emits where the expert is structurally zero.",
     )
     parser.add_argument(
         "--command-ee-delta",
         action="store_true",
-        help="LAB-106: append the raw (command_position − ee_position) tracking-error vector "
+        help="error-decomposition: append the raw (command_position − ee_position) tracking-error vector "
         "to the proprioception stream so the GRU can learn the free-space zero (the residual "
         "∝ this vector). Adds 3 input dims; both train and deploy assembly gate on it.",
     )

@@ -1,4 +1,4 @@
-"""Phase-1 KPI aggregation, tables, and plots (LAB-38).
+"""Phase-1 KPI aggregation, tables, and plots.
 
 The reporting end of the M6 harness: it consumes the flat per-trial records the
 ablation runner writes (``trials.csv``, one row per ``(seed, config)`` via
@@ -19,11 +19,13 @@ Two kinds of aggregate, matching the evaluation protocol:
 
 Pure aggregation + rendering — no sim, no controller, no re-run. Every number is a
 function of the stored records, so the tables/plots regenerate from ``trials.csv``
-with one command (``scripts/report_results.py``), which is the LAB-38 acceptance.
+with one command (``scripts/report_results.py``), which is the reporting step's acceptance.
 
 The peak-force KPI is reported as any other column, and it is a **measurement**, not a
 guarantee. What is bounded by construction is the assist's *authority* — the residual is
-hard-clamped and the backbone can command at most ``λ_max·‖Δx‖`` = 12.5 N of restoring force.
+hard-clamped to ``‖r‖ <= 0.03 m`` and projection onto the command clamp's ball is
+non-expansive, so the assist moves the commanded restoring force by at most
+``λ_max × 0.03`` = 15 N, whatever ``max_dpos`` is.
 The wrist sensor reads the contact *reaction*, which includes impact transients and is not
 bounded: peaks reach 77.86 N on force-aborted trials. See ``docs/results/mechanisms.md``.
 """
@@ -75,7 +77,7 @@ CONTINUOUS_KPIS: tuple[KpiSpec, ...] = (
     KpiSpec(
         "jerk_integral", "Trajectory jerk (∫|jerk|)", "", success_only=False, lower_is_better=True
     ),
-    # The near-miss KPI (LAB-121): how close the peg tip ever came to the hole centre. Unlike
+    # The near-miss KPI: how close the peg tip ever came to the hole centre. Unlike
     # every other entry here it scores *failed* trials on their own terms, so an assist that
     # improves approach accuracy without crossing the seating threshold is no longer invisible.
     # Its two companions (`penetration_at_closest_mm`, `lateral_error_at_closest_mm`) are
@@ -93,7 +95,7 @@ CONTINUOUS_KPIS: tuple[KpiSpec, ...] = (
 
 
 def _optional_float(row: dict[str, str], key: str) -> float | None:
-    """A float column that may be absent (pre-LAB-121 CSV) or blank (undefined for the trial)."""
+    """A float column that may be absent (pre-near-miss CSV) or blank (undefined for the trial)."""
     raw = row.get(key)
     return None if raw is None or raw in ("", "None") else float(raw)
 
@@ -104,7 +106,7 @@ def load_trials(csv_path: str | Path) -> list[TrialKPIs]:
     Inverts :meth:`TrialKPIs.to_dict` — the CSV stores every field as text, so the
     numeric columns are coerced back and an empty ``time_to_insert_s`` (a miss) is
     restored to ``None``. The near-miss columns are read leniently: a ``trials.csv``
-    written before LAB-121 (or by the trace-less DAgger loop) simply lacks them.
+    written before near-miss (or by the trace-less DAgger loop) simply lacks them.
     """
     records: list[TrialKPIs] = []
     with Path(csv_path).open(newline="") as handle:

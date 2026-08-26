@@ -1,8 +1,8 @@
-"""Record the Phase-1 residual policy's size + per-step inference latency (LAB-33).
+"""Record the Phase-1 residual policy's size + per-step inference latency.
 
 The acceptance criterion needs two numbers on record: the parameter count, and
 the per-control-tick latency of the O(1) ``step`` path against the ~10 ms budget
-(see LAB-34). This probes the *deployment* path — ``model.step`` with ``B=1`` on
+(see residual-policy). This probes the *deployment* path — ``model.step`` with ``B=1`` on
 CPU, ``eval`` + ``no_grad`` — which is how the seam adapter will call the policy
 at run time, not the (batched, sequence) training forward.
 

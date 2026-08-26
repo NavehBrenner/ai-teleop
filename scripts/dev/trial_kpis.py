@@ -14,7 +14,7 @@ observation — so reconstructing the observation stream is sufficient and exact
 
 Reads `assignments.json`, so run it only after the session is finished and unsealed.
 
-    uv run python scripts/dev/lab120_trial_kpis.py --out runs/blind_trial
+    uv run python scripts/dev/trial_kpis.py --out runs/blind_trial
 """
 
 from __future__ import annotations
@@ -43,7 +43,7 @@ from ai_teleop.domain import Delta  # noqa: E402
 from ai_teleop.eval.observer import TrialObserver  # noqa: E402
 from ai_teleop.eval.schema import TrialKPIs  # noqa: E402
 
-log = get_logger("lab120-kpis")
+log = get_logger("trial-kpis")
 
 Z = 1.96
 

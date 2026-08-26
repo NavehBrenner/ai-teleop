@@ -14,7 +14,7 @@ For *what the experiments found*, see the
 > means clone the analytical expert's corrections by behavioral cloning; "deploy" means load
 > that checkpoint as the correction layer in a live episode.
 
-> **Read every success rate at the noise floor (LAB-114).** A single checkpoint is one draw
+> **Read every success rate at the noise floor.** A single checkpoint is one draw
 > from a **20–31 pp**-wide distribution over training seeds (18 pp on the older, smaller
 > `dataset_10` corpus). These recipes produce and run
 > *individual* checkpoints; a rate from one of them is not a result about the recipe. See the
@@ -64,7 +64,7 @@ That writes a self-documenting run folder `outputs/policy/runs/my_ft_residual/`:
 | `history.png` | the loss curve |
 | `checkpoint.pt` | the deployable weights + serialized `PolicyConfig` |
 
-**Reproducibility (LAB-114).** `--seed` now seeds weight init, batch shuffling *and* the
+**Reproducibility.** `--seed` now seeds weight init, batch shuffling *and* the
 train/val split, so **corpus + `--seed` + git commit fully pin the checkpoint** — verify by
 re-training and comparing `checkpoint_sha256` ([§5](#5-regenerate-and-verify-a-checkpoint)).
 Always train on GPU (the `cuda` default); `--device cpu` is ~47× slower and only used to prove
@@ -74,12 +74,12 @@ device-invariance.
 
 | Flag | Effect | When |
 |---|---|---|
-| `--action-rate-weight 100` | smoothness penalty — cuts the ~5× jerk regression (LAB-104) | any deployable F/T policy; no success cost ([mechanisms §6](../results/mechanisms.md#6-negative-results)) |
+| `--action-rate-weight 100` | smoothness penalty — cuts the ~5× jerk regression | any deployable F/T policy; no success cost ([mechanisms §6](../results/mechanisms.md#6-negative-results)) |
 | `--vision` | add the image-CNN stream (needs a corpus recorded with `--record all`) | Phase-2 vision policy |
 | `--freeze-image-encoder` | pretrained backbone as a fixed extractor (train only the projection) | vision on a small GPU / fast |
 | `--checkpoint-image-encoder` + `--image-encode-chunk 32` `--amp` | VRAM cuts that let an unfrozen backbone fine-tune on 8 GB (Stage C) | vision fine-tune |
 | `--num-workers 4` | parallel wrist-frame decode | **always with `--vision`** |
-| `--weight-position 10 --weight-decay 1e-4` | force the lateral-correction fit (LAB-106) | offline-metric experiments — but see the anti-correlation warning below |
+| `--weight-position 10 --weight-decay 1e-4` | force the lateral-correction fit | offline-metric experiments — but see the anti-correlation warning below |
 
 > **Do not tune a policy by offline validation loss across recipes.** On this task per-step BC
 > fidelity is *anti*-correlated with closed-loop success — the `--command-ee-delta` /
@@ -146,7 +146,7 @@ uv run python scripts/report_results.py --trials runs/eval-3way/trials.csv \
 |---|---|
 | `--error-scale` | operator lateral-error difficulty; `1.0` = training σ's (flat wall, no lever), `0.4` = chamfer-contact band |
 | `--seeds` | paired seed count. **≥100 for a claim** — a 20-seed arm carries a ±20 pp exact interval |
-| `--max-steps` | per-episode budget (default matches the data-gen corpus; a mismatch was the LAB-107 bug) |
+| `--max-steps` | per-episode budget (default matches the data-gen corpus; a mismatch was the budget bug) |
 | `--device cpu` | force CPU inference (vision needs GPU for real-time) |
 
 > **One checkpoint is one draw.** A single ablation gives that checkpoint's rate ± the eval
@@ -185,7 +185,7 @@ table is the *operational* view.
 | `ftonly_baseline_lab82` | `dcea204` | no action-rate penalty | baseline; superseded by `ftonly_ar100` for deploy |
 | `ftonly_ar30` | `9023527` | action-rate ×30 | jerk sweep point |
 | `ftonly_ar100` | `9023527` | action-rate ×100 | **the deployable F/T policy** (smooth, no success cost) |
-| `ftonly_wpos10_wd` | `8d533ce` | pos-loss ×10 + weight-decay | LAB-106 offline-fix (1/2) |
+| `ftonly_wpos10_wd` | `8d533ce` | pos-loss ×10 + weight-decay | offline-fix (1/2) |
 | `ftonly_gate_wpos10_wd` | `8d533ce` | ↑ + `command_ee_delta` feature | **negative artifact** — collapsed closed-loop to 10% ([mechanisms §6](../results/mechanisms.md#6-negative-results)) |
 
 **M7 — vision** (all `dataset_vision`, seed 0)
@@ -203,7 +203,7 @@ table is the *operational* view.
 |---|---|---|
 | `dagger_round0` / `1` / `2` | 340 / 380 / 420 ep | **negative** — 40% → 30% → 15%; the bounded expert can't demonstrate recovery ([mechanisms §6](../results/mechanisms.md#6-negative-results)) |
 
-**Phase-1 reproduction + the seed-variance study** (`dataset_10` unless noted, LAB-101/114)
+**Phase-1 reproduction + the seed-variance study** (`dataset_10` unless noted)
 
 | Run(s) | Seed · commit | What it is | Status |
 |---|---|---|---|
@@ -224,7 +224,7 @@ not be arbitrated and is no longer quoted anywhere.
 
 ## 5. Regenerate and verify a checkpoint
 
-Post-LAB-114, a run is a pure function of its recorded inputs:
+With training seeded, a run is a pure function of its recorded inputs:
 
 ```bash
 # Re-train from the same corpus + seed + commit, then compare the hash to the original metadata.

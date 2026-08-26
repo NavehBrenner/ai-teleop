@@ -1,4 +1,4 @@
-"""Probe the stereo HandReading the kevin teleop path actually sees (LAB-74 debug).
+"""Probe the stereo HandReading the kevin teleop path actually sees (stereo-rig debug).
 
 Runs StereoHandSource exactly as `kvn episode --input vision --stereo-calib` does,
 but with no robot — just prints each reading so we can tell *why* the arm isn't

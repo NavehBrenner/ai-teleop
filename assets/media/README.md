@@ -1,6 +1,6 @@
 # Submission media
 
-Demo video and recorded live-teleoperation clips for the final submission, embedded in the
+The demo video and its README preview, embedded in the
 top-level README and described in [`../../docs/design-document.md`](../../docs/design-document.md) §7.
 
 Committed deliberately: `*.mp4` is gitignored so that generated captures under `outputs/` and
@@ -9,5 +9,11 @@ enough to serve inline on GitHub — re-encode rather than committing a large ca
 
 | File | Content | Status |
 |---|---|---|
-| `demo.mp4` | 1-2 min: webcam to robot, assistance on/off, KPI summary | pending |
-| `teleop_*.mp4` | 3-5 unedited live stereo-hand sessions | pending |
+| `demo.mp4` | 69 s, four segments: live stereo-hand free play (two unedited takes, one of which fails), four takes from the blinded human-operator trial, the analytical expert against no assist, and what the measurements support | shipped |
+| `demo-preview.gif` | 6.5 s silent excerpt of segment 1, embedded in the top-level README because GitHub strips `<video>` tags from rendered Markdown | shipped |
+
+> **Known stale:** the shipped cut predates the force-bound correction — its closing card still
+> says 12.5 N (docs now say 15 N) and its noise-floor caption reads "20-31 pp" rather than the
+> per-recipe spread. `scripts/dev/build_demo_cut.py` is already fixed; re-running it on the
+> machine holding `outputs/hand_takes/` regenerates a correct cut. Delete this note with that
+> re-cut.

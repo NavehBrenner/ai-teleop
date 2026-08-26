@@ -1,4 +1,4 @@
-"""`_should_render` — the viewer-sync cadence gate (LAB-88).
+"""`_should_render` — the viewer-sync cadence gate.
 
 The physics loop is deterministic regardless of rendering; this only decides *when* to sync
 the viewer. Target rate when there's spare wall-time, a hard floor even when behind. Pure

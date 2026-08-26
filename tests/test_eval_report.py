@@ -1,4 +1,4 @@
-"""Phase-1 KPI reporting tests (LAB-38).
+"""Phase-1 KPI reporting tests.
 
 Pure aggregation over synthetic :class:`TrialKPIs` records — no sim, no controller,
 no trained checkpoint — so these are fast and deterministic. They pin the contract
@@ -235,7 +235,7 @@ def test_paired_table_reports_discordant_footer() -> None:
 
 
 def test_paired_table_reports_each_kpi_own_pair_count() -> None:
-    """A success-only KPI's n is *not* the footer's matched-seed count (LAB-42 H-4).
+    """A success-only KPI's n is *not* the footer's matched-seed count (project-review H-4).
 
     Ten matched seeds, but only two where both arms seated — so time-to-insert's p is
     over 2 pairs, not 10. Rendering that n is the whole point: below n=6 a signed-rank

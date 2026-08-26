@@ -9,15 +9,15 @@ success, and KPI concepts live only here, so the controller stays mode-less.
 Public surface:
 
 * :class:`TrialObserver` — the ``run_episode`` ``step_callback`` that produces a
-  per-trial record (LAB-36).
+  per-trial record.
 * :class:`TrialKPIs` / :class:`TrialOutcome` — the behavior-free record contract
-  the ablation runner (LAB-37) and reporting (LAB-38) consume.
+  the ablation runner and reporting consume.
 * :class:`Config` / :func:`run_trial` / :func:`run_paired` / :func:`replay_kpis` —
-  the paired-seed ablation mechanism + offline trace replay (LAB-37).
-* :class:`EvalTraceRecorder` — the realized-state eval-log producer (LAB-37).
+  the paired-seed ablation mechanism + offline trace replay.
+* :class:`EvalTraceRecorder` — the realized-state eval-log producer.
 * :func:`load_trials` / :func:`build_report` (+ :class:`ConfigSummary` /
   :class:`PairedComparison`) — aggregate the per-trial records into the publishable
-  KPI tables + plots + paired statistics (LAB-38).
+  KPI tables + plots + paired statistics.
 """
 
 from ai_teleop.eval.ablation import (

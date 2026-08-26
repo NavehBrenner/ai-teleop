@@ -1,4 +1,4 @@
-"""Offline residual-BC dataset loader (LAB-32) — turns the M4 corpus into
+"""Offline residual-BC dataset loader — turns the M4 corpus into
 training samples for the Phase-1 residual policy.
 
 This module owns the **loader-facing** contracts; the on-disk schema and the
@@ -156,7 +156,7 @@ def extract_training_episode(
     When ``imgs_dir`` is given, the episode's rendered wrist-cam frames are loaded
     alongside the trajectory (see ``ai_teleop.data.images.load_frame_stream``).
 
-    ``command_ee_delta`` (LAB-106): append the raw ``cmd_position − ee_position``
+    ``command_ee_delta``: append the raw ``cmd_position − ee_position``
     tracking-error vector to the proprioception stream, so the GRU is handed the
     quantity the residual is ∝ to (and that → 0 in free space) as its own channel,
     normalized as a unit rather than reconstructed from two separately-z-scored
@@ -287,8 +287,8 @@ class OfflineResidualBCDataset(Dataset):
         )
         episode_summaries = train_episodes if train else val_episodes
         # Load the cheap vector streams eagerly; when load_images, store frame *paths* only and
-        # the (cheap) per-step frame index — pixels decode lazily in __getitem__ (LAB-103). Holding
-        # the whole decoded corpus resident OOMs before epoch 1 at the ~5k-episode LAB-82 scale.
+        # the (cheap) per-step frame index — pixels decode lazily in __getitem__. Holding
+        # the whole decoded corpus resident OOMs before epoch 1 at the ~5k-episode vision-corpus scale.
         raw_episodes: list[Episode] = []
         self._frame_paths: list[list[Path] | None] = []
         for summary in episode_summaries:
@@ -319,7 +319,7 @@ class OfflineResidualBCDataset(Dataset):
             if not train:
                 raise ValueError("the val split requires norm_stats computed on the train split")
             # Vector streams only — extract_training_episode above never decoded images, so
-            # norm-stats never hold the corpus resident (LAB-103).
+            # norm-stats never hold the corpus resident.
             norm_stats = compute_norm_stats(raw_episodes)
         self.norm_stats = norm_stats
         self.episodes = [normalize_episode(episode, norm_stats) for episode in raw_episodes]
@@ -386,7 +386,7 @@ def build_dataloaders(
     (episodes are the i.i.d. unit), the val loader is not. ``load_images`` requires
     the dataset was generated with ``--record all``/``--record images``; frames decode
     lazily per item, so ``num_workers>0`` parallelizes the decode into worker processes
-    and keeps resident RAM bounded to ~one batch (LAB-103). Returns
+    and keeps resident RAM bounded to ~one batch. Returns
     ``(train_loader, val_loader, norm_stats)``.
     """
     train_dataset = OfflineResidualBCDataset(

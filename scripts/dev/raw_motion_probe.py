@@ -1,14 +1,14 @@
-"""LAB-92 probe: raw (pre-assist) realized motion vs recorded, by outcome.
+"""careless-episode probe: raw (pre-assist) realized motion vs recorded, by outcome.
 
 `motion_profile_analysis.py` reads the M4 corpus (`data/dataset_N/runs/`), which
 only persists the EXPERT-ASSISTED trajectory -- the expert engages at
 `expert_d_far` (0.10 m), well outside `decel_radius` (0.016 m), so its
 correction can dominate the realized near-goal motion before a raw operator's
-carelessness (LAB-92) ever shows up. `data/recorded` is raw/unassisted. So the
+carelessness ever shows up. `data/recorded` is raw/unassisted. So the
 apples-to-apples comparison for calibrating `careless_probability` is raw
 (`NoAssist`) vs recorded, not the M4 corpus.
 
-**Do not use `eval.ablation.run_trial` for this** -- its `TrialObserver` (LAB-36)
+**Do not use `eval.ablation.run_trial` for this** -- its `TrialObserver`
 classifies FORCE_ABORT purely from raw wrist force vs its own `force_cap`
 (default 50N), never consulting the controller's own watchdog lock state. Since
 `Controller`'s watchdog trips (and freezes the arm) at 30N by default -- lower
@@ -18,7 +18,7 @@ than the observer's 50N -- force essentially never climbs to 50N, so
 including the 1.0 upper bound). `data.step_callbacks.episode_terminal_reason`
 (what data-gen's `TerminationProbe` uses) is the one that's right: it ORs the raw
 force check with `locked` (the controller's own HOLD state) -- this is flagged
-as a real LAB-36 gap, filed separately, not fixed here (out of LAB-92 scope).
+as a real observer gap, filed separately, not fixed here (out of careless-episode scope).
 
 This probe runs a raw NoAssist rollout directly (mirroring
 `eval.ablation.run_trial`'s scene/operator setup, but using `TerminationProbe`
@@ -26,7 +26,7 @@ for correct outcome classification) at a given `careless_probability`, across N
 seeds, recording ee_pose per step, and prints the same recorded-vs-scripted-by-
 outcome table `motion_profile_analysis.py` does.
 
-Run: uv run python scripts/dev/lab92_raw_motion_probe.py --seeds 30 --careless-probability 0.3
+Run: uv run python scripts/dev/raw_motion_probe.py --seeds 30 --careless-probability 0.3
 """
 
 from __future__ import annotations
@@ -50,7 +50,7 @@ from ai_teleop.sim.runner import run_episode  # noqa: E402
 _TARGET_HOLE_INDEX = 0
 _MAX_STEPS = 6000  # matches data-gen's DEFAULT_MAX_STEPS (~12s @ 500Hz)
 _SUCCESS_DEPTH = 0.015
-_LATERAL_TOLERANCE = 0.010  # post-LAB-77 (data.generate.DEFAULT_LATERAL_TOLERANCE)
+_LATERAL_TOLERANCE = 0.010  # post-difficulty-calibration (data.generate.DEFAULT_LATERAL_TOLERANCE)
 _FORCE_CAP = 50.0
 
 

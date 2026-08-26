@@ -1,4 +1,4 @@
-"""VisionInput — hand-pose readings → base EE Command (LAB-51).
+"""VisionInput — hand-pose readings → base EE Command.
 
 The headline M8 teleop logic: turn the stereo sensor's :class:`HandReading`
 stream (`hand_tracker.py`) into a base :class:`Command` behind the existing

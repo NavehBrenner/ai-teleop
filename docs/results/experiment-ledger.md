@@ -21,7 +21,7 @@ Every closed-loop number is only interpretable against *which corpus trained the
 |---|---|---|---|---|---|---|
 | `dataset_1` | `290f1750` | 2026-06-16 | 200 | 1.0 | — | M5 first BC (`lab34_baseline`). Old geometry/schema — **not comparable** to later corpora. |
 | `dataset_9` | `54dccad9` | 2026-07-06 | 200 | 2.0 | 71.5% | Trained the 2026-07-07 M6 run. **Overwritten in place** — see caveat below. |
-| `dataset_10` | `54dccad9` | 2026-07-22 | 200 | 2.0 | 71.5% | Regeneration of `dataset_9`'s config; trains every LAB-101/114 run. |
+| `dataset_10` | `54dccad9` | 2026-07-22 | 200 | 2.0 | 71.5% | Regeneration of `dataset_9`'s config; trains every Phase-1 reproduction and seed-variance run. |
 | `dataset_vision` | `de0eeb3b` | 2026-07-07 | 300 | 2.0 | 72.3% | All M6/M7 F/T + vision ablations (`ftonly_*`, `vision_*`). |
 | `dagger_ft_agg` | `de0eeb3b` base | 2026-07-10 | 340→420 | 2.0 | — | Aggregated on-policy corpus, grows per DAgger round. |
 
@@ -32,25 +32,26 @@ Every closed-loop number is only interpretable against *which corpus trained the
   config under 2026-07-22 code changed 35 of 200 trajectories (34 by a median of 1 step, one
   flipped baseline outcome, corpus baseline 22.5% → 23.0%). The original 2026-07-06 episode
   files were then **overwritten in place** by that regeneration — proven byte-for-byte by
-  `scripts/dev/lab114_corpus_identity.py` — so `data/dataset_9/` now holds `dataset_10`'s
+  `scripts/dev/corpus_identity.py` — so `data/dataset_9/` now holds `dataset_10`'s
   arrays under `dataset_9`'s stale manifest. **The corpus that trained the 2026-07-07 M6 run no longer
   exists on disk.**
 - **A "code era" column is load-bearing.** `dataset_0`/`dataset_1` (schema 1.0) already drift —
   their manifests predate `generated_walls` entering the fingerprint payload (finding C-1a).
-  Do not trust byte-identical regeneration of any pre-LAB-91 corpus.
+  Do not trust byte-identical regeneration of any corpus predating the
+  `generated_walls` fingerprint.
 
 ### 2.2 Eval operating points (`runs/eval*/trials.csv`)
 
 | Eval set | `error_scale` | Seeds | Regime | `human_only` | Notes |
 |---|---|---|---|---|---|
-| `runs/eval/` (LAB-53) | 0.4 | 100 | in-band | **31.0%** | Older step-budget era (pre-LAB-100); zero force-aborts. |
+| `runs/eval/` (the first head-to-head) | 0.4 | 100 | in-band | **31.0%** | Older step-budget era, before the residual clamp was widened; zero force-aborts. |
 | `eval_ftgate_es0p4` | 0.4 | 20 | in-band | 35.0% | M7 F/T gate ablation (3 arms). |
 | `eval_ftgate_es1p0` | 1.0 | 20 | flat-wall | 15.0% | " |
 | `eval_stageC_band04` | 0.4 | 20 | in-band | 35.0% | M7 Stage-C vision ablation (3 arms). |
 | `eval_stageC` | 1.0 | 20 | flat-wall | 15.0% | " |
 | `band_scale0.4` *(not committed)* | 0.4 | 30 | in-band | **36.7%** | The 2026-07-07 M6 30-seed slice. |
 | `flatwall_scale1.0` *(not committed)* | 1.0 | 30 | flat-wall | 20.0% | That run's ceiling-check control. |
-| `eval_lab101_band100*` | 0.4 | 100 | in-band | **50.0%** | LAB-101 reproduction (both ar0/ar100). |
+| `eval_lab101_band100*` | 0.4 | 100 | in-band | **50.0%** | Phase-1 reproduction (both ar0/ar100). |
 | `eval_lab114_*` (×10) | 0.4 | 100 | in-band | **50.0%** | The seed-variance + H-B/H-C study. |
 
 ### 2.3 Why the `human_only` baseline moves
@@ -59,10 +60,11 @@ The three "contradictory" human baselines quoted across old docs — **36.7 / 31
 — are one number at different operating points, not a discrepancy:
 
 - **50.0%** is the true in-band (es0.4) baseline, measured at 100 seeds, five independent times
-  in LAB-114, all *exactly* 50.0% (the arm uses no checkpoint, so it is bit-stable).
+  in the seed-variance study, all *exactly* 50.0% (the arm uses no checkpoint, so it is bit-stable).
 - **36.7%** is that same baseline on the **hard 30-seed slice** (seeds 0–29) the 2026-07-07 run
   happened to draw: 36.7% on 0–29 vs 55.7% on 30–99.
-- **31.0%** is the LAB-53 run at an **older step-budget era** (pre-LAB-100) — a different
+- **31.0%** is the first head-to-head run at an **older step-budget era**, before the
+  residual clamp was widened — a different
   contact regime, not a different sample.
 - **35% / 15%** are the 20-seed es0.4 / es1.0 baselines (M7 sets); es1.0 lands on the flat wall
   where nobody has a lateral lever, so everyone drops.
@@ -78,7 +80,7 @@ seed-count, step-budget-era) tuple.**
 
 Reconstructed from `outputs/policy/runs/<name>/metadata.json`. `val` is `best_val_loss` at
 `best_epoch/epochs_run`. **All GPU, seed 0, unless noted.** Offline val loss is *within-recipe*
-predictive but **anti-predictive across interventions** (LAB-106) — do not rank recipes by it.
+predictive but **anti-predictive across interventions** — do not rank recipes by it.
 
 | Run | Date | Corpus (fp) | Config delta vs F/T baseline | `val` (epoch) | Closed-loop | Verdict |
 |---|---|---|---|---|---|---|
@@ -86,7 +88,7 @@ predictive but **anti-predictive across interventions** (LAB-106) — do not ran
 | `ftonly_baseline_lab82` | 07-07 | `dataset_vision` (`de0e`) | F/T residual, no action-rate penalty | 0.00149 (17) | see [the closed-loop ledger](experiment-ledger.md#4-closed-loop-experiment-ledger) (es0.4 20s) | M6/M7 F/T baseline |
 | `ftonly_ar30` | 07-08 | `dataset_vision` | + action-rate penalty ×30 | 0.00116 (28) | — | jerk-reduction sweep |
 | `ftonly_ar100` | 07-08 | `dataset_vision` | + action-rate penalty ×100 | 0.00140 (23) | 40% (es0.4, 20s) | the "old-ar100" M7 arm |
-| `ftonly_wpos10_wd` | 07-10 | `dataset_vision` | pos-loss ×10 + weight-decay | 0.00169 (17) | — | LAB-106 offline fix (1/2) |
+| `ftonly_wpos10_wd` | 07-10 | `dataset_vision` | pos-loss ×10 + weight-decay | 0.00169 (17) | — | offline fix (1/2) |
 | `ftonly_gate_wpos10_wd` | 07-10 | `dataset_vision` | ↑ + **`command_ee_delta`** feedback feature + gate | 0.00135 (26) | **10%** (es0.4, 20s) | **REGRESSION** — see [negative results](mechanisms.md#6-negative-results) |
 | `vision_frozen_lab82` | 07-07 | `dataset_vision` | + vision, frozen MobileNetV3 encoder | 0.00107 (26) | — | best offline val of the arc — see caveat |
 | `vision_frozen_ar100` | 07-08 | `dataset_vision` | ↑ + action-rate ×100 | 0.00123 (19) | — | |
@@ -104,7 +106,7 @@ predictive but **anti-predictive across interventions** (LAB-106) — do not ran
 **The offline-val trap, stated once.** `vision_frozen_lab82` has the *best* val loss of the
 whole arc (0.00107) and is a closed-loop non-improver; the F/T recipe's own five seeds
 span 18 pp of success at val losses 0.00117–0.00197. **A lower validation loss did not buy
-closed-loop success across these interventions** — the central M7 mechanism (LAB-106,
+closed-loop success across these interventions** — the central M7 mechanism (see
 [what stands](mechanisms.md#7-what-still-stands)).
 
 ---
@@ -118,7 +120,7 @@ Reconstructed from the per-trial CSVs via `compare_paired`. Δ is paired (McNema
 | Eval set | Op. point | Arm | Success | Paired Δ (n, p) | Verdict |
 |---|---|---|---|---|---|
 | `flatwall_scale1.0` *(not committed)* | es1.0, 30s | residual | 20.0% vs 20.0% | +0.0 pp (30, p=1.0) | flat-wall ceiling control (expected) |
-| `runs/eval/` (LAB-53) | es0.4, 100s, old budget | residual | 43.0% vs 31.0% | +12.0 pp (100, p=0.043) | **NOISE** — inside the floor; unseeded training (H-7) |
+| `runs/eval/` (first head-to-head) | es0.4, 100s, old budget | residual | 43.0% vs 31.0% | +12.0 pp (100, p=0.043) | **NOISE** — inside the floor; unseeded training (H-7) |
 | `eval_ftgate_es0p4` | es0.4, 20s | ar100 (`residual`) | 40.0% vs 35.0% | +5.0 pp (20, p=1.0) | **NOISE** |
 | `eval_ftgate_es0p4` | es0.4, 20s | `command_ee_delta` (`ftonly`) | **10.0%** vs 35.0% | −25.0 pp (20, p=0.125) | **REGRESSION** (mechanism, [negative results](mechanisms.md#6-negative-results)) |
 | `eval_ftgate_es1p0` | es1.0, 20s | ar100 / gate | 20% / 15% vs 15% | ≤+5 pp (20, p=1.0) | **NOISE** (flat wall) |

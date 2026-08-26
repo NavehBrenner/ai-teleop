@@ -1,4 +1,4 @@
-"""Paired-seed ablation runner tests (LAB-37).
+"""Paired-seed ablation runner tests.
 
 Drives the real M3 stack on the static task scene (like ``test_episode_e2e``), so it
 is an end-to-end check that the runner produces well-formed paired records, the
@@ -47,7 +47,7 @@ class _RamIntoWall:
     """An AssistProvider that pushes hard *past* wherever the base command is
     already aiming, overshooting into whatever the operator is approaching.
 
-    Used only to trip the controller's force-cap watchdog reliably (LAB-94
+    Used only to trip the controller's force-cap watchdog reliably (force-cap
     regression) -- not a stand-in for any real policy. Direction-agnostic (scales
     off the base command's own aim) so it doesn't depend on the static scene's
     world-frame orientation.
@@ -95,7 +95,7 @@ def test_paired_run_same_seed_identical_operator_stream(tmp_path):
 
 
 def test_operator_error_scale_changes_the_command_stream(tmp_path):
-    """The LAB-53 difficulty knob is wired: at the same seed, scale=0 (no bias/drift)
+    """The difficulty-pin difficulty knob is wired: at the same seed, scale=0 (no bias/drift)
     yields a different — and closer-to-target — operator stream than the trained σ's."""
     run_trial(
         2,
@@ -131,7 +131,7 @@ def test_saved_trace_replays_to_same_kpis(tmp_path):
 
 
 def test_controller_watchdog_trip_is_classified_force_abort():
-    """LAB-94 regression: a trial that trips the controller's force-cap watchdog
+    """force-cap regression: a trial that trips the controller's force-cap watchdog
     must be classified FORCE_ABORT, not TIMEOUT.
 
     Before the fix, ``run_trial`` wired the controller's watchdog (hardcoded 30N)
@@ -152,7 +152,7 @@ def test_controller_watchdog_trip_is_classified_force_abort():
 
 
 def test_ablation_runners_default_to_insertion_budget():
-    """LAB-107 regression: the paired-ablation entry points must default to the
+    """step-budget regression: the paired-ablation entry points must default to the
     insertion step budget. Callers that omit ``max_steps`` — notably
     ``dagger._reablate`` — rely on this default, and ``scripts/evaluate.py`` anchors
     its own ``--max-steps`` default on the same ``INSERTION_MAX_STEPS`` constant. If

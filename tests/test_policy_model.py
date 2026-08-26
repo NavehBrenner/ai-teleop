@@ -1,4 +1,4 @@
-"""Tests for the Phase-1 residual policy model (LAB-33).
+"""Tests for the Phase-1 residual policy model.
 
 Self-contained and CPU-only: the model is exercised on synthetic batches built
 through the *real* loader collate (``collate_episodes``), so the test proves the
@@ -183,7 +183,7 @@ def test_input_dim_is_derived_not_hardcoded():
 
 
 # ---------------------------------------------------------------------------
-# Phase-2 vision stream — the image-conditioned path (LAB-81)
+# Phase-2 vision stream — the image-conditioned path
 # ---------------------------------------------------------------------------
 
 
@@ -282,13 +282,13 @@ def test_vision_changes_the_output():
 
 
 # ---------------------------------------------------------------------------
-# Stage-C memory levers (LAB-105) — must not change results, must still learn
+# Stage-C memory levers — must not change results, must still learn
 # ---------------------------------------------------------------------------
 
 
 def test_encode_frames_chunking_matches_unchunked():
     """Frame chunking is a pure memory optimization: encoding the F frames in
-    sub-batches must give the same embeddings as one forward (LAB-105 Stage C)."""
+    sub-batches must give the same embeddings as one forward (perception-probe Stage C)."""
     model = _vision_model()  # eval mode ⇒ deterministic, checkpoint branch inactive
     encoder = model.image_encoder
     assert encoder is not None

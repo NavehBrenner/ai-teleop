@@ -1,4 +1,4 @@
-"""Tests for the BC training loop (LAB-34) — ``ai_teleop.policy.train``.
+"""Tests for the BC training loop — ``ai_teleop.policy.train``.
 
 The training core takes prebuilt ``DataLoader``s, so it is exercised on a small
 synthetic corpus with a *learnable* signal (each step's Δ is a fixed linear map of
@@ -95,7 +95,7 @@ def _vision_episode(index: int, length: int, *, n_frames: int = 3, seed: int = 0
 
 
 def test_vision_epoch_encodes_cnn_once_per_batch_regardless_of_tbptt():
-    """LAB-102 acceptance: the CNN runs once per batch, not once per TBPTT chunk.
+    """Acceptance: the CNN runs once per batch, not once per TBPTT chunk.
 
     The pre-fix loop re-encoded the whole backbone on every chunk (blowing VRAM); the
     fix encodes once and slices the embedding. So the per-step-embedding call count must
@@ -166,7 +166,7 @@ def test_checkpoint_persists_training_history(tmp_path):
 
 
 def test_train_policy_is_reproducible_at_a_fixed_seed(tiny_dataset, tmp_path):  # noqa: F811
-    """LAB-114 acceptance: same command + same corpus ⇒ bit-identical weights.
+    """seed-variance acceptance: same command + same corpus ⇒ bit-identical weights.
 
     Before this, `--seed` reached only the train/val split — weight init and batch
     shuffling came from OS entropy, so every run of the same command produced a

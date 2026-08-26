@@ -1,17 +1,17 @@
-"""LAB-114 G2: how much does the *recipe* vary across training seeds?
+"""seed-variance G2: how much does the *recipe* vary across training seeds?
 
 Every M5–M7 conclusion in this project rests on one checkpoint per condition. Until
-LAB-114 seeded training, "one checkpoint" also meant "one unrepeatable draw" — which is
+seed-variance seeded training, "one checkpoint" also meant "one unrepeatable draw" — which is
 how the Phase-1 headline (+33.3 pp) came to be unreproducible. This aggregates the N
 seeded retrains of one fixed recipe (same corpus, same hyperparameters, seeds 0..N-1),
 each evaluated against `human_only` on the *same* 100 paired eval seeds, and prints the
 spread: the number that decides whether any single-checkpoint result here is meaningful.
 
 Also answers the free secondary question: is `best_val_loss` predictive of closed-loop
-success across seeds? (LAB-106 found offline metrics anti-predictive *across
+success across seeds? (error-decomposition found offline metrics anti-predictive *across
 interventions*; across seeds of one recipe it was unmeasured.)
 
-Read-only. Run: `uv run python scripts/dev/lab114_seed_spread.py`
+Read-only. Run: `uv run python scripts/dev/seed_spread.py`
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ SEEDS = range(5)
 RUN_DIR = Path("outputs/policy/runs")
 EVAL_DIR = Path("runs")
 RESULTS = Path("docs/results/phase-1")
-PLOT_PATH = RESULTS / "lab114_val_loss_vs_success.png"
+PLOT_PATH = RESULTS / "seed_variance_val_loss_vs_success.png"
 HEADLINE_TRIALS = RESULTS / "band_scale0.4_trials.csv"  # the 30 seeds behind the 70.0% claim
 HEADLINE_RATE = 70.0  # what the unreproducible 2026-07-07 checkpoint scored on them
 

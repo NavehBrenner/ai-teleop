@@ -23,12 +23,12 @@ import numpy as np
 from ai_teleop.common.command import Command
 from ai_teleop.common.observation import Observation
 
-# Raised 0.02 → 0.03 by LAB-100: under the deployment controller config the
+# Raised 0.02 → 0.03 by clamp-recalibration: under the deployment controller config the
 # ±2 cm bound was the binding constraint on the expert's approach-speed brake
-# (LAB-98's saturated residual aborts). 3 cm is the smallest bound that stops
+# (the expert brake's saturated residual aborts). 3 cm is the smallest bound that stops
 # the clamp saturating on success episodes and matches 4 cm's measured ceiling
 # on both sweep seed families. Corpora record their own bound (`delta_clamp`
-# in metadata), so pre-LAB-100 datasets regenerate at their original ±2 cm.
+# in metadata), so pre-clamp-recalibration datasets regenerate at their original ±2 cm.
 _MAX_DELTA_POSITION: float = 0.03
 _MAX_DELTA_ORIENTATION: float = float(np.deg2rad(10.0))
 _MAX_DELTA_GRIP_FORCE: float = 5.0

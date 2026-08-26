@@ -1,4 +1,4 @@
-"""Eval-trace schema + writer/reader — the realized-state log evaluation records (LAB-37).
+"""Eval-trace schema + writer/reader — the realized-state log evaluation records.
 
 An *eval trace* is the per-tick **realized environment state** of one evaluation
 episode, persisted so the KPIs can be (re)computed **offline** — without re-running

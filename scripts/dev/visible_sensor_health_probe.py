@@ -1,5 +1,5 @@
 """Check whether the demo's *visual* smoothness hides the same raw drop-out kevin measures
-(LAB-74 debug, continued from `viewer_gil_probe.py` / `poll_rate_probe.py`).
+(stereo-rig debug, continued from `viewer_gil_probe.py` / `poll_rate_probe.py`).
 
 Two threading hypotheses (the MuJoCo viewer's render thread; kevin's poll frequency) were
 each cleanly falsified by controlled measurement, and the camera pair itself was ruled out

@@ -1,4 +1,4 @@
-"""LAB-42 1A round-2: audit `eval/report.py` against the committed trials.csv files.
+"""project-review 1A round-2: audit `eval/report.py` against the committed trials.csv files.
 
 Checks the two things that would silently corrupt the Phase-3 KPI dashboard:
 
@@ -10,7 +10,7 @@ Checks the two things that would silently corrupt the Phase-3 KPI dashboard:
    `(both + baseline_only) / n_pairs` over *matched* seeds only. Same label, same
    report, different number whenever the seed sets differ.
 
-Read-only. Run: `uv run python scripts/dev/lab42_report_audit.py`
+Read-only. Run: `uv run python scripts/dev/report_audit.py`
 """
 
 from __future__ import annotations

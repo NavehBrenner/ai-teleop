@@ -1,7 +1,7 @@
-"""LAB-81 offline held-out eval — trained policy vs expert on unseen episodes.
+"""offline-eval offline held-out eval — trained policy vs expert on unseen episodes.
 
 Closed-loop vision deployment isn't wired yet (``Observation`` carries no wrist
-image — that's LAB-83), and the ``data/recorded/`` corpus has no rendered frames,
+image — that's latency), and the ``data/recorded/`` corpus has no rendered frames,
 so the vision policy can't be run in the sim loop or on those recordings. What we
 *can* test now is the honest offline metric: run each trained checkpoint over the
 **held-out val split** (episodes excluded from training) and measure how well its
@@ -14,7 +14,7 @@ grip N), against a zero-Δ baseline so "did it learn anything" is unambiguous.
 
 Run from ``kevin/``::
 
-    uv run python scripts/dev/lab81_offline_eval.py
+    uv run python scripts/dev/offline_eval.py
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ from ai_teleop.data import build_dataloaders
 from ai_teleop.policy.losses import _GRIP, _ORI, _POS, geodesic_angle
 from ai_teleop.policy.residual_policy import load_checkpoint
 
-log = get_logger("lab81eval")
+log = get_logger("offline-eval")
 
 _DATASET = Path("data/dataset_vision_bringup")
 _BRINGUP = Path("outputs/policy/bringup")
@@ -116,7 +116,8 @@ def main() -> int:
 
     configure_logging()
     log.info(
-        "LAB-81 offline held-out eval on %s val split (policy Δ̂ vs expert Δ*)", args.dataset.name
+        "offline-eval offline held-out eval on %s val split (policy Δ̂ vs expert Δ*)",
+        args.dataset.name,
     )
     _report("ft_only", args.dataset, args.ft_run, vision=False)
     _report("vision", args.dataset, args.vision_run, vision=True)

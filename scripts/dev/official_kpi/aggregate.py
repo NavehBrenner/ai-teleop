@@ -1,4 +1,4 @@
-"""Aggregate the official-run eval sets into per-recipe DISTRIBUTIONS (the LAB-114 discipline:
+"""Aggregate the official-run eval sets into per-recipe DISTRIBUTIONS (the seed-variance discipline:
 report mean + range over training seeds, never a single checkpoint). Read-only; re-runnable.
 
 Run from kevin/:  uv run python scripts/dev/official_kpi/aggregate.py
