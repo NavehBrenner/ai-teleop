@@ -11,9 +11,3 @@ enough to serve inline on GitHub — re-encode rather than committing a large ca
 |---|---|---|
 | `demo.mp4` | 69 s, four segments: live stereo-hand free play (two unedited takes, one of which fails), four takes from the blinded human-operator trial, the analytical expert against no assist, and what the measurements support | shipped |
 | `demo-preview.gif` | 6.5 s silent excerpt of segment 1, embedded in the top-level README because GitHub strips `<video>` tags from rendered Markdown | shipped |
-
-> **Known stale:** the shipped cut predates the force-bound correction — its closing card still
-> says 12.5 N (docs now say 15 N) and its noise-floor caption reads "20-31 pp" rather than the
-> per-recipe spread. `scripts/dev/build_demo_cut.py` is already fixed; re-running it on the
-> machine holding `outputs/hand_takes/` regenerates a correct cut. Delete this note with that
-> re-cut.
