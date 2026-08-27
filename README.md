@@ -24,7 +24,7 @@ Built in [MuJoCo](https://mujoco.org) for the Franka Emika Panda. The residual p
 
 > **Status**: the simulation, control backbone, assistance seam, expert + data generation, both
 > policy arcs (Phase-1 F/T residual, Phase-2 vision), and live stereo-hand teleoperation are
-> built and evaluated (**M1–M8**); final evaluation and polish (**M9**) are in progress. To train
+> built and evaluated, and the final evaluation and delivery pass is complete (**M1–M9**). To train
 > or deploy a policy see [docs/guides/policy-guide.md](./docs/guides/policy-guide.md); for measured
 > outcomes see [docs/results/kpi-dashboard.md](./docs/results/kpi-dashboard.md). Per-milestone status:
 > [docs/specs/milestones.md](./docs/specs/milestones.md). Full definition: [docs/design-document.md](./docs/design-document.md).

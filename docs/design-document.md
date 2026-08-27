@@ -726,7 +726,7 @@ Runway 2026-05-18 → 2026-08-31, ~15 weeks at 10–15 h/week. Milestone specs:
 | M6 | Evaluation harness + Phase-1 results | ✅ done |
 | M7 | Vision-conditioned residual, Phase 2 | ✅ done — closed as a documented negative |
 | M8 | Human teleoperation input (stereo hand tracking) | ✅ done |
-| M9 | Final evaluation + polish — official KPI run, this document, video, submission | 🟡 in progress |
+| M9 | Final evaluation + polish — official KPI run, this document, video, submission | ✅ done |
 
 **Work-plan note.** Phasing was deliberate: **Phase 1 (F/T-only residual) was the guaranteed
 deliverable** and Phase 2 (vision) the upside, so a complete and defensible submission never

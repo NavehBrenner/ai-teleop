@@ -36,6 +36,7 @@ import csv
 import json
 import multiprocessing
 import os
+import shutil
 from collections.abc import Mapping
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
@@ -260,13 +261,43 @@ def rollout_and_relabel(
         environment.close()
 
 
+def _link_episode(source: Path, link: Path) -> None:
+    """Point ``link`` at the episode directory ``source``, by symlink or by copy.
+
+    A symlink is the intent — the seed corpus is read-only here, so a link costs
+    nothing while a copy costs the whole corpus on disk. But **Windows refuses
+    symlinks to unprivileged processes** unless Developer Mode is on, raising
+    ``OSError: [WinError 1314] A required privilege is not held by the client``.
+    That is an environment property, not a bad argument, so it cannot be
+    pre-flighted portably — hence try-and-fall-back rather than a capability check.
+
+    The copy is a correct substitute: the loader only ever *reads* through this
+    path, so it resolves the same episode either way. It is slower and costs disk,
+    which is worth one warning rather than a silent surprise on a large corpus.
+    """
+    if link.exists() or link.is_symlink():  # is_symlink also catches a broken link,
+        return  # which exists() reports as absent and os.symlink then rejects.
+    try:
+        os.symlink(source, link, target_is_directory=True)
+    except OSError as error:
+        shutil.copytree(source, link)
+        log.warning(
+            "symlink unavailable (%s) — copied %s instead. This costs disk on a large "
+            "corpus; on Windows, enabling Developer Mode restores the linked path.",
+            error.__class__.__name__,
+            link.name,
+        )
+
+
 def seed_aggregate(base_dir: str | Path, aggregate_dir: str | Path) -> list[EpisodeSummary]:
     """Seed the aggregate corpus from ``base_dir`` and return its episode summaries.
 
     The seed corpus's episode folders are **symlinked** (not copied) into
     ``aggregate/runs/`` — the loader resolves the dataset-relative ``file`` paths
     through the links, so a 300-episode image corpus costs 300 symlinks, not a
-    multi-GB copy. The aggregate ``metadata.json`` starts as the base manifest;
+    multi-GB copy. Where symlinks are unavailable the episodes are copied instead
+    (see :func:`_link_episode`), which costs disk but reads identically. The
+    aggregate ``metadata.json`` starts as the base manifest;
     :func:`append_summaries` extends its ``episodes`` list per round.
     """
     base_dir = Path(base_dir)
@@ -278,9 +309,7 @@ def seed_aggregate(base_dir: str | Path, aggregate_dir: str | Path) -> list[Epis
     for summary in base_metadata["episodes"]:
         name = Path(summary["file"]).parent.name  # episode_NNNNN
         source = (base_dir / "runs" / name).resolve()
-        link = aggregate_runs / name
-        if not link.exists():
-            os.symlink(source, link)
+        _link_episode(source, aggregate_runs / name)
 
     (aggregate_dir / "metadata.json").write_text(json.dumps(base_metadata, indent=2) + "\n")
     return list(base_metadata["episodes"])

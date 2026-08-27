@@ -13,7 +13,9 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pytest
 
+import ai_teleop.dagger as dagger_module
 from ai_teleop.dagger import (
     _summaries_through_round,
     append_summaries,
@@ -112,11 +114,16 @@ def test_aggregate_unions_and_loads(tmp_path: Path) -> None:
         json.dumps({"schema_version": "2.0", "n_episodes": 3, "episodes": base_summaries})
     )
 
-    # Seed the aggregate (symlinks the base episodes in), add one DAgger episode.
+    # Seed the aggregate (links the base episodes in), add one DAgger episode.
     aggregate = tmp_path / "agg"
     summaries = seed_aggregate(base, aggregate)
     assert len(summaries) == 3
-    assert (aggregate / "runs" / "episode_00000").is_symlink()
+    # Assert the *property the loader needs* — the episode resolves through
+    # aggregate/runs/ — not the mechanism. Windows without Developer Mode copies
+    # instead of linking (see `_link_episode`), and either satisfies the loader.
+    seeded = aggregate / "runs" / "episode_00000"
+    assert seeded.is_dir()
+    assert (seeded / "episode.npz").is_file()
 
     summaries.append(
         rollout_and_relabel(
@@ -142,6 +149,42 @@ def test_aggregate_unions_and_loads(tmp_path: Path) -> None:
     )
     # `Dataset` isn't `Sized` in the torch stubs; every dataset here is a list.
     assert len(train_loader.dataset) + len(val_loader.dataset) == 4  # type: ignore[arg-type]
+
+
+def test_seed_aggregate_falls_back_to_copy_without_symlinks(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Windows denies symlinks to unprivileged processes; seeding must still work.
+
+    Forced rather than platform-gated: CI is Linux, where symlinks succeed, so the
+    fallback would otherwise be untested on every machine that runs the suite.
+    """
+    base = tmp_path / "base"
+    (base / "runs" / "episode_00000").mkdir(parents=True)
+    (base / "runs" / "episode_00000" / "episode.npz").write_bytes(b"payload")
+    (base / "metadata.json").write_text(
+        json.dumps({
+            "schema_version": "2.0",
+            "n_episodes": 1,
+            "episodes": [{"file": "runs/episode_00000/episode.npz"}],
+        })
+    )
+
+    def deny_symlink(*args: object, **kwargs: object) -> None:
+        raise OSError(1314, "A required privilege is not held by the client")
+
+    monkeypatch.setattr(dagger_module.os, "symlink", deny_symlink)
+
+    aggregate = tmp_path / "agg"
+    summaries = seed_aggregate(base, aggregate)
+
+    assert len(summaries) == 1
+    seeded = aggregate / "runs" / "episode_00000"
+    assert seeded.is_dir() and not seeded.is_symlink()  # copied, not linked
+    assert (seeded / "episode.npz").read_bytes() == b"payload"
+
+    # Idempotent: re-seeding an already-populated aggregate must not raise.
+    seed_aggregate(base, aggregate)
 
 
 def test_summaries_through_round_drops_later_rounds(tmp_path: Path) -> None:
