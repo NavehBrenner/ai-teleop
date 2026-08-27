@@ -315,10 +315,9 @@ it holds without reference to any measurement. It is not a bound on what the rob
 ## 6. Verdict against the stated criteria
 
 The design document's five original success criteria are quoted verbatim and marked in
-[§8](design-document.md#8-evaluation-criteria). In summary: **two met, two not met, one in
-progress.** The two not met are both success-rate criteria — one of them partly met on its
-force clause, which holds as a bound on the assist's authority but not on measured contact.
-The one in progress is the submission deliverables themselves.
+[§8](design-document.md#8-evaluation-criteria). In summary: **three met, two not met.**
+The two not met are both success-rate criteria — one of them partly met on its force clause,
+which holds as a bound on the assist's authority but not on measured contact.
 
 The project does not demonstrate that a behavioral-cloned residual improves insertion success
 for a human operator on this task, nor that it reduces contact force. It demonstrates, with a

@@ -25,7 +25,7 @@ milestone is started.
 | M6 | Evaluation harness + Phase 1 results | Phase 1 | 6 | ✅ done † |
 | M7 | Vision-conditioned residual — Phase 2 | Phase 2 | 4 (vision) | ✅ done ‡ |
 | M8 | Human teleop input (stereo hand tracking) | Phase 2 | 5 | ✅ done |
-| M9 | Final evaluation + polish | Delivery | 6, 7 | 🟡 in progress |
+| M9 | Final evaluation + polish | Delivery | 6, 7 | ✅ done |
 
 † On the seeded multi-seed measurement, **no recipe lifts closed-loop success above the
 human-only baseline beyond training-seed noise**; the standing results are the bounded-force
@@ -283,10 +283,11 @@ well-engineered Phase-1 project is a strong submission on its own). **Rough effo
 
 ## Indicative timeline
 
-Solo, ~10–15 h/week, deadline 2026-08-31. **Actuals (as of 2026-07-23): M1–M8 landed on
-schedule; M7 closed as a documented negative; M9 (final eval + polish, via the project-state review) is
-in progress ahead of the D2 submission.** The windows below are the original plan, kept for the
-record.
+Solo, ~10–15 h/week, deadline 2026-08-31. **Actuals (as of 2026-08-27): M1–M8 landed on
+schedule; M7 closed as a documented negative; M9 (final eval + polish, via the project-state
+review) is complete — the official KPI run, this document set, the blinded human trial and the
+demo video all landed ahead of the D2 submission.** The windows below are the original plan, kept
+for the record.
 
 | Window | Target |
 |---|---|
