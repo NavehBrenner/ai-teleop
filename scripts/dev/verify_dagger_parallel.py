@@ -24,8 +24,8 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from ai_teleop.dagger import _run_round_rollouts  # noqa: E402
-from ai_teleop.data.trajectory import episode_npz_path  # noqa: E402
+from ai_teleop.dagger import _run_round_rollouts
+from ai_teleop.data.trajectory import episode_npz_path
 
 BASE = Path("data/dataset_official_ft")
 CHECKPOINT = Path("outputs/policy/runs/official_ft_s0/checkpoint.pt")
@@ -42,8 +42,8 @@ def _load(runs_dir: Path, index: int) -> dict[str, np.ndarray]:
 
 def _assert_same(label: str, left: dict[str, np.ndarray], right: dict[str, np.ndarray]) -> None:
     assert left.keys() == right.keys(), f"{label}: key mismatch {left.keys()} vs {right.keys()}"
-    for key in left:
-        assert np.array_equal(left[key], right[key]), f"{label}: array '{key}' differs"
+    for key, value in left.items():
+        assert np.array_equal(value, right[key]), f"{label}: array '{key}' differs"
 
 
 def _run(tag: str, workers: int) -> Path:

@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Any, Literal, Self
 
 import mujoco
 import numpy as np
@@ -565,7 +565,7 @@ class StereoHandSource:
         self._tracker.close()
         log.info("stereo hand tracker stopped")
 
-    def __enter__(self) -> StereoHandSource:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *exc: object) -> None:

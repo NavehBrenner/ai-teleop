@@ -17,8 +17,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "src"))
 
-from ai_teleop.sim.scene import SimEnv  # noqa: E402
-from ai_teleop.sim.scene_source import resolve_scene_path  # noqa: E402
+from ai_teleop.sim.scene import SimEnv
+from ai_teleop.sim.scene_source import resolve_scene_path
 
 
 def main() -> None:

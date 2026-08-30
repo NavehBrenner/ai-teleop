@@ -19,9 +19,9 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "src"))
 
-from ai_teleop.common.command import Command  # noqa: E402
-from ai_teleop.control import Controller  # noqa: E402
-from ai_teleop.sim.scene import SimEnv  # noqa: E402
+from ai_teleop.common.command import Command
+from ai_teleop.control import Controller
+from ai_teleop.sim.scene import SimEnv
 
 SCENE = Path(__file__).resolve().parent.parent.parent / "assets" / "mjcf" / "full_scene.xml"
 
@@ -81,7 +81,7 @@ def main() -> int:
             obs = env.get_observation()
             ctrl.compute(obs, cmd)
             env.step()
-        drift, qvel_max, hold_err = run_hold(env, ctrl, lat_target, hold_s=4.0)
+        drift, qvel_max, _hold_err = run_hold(env, ctrl, lat_target, hold_s=4.0)
         env.close()
 
         ttt = f"{t_to_target:.2f}s" if t_to_target else "—"

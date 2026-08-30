@@ -32,17 +32,17 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from record_comparison_grid import PANEL, label, make_camera, save_animation  # noqa: E402
+from record_comparison_grid import PANEL, label, make_camera, save_animation
 
-from ai_teleop.common.log import (  # noqa: E402
+from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     get_logger,
 )
-from ai_teleop.control import Controller  # noqa: E402
-from ai_teleop.data import load_episode  # noqa: E402
-from ai_teleop.sim.scene import EnvConfig, SimEnv  # noqa: E402
-from ai_teleop.sim.scene_source import resolve_scene_path  # noqa: E402
+from ai_teleop.control import Controller
+from ai_teleop.data import load_episode
+from ai_teleop.sim.scene import EnvConfig, SimEnv
+from ai_teleop.sim.scene_source import resolve_scene_path
 
 log = get_logger("render-trajectory")
 

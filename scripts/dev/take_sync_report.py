@@ -28,12 +28,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from ai_teleop.common.log import (  # noqa: E402
+from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     get_logger,
 )
-from ai_teleop.data.trajectory import load_episode  # noqa: E402
+from ai_teleop.data.trajectory import load_episode
 
 log = get_logger("take-sync")
 
@@ -96,7 +96,7 @@ def main() -> None:
         if not path.exists():
             raise SystemExit(f"{path} is missing — is {arguments.take} a completed take?")
 
-    columns, metadata = load_episode(episode)
+    _columns, metadata = load_episode(episode)
     n_steps = int(metadata["n_steps"])
     sim_seconds = n_steps * SIM_DT
     wall_seconds, hand_frames = _probe_video(hand)

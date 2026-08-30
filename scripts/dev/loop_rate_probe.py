@@ -24,12 +24,12 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "src"))
 
-from ai_teleop.control import Controller  # noqa: E402
-from ai_teleop.domain import NoAssist  # noqa: E402
-from ai_teleop.input import ScriptedNoisyHuman  # noqa: E402
-from ai_teleop.sim.runner import SIM_DT, run_episode  # noqa: E402
-from ai_teleop.sim.scene import SimEnv  # noqa: E402
-from ai_teleop.sim.scene_source import resolve_scene_path  # noqa: E402
+from ai_teleop.control import Controller
+from ai_teleop.domain import NoAssist
+from ai_teleop.input import ScriptedNoisyHuman
+from ai_teleop.sim.runner import SIM_DT, run_episode
+from ai_teleop.sim.scene import SimEnv
+from ai_teleop.sim.scene_source import resolve_scene_path
 
 
 def main() -> None:

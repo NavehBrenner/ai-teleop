@@ -84,7 +84,7 @@ def main() -> None:
     print("\n### Reachability from README.md (link hops; '-' = unreachable by links)")
     for doc in docs:
         hops = depth.get(doc)
-        print(f"  {str(doc):<44} {hops if hops is not None else '-'}")
+        print(f"  {doc!s:<44} {hops if hops is not None else '-'}")
 
     modules = [
         (str(p.relative_to("src/ai_teleop")), str(p.relative_to("src/ai_teleop")))

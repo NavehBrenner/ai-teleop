@@ -27,9 +27,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # for blind_trial
 
-from blind_trial import GUESSES, run_trial, schedule  # noqa: E402
+from blind_trial import GUESSES, run_trial, schedule
 
-from ai_teleop.common.log import (  # noqa: E402
+from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     get_logger,

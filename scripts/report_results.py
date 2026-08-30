@@ -21,12 +21,12 @@ from pathlib import Path
 # Allow running before the package is installed in the venv.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from ai_teleop.common.log import (  # noqa: E402
+from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     get_logger,
 )
-from ai_teleop.eval.report import build_report, load_trials  # noqa: E402
+from ai_teleop.eval.report import build_report, load_trials
 
 log = get_logger("report")
 

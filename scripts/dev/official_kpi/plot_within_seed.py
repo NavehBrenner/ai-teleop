@@ -55,13 +55,13 @@ import matplotlib
 
 matplotlib.use("Agg")  # headless: render to file, never to a display
 
-import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib.axes import Axes  # noqa: E402
-from matplotlib.figure import Figure  # noqa: E402
+import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from kpi_data import (  # noqa: E402
+from kpi_data import (
     DEFAULT_RUNS_ROOT,
     METRICS,
     SUCCESS_METRIC,
@@ -73,7 +73,7 @@ from kpi_data import (  # noqa: E402
     paired_value,
     seated_pair_means,
 )
-from plot_kpis import (  # noqa: E402
+from plot_kpis import (
     BASELINE_COLOR,
     DEFAULT_FIGURE_DIR,
     MARKER_COLOR,
@@ -83,7 +83,7 @@ from plot_kpis import (  # noqa: E402
     finish,
 )
 
-from ai_teleop.common.log import (  # noqa: E402
+from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     get_logger,

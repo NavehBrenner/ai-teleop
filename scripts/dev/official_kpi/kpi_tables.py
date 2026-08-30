@@ -27,7 +27,7 @@ from statistics import mean
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from kpi_data import (  # noqa: E402
+from kpi_data import (
     DEFAULT_POLICY_RUNS_ROOT,
     DEFAULT_RUNS_ROOT,
     METRICS,
@@ -47,7 +47,7 @@ from kpi_data import (  # noqa: E402
     treatment_spread,
 )
 
-from ai_teleop.common.log import (  # noqa: E402
+from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     get_logger,

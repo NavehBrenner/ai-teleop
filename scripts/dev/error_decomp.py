@@ -87,8 +87,8 @@ def _report_run(run: str, val_summaries) -> None:
 
     log.info("── %s  (command_ee_delta=%s) ──", run, loaded.config.use_command_ee_delta)
     all_e, all_z = [], []
-    for k in buckets:
-        e = np.concatenate(buckets[k])
+    for k, bucket in buckets.items():
+        e = np.concatenate(bucket)
         p = np.concatenate(pred_mag[k])
         z = np.concatenate(zero_err[k])
         all_e.append(e)

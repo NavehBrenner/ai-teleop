@@ -33,15 +33,15 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from ai_teleop.common import Command, Observation  # noqa: E402
-from ai_teleop.common.log import (  # noqa: E402
+from ai_teleop.common import Command, Observation
+from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     get_logger,
 )
-from ai_teleop.domain import Delta  # noqa: E402
-from ai_teleop.eval.observer import TrialObserver  # noqa: E402
-from ai_teleop.eval.schema import TrialKPIs  # noqa: E402
+from ai_teleop.domain import Delta
+from ai_teleop.eval.observer import TrialObserver
+from ai_teleop.eval.schema import TrialKPIs
 
 log = get_logger("trial-kpis")
 

@@ -33,13 +33,13 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from ai_teleop.common.log import (  # noqa: E402
+from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     get_logger,
 )
-from ai_teleop.data.schema import RECORDED_MASTER_SEED  # noqa: E402
-from ai_teleop.data.trajectory import load_episode  # noqa: E402
+from ai_teleop.data.schema import RECORDED_MASTER_SEED
+from ai_teleop.data.trajectory import load_episode
 
 log = get_logger("recorded-manifest")
 

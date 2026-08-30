@@ -50,33 +50,33 @@ from ai_teleop.data.schema import EpisodeColumns, EpisodeMetadata
 # Allow running before the package is installed in the venv.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from ai_teleop.common import Command, Observation  # noqa: E402
-from ai_teleop.common.log import (  # noqa: E402
+from ai_teleop.common import Command, Observation
+from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     get_logger,
 )
-from ai_teleop.control import Controller  # noqa: E402
-from ai_teleop.data.generate import (  # noqa: E402
+from ai_teleop.control import Controller
+from ai_teleop.data.generate import (
     DEFAULT_FORCE_CAP,
     DEFAULT_LATERAL_TOLERANCE,
     DEFAULT_SUCCESS_DEPTH,
 )
-from ai_teleop.data.step_callbacks import EpisodeLogger, TerminationProbe  # noqa: E402
-from ai_teleop.data.trajectory import TerminalReason, load_episode  # noqa: E402
-from ai_teleop.domain import Delta, NoAssist  # noqa: E402
-from ai_teleop.domain.interfaces import AssistProvider, InputStrategy  # noqa: E402
-from ai_teleop.input import (  # noqa: E402
+from ai_teleop.data.step_callbacks import EpisodeLogger, TerminationProbe
+from ai_teleop.data.trajectory import TerminalReason, load_episode
+from ai_teleop.domain import Delta, NoAssist
+from ai_teleop.domain.interfaces import AssistProvider, InputStrategy
+from ai_teleop.input import (
     DEFAULT_SPEED_LOGNORMAL_SIGMA,
     ScriptedNoisyHuman,
     VisionInput,
     WorkspaceCalibration,
     calibrate_neutral,
 )
-from ai_teleop.sim.config import EnvConfig  # noqa: E402
-from ai_teleop.sim.runner import DEFAULT_LIVE_MAX_STEPS, SIM_DT, run_episode  # noqa: E402
-from ai_teleop.sim.scene import DEFAULT_WRIST_RENDER_EVERY, SimEnv  # noqa: E402
-from ai_teleop.sim.scene_source import resolve_scene_path  # noqa: E402
+from ai_teleop.sim.config import EnvConfig
+from ai_teleop.sim.runner import DEFAULT_LIVE_MAX_STEPS, SIM_DT, run_episode
+from ai_teleop.sim.scene import DEFAULT_WRIST_RENDER_EVERY, SimEnv
+from ai_teleop.sim.scene_source import resolve_scene_path
 
 log = get_logger("episode")
 

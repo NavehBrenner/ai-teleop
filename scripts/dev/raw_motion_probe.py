@@ -37,15 +37,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-import numpy as np  # noqa: E402
+import numpy as np
 
-from ai_teleop.control import Controller  # noqa: E402
-from ai_teleop.data.step_callbacks import TerminationProbe  # noqa: E402
-from ai_teleop.domain import NoAssist  # noqa: E402
-from ai_teleop.input import ScriptedNoisyHuman  # noqa: E402
-from ai_teleop.sim.config import EnvConfig, episode_wall_seed  # noqa: E402
-from ai_teleop.sim.env_setup import make_env  # noqa: E402
-from ai_teleop.sim.runner import run_episode  # noqa: E402
+from ai_teleop.control import Controller
+from ai_teleop.data.step_callbacks import TerminationProbe
+from ai_teleop.domain import NoAssist
+from ai_teleop.input import ScriptedNoisyHuman
+from ai_teleop.sim.config import EnvConfig, episode_wall_seed
+from ai_teleop.sim.env_setup import make_env
+from ai_teleop.sim.runner import run_episode
 
 _TARGET_HOLE_INDEX = 0
 _MAX_STEPS = 6000  # matches data-gen's DEFAULT_MAX_STEPS (~12s @ 500Hz)

@@ -12,7 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from ai_teleop.eval.ablation import TrialConfigSpec, run_paired_batch  # noqa: E402
+from ai_teleop.eval.ablation import TrialConfigSpec, run_paired_batch
 
 CHECKPOINT = "outputs/policy/runs/official_ft_s0/checkpoint.pt"
 N = 32

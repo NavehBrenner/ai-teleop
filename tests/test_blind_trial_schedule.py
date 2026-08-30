@@ -17,14 +17,14 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts" / "dev"))
 
-from blind_trial import (  # noqa: E402
+from blind_trial import (
     _OPERATOR_STATUS,
     BLOCK,
     _StatusLine,
     run_child,
     schedule,
 )
-from run_episode import _ScaledAssist  # noqa: E402
+from run_episode import _ScaledAssist
 
 from ai_teleop.common import Command, Observation
 from ai_teleop.domain import Delta
