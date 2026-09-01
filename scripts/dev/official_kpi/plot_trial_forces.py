@@ -32,28 +32,28 @@ import matplotlib
 import numpy as np
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib.axes import Axes  # noqa: E402
-from matplotlib.figure import Figure  # noqa: E402
+import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from kpi_data import (  # noqa: E402
+from kpi_data import (
     BASELINE_CONFIG,
     DEFAULT_RUNS_ROOT,
     METRICS,
     MetricSpec,
     load_recipes,
 )
-from plot_kpis import (  # noqa: E402
+from plot_kpis import (
     DEFAULT_FIGURE_DIR,
     RECIPE_ORDER,
     apply_plain_style,
     finish,
 )
 
-from ai_teleop.common.log import (  # noqa: E402
+from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     get_logger,

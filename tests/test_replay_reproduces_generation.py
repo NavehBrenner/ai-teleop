@@ -182,7 +182,7 @@ def test_replay_is_faithful_under_finite_time_factor(tmp_path):
 
 
 def test_episode_terminal_reason_policy():
-    deep = dict(success_depth=0.015, lateral_tolerance=0.006, force_cap=50.0)
+    deep = {"success_depth": 0.015, "lateral_tolerance": 0.006, "force_cap": 50.0}
     # seated → SUCCESS (wins even with high force / lock).
     assert (
         episode_terminal_reason(

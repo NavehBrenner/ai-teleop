@@ -40,11 +40,11 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")  # headless: render to file, never to a display
-import matplotlib.pyplot as plt  # noqa: E402
-import numpy as np  # noqa: E402
-from scipy import stats  # noqa: E402
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy import stats
 
-from ai_teleop.eval.schema import TrialKPIs  # noqa: E402
+from ai_teleop.eval.schema import TrialKPIs
 
 
 @dataclass(frozen=True)

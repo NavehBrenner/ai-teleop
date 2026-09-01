@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from ai_teleop.data.generate import GenerationConfig  # noqa: E402
+from ai_teleop.data.generate import GenerationConfig
 
 
 def main() -> int:

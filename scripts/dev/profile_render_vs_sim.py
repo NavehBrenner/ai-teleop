@@ -50,7 +50,7 @@ def _build(max_dpos: float = 0.02):
 
 def profile_costs(steps: int = 2000) -> None:
     print(f"\n=== (A) cost breakdown over {steps} sim steps ===")
-    env, controller, human, target, obs = _build()
+    env, controller, human, _target, obs = _build()
     cam = mujoco.MjvCamera()
     cam.lookat[:] = [0.55, 0, 0.5]
     cam.distance = 1.6

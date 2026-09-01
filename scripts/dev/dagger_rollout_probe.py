@@ -47,7 +47,7 @@ def main() -> int:
             render_every=20,
         )
         wall = time.time() - start
-        columns, _ = load_episode(runs_dir / f"episode_{rollout_index:05d}" / "episode.npz")
+        _columns, _ = load_episode(runs_dir / f"episode_{rollout_index:05d}" / "episode.npz")
         n_frames = len(list((runs_dir / f"episode_{rollout_index:05d}" / "imgs").glob("*.jpg")))
         log.info(
             "rollout %d │ %6d steps │ %s │ %d frames │ %.1fs (%.1f steps/s)",

@@ -32,15 +32,15 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from ai_teleop.common.command import Command  # noqa: E402
-from ai_teleop.common.log import (  # noqa: E402
+from ai_teleop.common.command import Command
+from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     get_logger,
 )
-from ai_teleop.policy import LearnedResidual  # noqa: E402
-from ai_teleop.sim.config import EnvConfig  # noqa: E402
-from ai_teleop.sim.env_setup import make_env  # noqa: E402
+from ai_teleop.policy import LearnedResidual
+from ai_teleop.sim.config import EnvConfig
+from ai_teleop.sim.env_setup import make_env
 
 log = get_logger("ablation-latency")
 

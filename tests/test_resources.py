@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import ai_teleop.common.resources as resources
+from ai_teleop.common import resources
 from ai_teleop.common.resources import safe_worker_count
 
 

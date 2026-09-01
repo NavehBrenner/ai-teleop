@@ -28,18 +28,18 @@ import torch
 # Allow running before the package is installed in the venv.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from ai_teleop.common.log import (  # noqa: E402
+from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     get_logger,
 )
-from ai_teleop.policy import (  # noqa: E402
+from ai_teleop.policy import (
     DEFAULT_TBPTT_STEPS,
     LossConfig,
     PolicyConfig,
     TrainConfig,
 )
-from ai_teleop.policy.train import (  # noqa: E402
+from ai_teleop.policy.train import (
     DEFAULT_BATCH_SIZE,
     DEFAULT_RUNS_ROOT,
     DEFAULT_VAL_FRACTION,

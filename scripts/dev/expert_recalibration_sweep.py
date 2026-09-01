@@ -300,13 +300,13 @@ def main() -> None:
         # global at call time, so one patch moves the shared action bound.
         delta_module._MAX_DELTA_POSITION = args.delta_clamp_cm / 100
 
-    rollout_config = dict(
-        joint_damping=args.joint_damping,
-        max_dpos=args.max_dpos,
-        speed_lognorm_median=args.speed_lognorm_median,
-        speed_lognorm_sigma=args.speed_lognorm_sigma,
-        max_steps=args.max_steps,
-    )
+    rollout_config = {
+        "joint_damping": args.joint_damping,
+        "max_dpos": args.max_dpos,
+        "speed_lognorm_median": args.speed_lognorm_median,
+        "speed_lognorm_sigma": args.speed_lognorm_sigma,
+        "max_steps": args.max_steps,
+    }
     print(
         f"n_seeds={args.seeds} master_seed={args.master_seed} "
         + " ".join(f"{key}={value}" for key, value in rollout_config.items())
@@ -336,9 +336,11 @@ def main() -> None:
         brake_gains = [float(v) for v in args.brake_gain.split(",")]
         brake_floors = [float(v) / 1000 for v in args.brake_lead_floor_mm.split(",")]
         for d_far, epsilon, gain, floor in product(d_fars, epsilons, brake_gains, brake_floors):
-            expert_kwargs: dict[str, float | int] = dict(
-                target_hole_index=_TARGET_HOLE_INDEX, d_far=d_far, epsilon_lateral=epsilon
-            )
+            expert_kwargs: dict[str, float | int] = {
+                "target_hole_index": _TARGET_HOLE_INDEX,
+                "d_far": d_far,
+                "epsilon_lateral": epsilon,
+            }
             label = f"expert d_far={d_far * 1000:.0f}mm eps={epsilon * 1000:.1f}mm"
             if gain > 0.0:
                 expert_kwargs.update(brake_gain=gain, brake_lead_floor=floor)

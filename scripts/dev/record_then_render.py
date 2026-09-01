@@ -30,7 +30,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from run_episode import _resolve_record_path  # noqa: E402
+from run_episode import _resolve_record_path
 
 _CONTROLLED_FLAGS = {"--record", "--record-out", "--headless"}
 

@@ -31,14 +31,14 @@ import numpy as np
 # Allow running before the package is installed in the venv.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from ai_teleop.common.command import Command  # noqa: E402
-from ai_teleop.common.log import (  # noqa: E402
+from ai_teleop.common.command import Command
+from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     get_logger,
 )
-from ai_teleop.control import Controller, LockState  # noqa: E402
-from ai_teleop.sim.scene import SimEnv  # noqa: E402
+from ai_teleop.control import Controller, LockState
+from ai_teleop.sim.scene import SimEnv
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCENE_PATH = REPO_ROOT / "assets" / "mjcf" / "full_scene.xml"
@@ -103,7 +103,7 @@ def run_phase(
     `target_pos_fn(t)` returns the commanded target position at sim time `t`
     (so phases can ramp). `target_quat` is held constant within a phase.
     """
-    n_steps = int(round(duration_s / SIM_DT))
+    n_steps = round(duration_s / SIM_DT)
     peak_force = 0.0
     last_pos_err = float("nan")
     lock_state_changes: list[tuple[float, str, str]] = []

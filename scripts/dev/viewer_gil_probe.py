@@ -40,10 +40,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "src"))
 
-from ai_teleop.common.log import add_logging_arguments, configure_from_args  # noqa: E402
-from ai_teleop.input.hand_tracker import StereoHandSource  # noqa: E402
-from ai_teleop.sim.scene import SimEnv  # noqa: E402
-from ai_teleop.sim.scene_source import resolve_scene_path  # noqa: E402
+from ai_teleop.common.log import add_logging_arguments, configure_from_args
+from ai_teleop.input.hand_tracker import StereoHandSource
+from ai_teleop.sim.scene import SimEnv
+from ai_teleop.sim.scene_source import resolve_scene_path
 
 _SYNC_INTERVAL_S = 1.0 / 30.0  # matches run_episode's DEFAULT_RENDER_FPS
 _POLL_INTERVAL_S = 0.002  # mirrors run_episode's 500 Hz physics-rate poll cadence

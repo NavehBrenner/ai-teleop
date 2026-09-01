@@ -22,16 +22,16 @@ from statistics import mean
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from kpi_data import (  # noqa: E402
+from kpi_data import (
     BASELINE_CONFIG,
     DEFAULT_RUNS_ROOT,
     METRICS,
     MetricSpec,
     load_recipes,
 )
-from plot_kpis import RECIPE_ORDER  # noqa: E402
+from plot_kpis import RECIPE_ORDER
 
-from ai_teleop.common.log import (  # noqa: E402
+from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     get_logger,

@@ -37,9 +37,9 @@ import matplotlib
 
 matplotlib.use("Agg")  # headless: render to file, never to a display
 
-import matplotlib.pyplot as plt  # noqa: E402
-from matplotlib.axes import Axes  # noqa: E402
-from matplotlib.figure import Figure  # noqa: E402
+import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -58,11 +58,11 @@ from kpi_data import (
     load_recipes,
     load_vision_dagger_rounds,
     marginal_value,
-    population_spread,  # noqa: E402
+    population_spread,
     treatment_spread,
 )
 
-from ai_teleop.common.log import (  # noqa: E402
+from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     get_logger,

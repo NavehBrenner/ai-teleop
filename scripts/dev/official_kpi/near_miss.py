@@ -37,15 +37,15 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from kpi_data import DEFAULT_RUNS_ROOT, EvalPoint, Recipe, load_recipes  # noqa: E402
-from plot_kpis import RECIPE_ORDER  # noqa: E402
+from kpi_data import DEFAULT_RUNS_ROOT, EvalPoint, Recipe, load_recipes
+from plot_kpis import RECIPE_ORDER
 
-from ai_teleop.common.log import (  # noqa: E402
+from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     get_logger,
 )
-from ai_teleop.eval.schema import TrialKPIs  # noqa: E402
+from ai_teleop.eval.schema import TrialKPIs
 
 log = get_logger("near-miss")
 

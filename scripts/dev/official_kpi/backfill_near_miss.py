@@ -36,13 +36,13 @@ from typing import SupportsFloat
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "src"))
 
-from ai_teleop.common.log import (  # noqa: E402
+from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     get_logger,
 )
-from ai_teleop.eval.ablation import replay_kpis  # noqa: E402
-from ai_teleop.eval.schema import TrialKPIs  # noqa: E402
+from ai_teleop.eval.ablation import replay_kpis
+from ai_teleop.eval.schema import TrialKPIs
 
 log = get_logger("backfill-near-miss")
 

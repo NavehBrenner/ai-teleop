@@ -26,12 +26,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from ai_teleop.common.log import (  # noqa: E402
+from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     get_logger,
 )
-from ai_teleop.data.trajectory import EPISODE_NPZ_NAME, episode_npz_path  # noqa: E402
+from ai_teleop.data.trajectory import EPISODE_NPZ_NAME, episode_npz_path
 
 log = get_logger("stage-blind-trial")
 

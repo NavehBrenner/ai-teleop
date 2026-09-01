@@ -345,7 +345,7 @@ class SimEnv:
                 f"launch_viewer() requires render_mode='viewer', got {self._render_mode!r}"
             )
         if self._viewer is not None:
-            return None
+            return
         # Imported here so headless tests don't load GLFW.
         import mujoco.viewer as mjv  # noqa: PLC0415
 

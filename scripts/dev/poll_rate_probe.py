@@ -46,8 +46,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent / "src"))
 
-from ai_teleop.common.log import add_logging_arguments, configure_from_args  # noqa: E402
-from ai_teleop.input.hand_tracker import StereoHandSource  # noqa: E402
+from ai_teleop.common.log import add_logging_arguments, configure_from_args
+from ai_teleop.input.hand_tracker import StereoHandSource
 
 
 def _camera_source(value: str) -> int | str:

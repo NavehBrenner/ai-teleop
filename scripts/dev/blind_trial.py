@@ -54,15 +54,16 @@ import threading
 import time
 from pathlib import Path
 from types import TracebackType
+from typing import Self
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from ai_teleop.common.log import (  # noqa: E402
+from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     get_logger,
 )
-from ai_teleop.data import load_episode  # noqa: E402
+from ai_teleop.data import load_episode
 
 log = get_logger("blind-trial")
 
@@ -122,7 +123,7 @@ class _StatusLine:
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
 
-    def __enter__(self) -> _StatusLine:
+    def __enter__(self) -> Self:
         if self._live:
             self._thread = threading.Thread(target=self._animate, daemon=True)
             self._thread.start()

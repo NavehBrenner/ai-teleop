@@ -22,10 +22,10 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-from scipy import stats  # noqa: E402
+import matplotlib.pyplot as plt
+from scipy import stats
 
-from ai_teleop.eval.report import compare_paired, group_by_config, load_trials  # noqa: E402
+from ai_teleop.eval.report import compare_paired, group_by_config, load_trials
 
 SEEDS = range(5)
 RUN_DIR = Path("outputs/policy/runs")

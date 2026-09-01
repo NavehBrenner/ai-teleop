@@ -31,13 +31,13 @@ from typing import Any
 import matplotlib
 
 matplotlib.use("Agg")  # headless: render to file, never to a display
-import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.pyplot as plt
 
-from ai_teleop.data.dataset import NormStats  # noqa: E402
-from ai_teleop.policy.config import PolicyConfig, TrainConfig  # noqa: E402
-from ai_teleop.policy.losses import LossConfig  # noqa: E402
-from ai_teleop.policy.model import ResidualPolicy  # noqa: E402
-from ai_teleop.policy.residual_policy import save_checkpoint  # noqa: E402
+from ai_teleop.data.dataset import NormStats
+from ai_teleop.policy.config import PolicyConfig, TrainConfig
+from ai_teleop.policy.losses import LossConfig
+from ai_teleop.policy.model import ResidualPolicy
+from ai_teleop.policy.residual_policy import save_checkpoint
 
 CHECKPOINT_NAME = "checkpoint.pt"
 METADATA_NAME = "metadata.json"

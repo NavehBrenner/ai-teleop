@@ -28,13 +28,13 @@ from pathlib import Path
 # Allow running before the package is installed in the venv.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
-from ai_teleop.common.log import (  # noqa: E402
+from ai_teleop.common.log import (
     add_logging_arguments,
     configure_from_args,
     get_logger,
 )
-from ai_teleop.data.generate import DEFAULT_JOINT_DAMPING  # noqa: E402
-from ai_teleop.eval.ablation import (  # noqa: E402
+from ai_teleop.data.generate import DEFAULT_JOINT_DAMPING
+from ai_teleop.eval.ablation import (
     DEFAULT_MAX_DPOS,
     DEFAULT_OPERATOR_ERROR_SCALE,
     DEFAULT_WRIST_RENDER_EVERY,
