@@ -32,5 +32,8 @@ jobs:
       - name: Type check (mypy)
         run: uv run poe typecheck
 
+      - name: Structural rules (qualety)
+        run: uv run poe structure
+
       - name: Tests (pytest)
         run: uv run poe test

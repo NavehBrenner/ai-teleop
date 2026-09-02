@@ -139,3 +139,7 @@ gha-creds-*.json
 
 # Claude Code git worktrees — never commit as stray gitlinks
 .claude/worktrees/
+
+# qualety's generated engine configs + ruff cache (regenerated every run).
+# The committed config is qualety.config.json at the repo root.
+.qualety/

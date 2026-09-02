@@ -27,6 +27,7 @@ from kpi_data import (
     DEFAULT_RUNS_ROOT,
     METRICS,
     MetricSpec,
+    Recipe,
     load_recipes,
 )
 from plot_kpis import RECIPE_ORDER
@@ -40,7 +41,7 @@ from ai_teleop.common.log import (
 log = get_logger("noise-floor")
 
 
-def paired_deltas(recipe, metric: MetricSpec) -> list[float]:
+def paired_deltas(recipe: Recipe, metric: MetricSpec) -> list[float]:
     """One paired Δ (treatment − baseline) per training seed, over the matched trials."""
     deltas = []
     for point in recipe.points:

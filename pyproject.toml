@@ -81,6 +81,9 @@ dev = [
     "mypy>=1.8",
     "poethepoet>=0.24",
     "rich>=13",
+    # Structural rules ruff/mypy can't express. Config + rationale for what is
+    # enabled live in qualety.config.json; see AGENTS.md "Structural rules (qualety)".
+    "qualety>=0.1.4",
 ]
 
 # The project CLI front door — `kvn` (pronounced "Kevin"). After
@@ -151,7 +154,10 @@ fmt-check = "ruff format --check src tests scripts"  # non-mutating, for CI
 lint = "ruff check --fix src tests scripts"
 typecheck = "python -m mypy"
 test = "python -m pytest -q"
-check = ["lint", "typecheck", "test"]          # the full gate, same as CI
+# Structural rules (AST-level invariants ruff/mypy don't express). qualety ships a
+# standalone binary; `python -m qualety` is the relocated-venv-safe way to reach it.
+structure = "python -m qualety check"
+check = ["lint", "typecheck", "structure", "test"]  # the full gate, same as CI
 sim = "python scripts/view_generated_wall.py"  # extra args pass through, e.g. poe sim --seed 7
 smoke = "python scripts/smoke_test_sim.py"
 # Relocated-venv-safe way to reach the `kvn` CLI without the console script

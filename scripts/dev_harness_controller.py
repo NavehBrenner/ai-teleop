@@ -23,6 +23,7 @@ import argparse
 import csv
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -93,7 +94,7 @@ def run_phase(
     *,
     label: str,
     duration_s: float,
-    target_pos_fn,
+    target_pos_fn: Callable[[float], np.ndarray],
     target_quat: np.ndarray,
     csv_writer: _csv._writer | None,
     viewer_real_time: bool,

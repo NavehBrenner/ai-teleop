@@ -65,8 +65,9 @@ here; you can also run them directly with `uv run poe <task>`:
 | `uv run poe fmt` | `ruff format` the code |
 | `uv run poe lint` | `ruff check` |
 | `uv run poe typecheck` | `mypy` |
+| `uv run poe structure` | `qualety` structural rules (see below) |
 | `uv run poe test` | `pytest` |
-| `uv run poe check` | lint + typecheck + test (the full gate, same as CI) |
+| `uv run poe check` | lint + typecheck + structure + test (the full gate, same as CI) |
 | `uv run poe sim [args]` | launch the wall viewer (e.g. `uv run poe sim --seed 7`) |
 | `uv run poe smoke` | run the sim smoke test |
 | `uv run poe cli [args]` | reach the `kvn` CLI without the console script (relocated-venv-safe) |
@@ -75,6 +76,36 @@ Prefer these over remembering the underlying commands. Add a new task here
 rather than scattering one-off invocations. (mypy/pytest run via `python -m`
 inside the tasks because the relocated `.venv` has stale console-script
 shebangs — see the hooks note below.)
+
+### Structural rules (qualety)
+
+`poe structure` runs [qualety](https://github.com/NavehBrenner/qualety) — AST-level
+invariants that ruff and mypy do not express (single-use indirection, untested public
+exports, missing annotations on public callables). It is part of `poe check` and gates
+every PR alongside lint/typecheck/test.
+
+Two things about `qualety.config.json` are deliberate and should not be "tidied":
+
+- **`"ruff": false`.** qualety bundles its own ruff and, before v0.1.4, ran it against a
+  standalone config that ignored ours — 104 false `I001` and 16 false `RUF100` whose
+  suggested fixes turned a green `ruff check` red. We already gate on ruff via `poe lint`
+  with our own `select`/`isort` settings, so the bundled phase is pure duplication and a
+  second source of truth. Leave it off.
+- **Seven rules are `"off"`, each for a stated reason.** Do not switch one back on
+  without re-running `poe structure` and reading the output — the disabled set is not
+  arbitrary:
+
+  | rule | why off |
+  |---|---|
+  | `no-unnecessary-def`, `no-unnecessary-class` | Upstream false positive: a method called as `self._attr.method()` is not counted as a use, so live public methods are reported dead ([qualety#126](https://github.com/NavehBrenner/qualety/issues/126)). ~105 findings across our two repos. Re-enable when that lands. |
+  | `no-silent-except` | Upstream false positive: `except X: continue` in a fallback chain, and `pass` that falls through to a documented default, are both read as swallows ([qualety#106](https://github.com/NavehBrenner/qualety/issues/106)). |
+  | `no-public-any` | Fires on `**kwargs: Any` forwarding, which is the idiomatic annotation and mypy-strict-clean. All 8 of our hits are that shape. |
+  | `public-exports-tested` | Mixed signal — some genuinely untested exports, some flagged despite a test reference. Worth revisiting deliberately as a coverage push, not as a gate. |
+  | `no-sys-path-hack` | The `sys.path.insert` preamble in `scripts/` is a deliberate convention (run a script before the package is installed), documented in each script. 57 findings, all intended. |
+  | `no-open-without-with` | One site, `dev_harness_controller.py` — a CSV handle streamed across the loop and closed after it, already carrying `# noqa: SIM115` with the reasoning. |
+
+When a disabled rule's upstream issue closes, re-run `poe structure` against a fresh
+qualety and drop the entry rather than letting the list ossify.
 
 ### Hooks and CI
 
@@ -90,8 +121,8 @@ git config core.hooksPath .githooks
 
 CI (`.github/workflows/ci.yml`) gates every **PR into `master`**: it installs
 all extras via `uv sync --all-extras` (which includes the `ml` extra bringing
-`torch`, used by the M5 dataset-loader tests) and must pass `mypy` and
-`pytest`. The hooks run the same
+`torch`, used by the M5 dataset-loader tests) and must pass `ruff`, `mypy`,
+`qualety` and `pytest`. The hooks run the same
 tools via `uv run` (mypy as `uv run python -m mypy`, since the relocated
 `.venv` has stale console-script shebangs).
 

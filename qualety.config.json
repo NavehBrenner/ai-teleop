@@ -1,0 +1,13 @@
+{
+  "plugins": ["@qualety/python"],
+  "ruff": false,
+  "rules": {
+    "python/no-unnecessary-def": "off",
+    "python/no-unnecessary-class": "off",
+    "python/public-exports-tested": "off",
+    "python/no-public-any": "off",
+    "python/no-silent-except": "off",
+    "python/no-sys-path-hack": "off",
+    "python/no-open-without-with": "off"
+  }
+}

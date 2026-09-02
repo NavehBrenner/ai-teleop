@@ -32,6 +32,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from ai_teleop.control import Controller
 from ai_teleop.domain import NoAssist, apply_delta
+from ai_teleop.domain.interfaces import AssistProvider
 from ai_teleop.expert import Expert
 from ai_teleop.input import ScriptedNoisyHuman
 from ai_teleop.sim.scene import SimEnv
@@ -96,7 +97,7 @@ def _progress(prefix: str, done: int, total: int) -> None:
 
 def run_views(
     scene_path: Path,
-    assist,
+    assist: AssistProvider,
     seed: int,
     steps: int,
     every: int,
