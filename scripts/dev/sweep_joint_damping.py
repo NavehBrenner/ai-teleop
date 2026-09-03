@@ -26,7 +26,9 @@ from ai_teleop.sim.scene import SimEnv
 SCENE = Path(__file__).resolve().parent.parent.parent / "assets" / "mjcf" / "full_scene.xml"
 
 
-def run_approach(env, ctrl, target, max_s):
+def run_approach(
+    env: SimEnv, ctrl: Controller, target: np.ndarray, max_s: float
+) -> tuple[float | None, float]:
     cmd = Command(target_position=target, target_quaternion=ctrl.home_pose[3:].copy())
     n = int(max_s / 0.002)
     time_to_target = None
@@ -40,7 +42,9 @@ def run_approach(env, ctrl, target, max_s):
     return time_to_target, final_err
 
 
-def run_hold(env, ctrl, target, hold_s):
+def run_hold(
+    env: SimEnv, ctrl: Controller, target: np.ndarray, hold_s: float
+) -> tuple[float, float, float]:
     cmd = Command(target_position=target, target_quaternion=ctrl.home_pose[3:].copy())
     n = int(hold_s / 0.002)
     init = env.get_observation().ee_pose[:3].copy()

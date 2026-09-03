@@ -76,8 +76,8 @@ class ResidualPolicy(nn.Module):
         image_frame_index: Tensor | None = None,
         image_embedding: Tensor | None = None,
         lengths: Tensor | None = None,
-        hidden=None,
-    ):
+        hidden: Tensor | None = None,
+    ) -> tuple[Tensor, Tensor]:
         """Score a whole sequence at once — the **training** half of the model's contract.
 
         Takes ``(B, T, …)`` streams and returns ``(delta, h_n)`` with delta shaped
@@ -135,7 +135,7 @@ class ResidualPolicy(nn.Module):
         image: Tensor | None = None,
         hidden: Tensor | None = None,
         image_embedding: Tensor | None = None,
-    ):
+    ) -> tuple[Tensor, Tensor]:
         """Advance one timestep — the **deployment** half of the model's contract.
 
         Takes ``(B, …)`` streams for a single tick and returns ``(delta, h_n)`` with delta

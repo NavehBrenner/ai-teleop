@@ -203,7 +203,7 @@ class SimEnv:
         return self._config
 
     @property
-    def viewer(self):
+    def viewer(self) -> mujoco.viewer.Handle | None:
         """The passive viewer handle when render_mode='viewer', else None.
 
         Caller is responsible for calling `.sync()` between physics steps if
